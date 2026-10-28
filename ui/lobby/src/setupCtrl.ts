@@ -73,7 +73,7 @@ export default class SetupController {
     // Load props from the store, but override any store values with values found in forceOptions
     this.variant = propWithEffect(forceOptions?.variant || storeProps.variant, this.onDropdownChange);
     this.fen = this.propWithApply(forceOptions?.fen || storeProps.fen);
-    const canChangeTimeMode = !!this.root.me || this.gameType !== 'hook';
+    const canChangeTimeMode = !!this.root.me || this.gameType !== 'hook' || !!this.root.opts.noSweat;
     this.timeControl = timeControlFromStoredValues(
       propWithEffect(forceOptions?.timeMode || storeProps.timeMode, this.onDropdownChange),
       canChangeTimeMode ? timeModes : ['realTime'],
@@ -89,6 +89,7 @@ export default class SetupController {
     this.aiLevel = this.propWithApply(storeProps.aiLevel);
     this.color(forceOptions?.color || storeProps.color || 'random');
 
+    if (this.root.opts.noSweat) this.variant = this.propWithApply('standard');
     this.enforcePropRules();
     // Upon loading the props from the store, overriding with forced options, and enforcing rules,
     // immediately save them to the store. This way, the user can know that whatever they saw last
@@ -176,7 +177,7 @@ export default class SetupController {
     friendUser?: string,
   ) => {
     this.root.leavePool();
-    this.gameType = gameType;
+    this.gameType = this.root.opts.noSweat ? 'hook' : gameType;
     this.loading = false;
     this.fenError = false;
     this.lastValidFen = '';
@@ -292,6 +293,21 @@ export default class SetupController {
   minimumTimeIfReal = () => (this.gameType === 'ai' && this.variant() === 'fromPosition' ? 1 : 0);
 
   submit = async () => {
+    if (this.root.opts.noSweat) {
+      this.loading = true;
+      this.root.redraw();
+      await this.root.matchMaia({
+        timeMode: this.timeControl.mode(),
+        minutes: this.timeControl.time(),
+        increment: this.timeControl.increment(),
+        days: this.timeControl.days(),
+        rated: this.gameMode() === 'rated',
+        color: this.color(),
+      });
+      this.loading = false;
+      this.root.redraw();
+      return;
+    }
     const color = this.color();
     const poolMember = this.hookToPoolMember(color);
     if (poolMember) {

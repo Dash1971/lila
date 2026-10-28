@@ -58,11 +58,11 @@ export default function setupModal(ctrl: LobbyController): VNode[] | null {
 
 const views = {
   hook: (ctrl: LobbyController): LooseVNodes => [
-    variantPicker(ctrl.setupCtrl),
+    !ctrl.opts.noSweat && variantPicker(ctrl.setupCtrl),
     timePickerAndSliders(ctrl.setupCtrl.timeControl, 0),
     gameModeButtons(ctrl),
     ratingView(ctrl),
-    ratingDifferenceSliders(ctrl),
+    !ctrl.opts.noSweat && ratingDifferenceSliders(ctrl),
     colorButtons(ctrl.setupCtrl),
   ],
   friend: (ctrl: LobbyController): LooseVNodes => [

@@ -101,7 +101,8 @@ final class LilaComponents(
       httpErrorHandler,
       httpConfiguration,
       httpFilters,
-      controllerComponents
+      controllerComponents,
+      configuration.getOptional[Boolean]("nosweat.enabled").getOrElse(false)
     )
 
   lazy val devAssetsController =
@@ -112,6 +113,7 @@ final class LilaComponents(
   lazy val api: Api = wire[Api]
   lazy val appealC: appeal.Appeal = wire[appeal.Appeal]
   lazy val auth: Auth = wire[Auth]
+  lazy val noSweat: controllers.NoSweat = wire[controllers.NoSweat]
   lazy val feed: Feed = wire[Feed]
   lazy val playApi: PlayApi = wire[PlayApi]
   lazy val challenge: Challenge = wire[Challenge]

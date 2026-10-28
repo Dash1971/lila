@@ -35,6 +35,7 @@ object home:
           Json
             .obj(
               "data" -> data,
+              "noSweat" -> env.noSweat.enabled,
               "showRatings" -> ctx.pref.showRatings
             )
             .add("hasUnreadLichessMessage", hasUnreadLichessMessage)
@@ -118,11 +119,15 @@ object home:
               button(cls := "button button-metal lobby__start__button lobby__start__button--hook")(
                 trans.site.createLobbyGame()
               ),
-              button(cls := "button button-metal lobby__start__button lobby__start__button--friend")(
-                trans.site.challengeAFriend()
+              Option.unless(env.noSweat.enabled)(
+                button(cls := "button button-metal lobby__start__button lobby__start__button--friend")(
+                  trans.site.challengeAFriend()
+                )
               ),
-              button(cls := "button button-metal lobby__start__button lobby__start__button--ai")(
-                trans.site.playAgainstComputer()
+              Option.unless(env.noSweat.enabled)(
+                button(cls := "button button-metal lobby__start__button lobby__start__button--ai")(
+                  trans.site.playAgainstComputer()
+                )
               )
             )
           ),

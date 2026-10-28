@@ -34,7 +34,27 @@ final class Env(
 )(using scheduler: Scheduler)(using Executor, Materializer):
   private val config = appConfig.get[GameConfig]("game")(using AutoConfig.loader)
 
-  val gameRepo = GameRepo(db(config.gameColl))
+  private val noSweatGames = db(CollName("nosweat_game"))
+  private val noSweatOnly = appConfig.getOptional[Boolean]("nosweat.enabled").getOrElse(false)
+  private def admitNoSweat(game: lila.core.game.Game): Funit =
+    import lila.db.dsl.{ *, given }
+    if !noSweatOnly || !game.playable then funit
+    else
+      noSweatGames
+        .byId[lila.db.dsl.Bdoc](game.id)
+        .flatMap: reservation =>
+          val allowed = reservation.exists: doc =>
+            val bot = doc.getAsOpt[UserId]("bot")
+            val human = doc.getAsOpt[UserId]("human")
+            val seats = bot.exists(game.userIds.contains) && human.fold(
+              game.userIds.size == 1 && game.rated.no && doc.getAsOpt[String]("guest").isDefined
+            )(id => game.userIds.distinct.size == 2 && game.userIds.contains(id) && !bot.contains(id))
+            seats && game.variant.standard && game.sourceIs(_.Pool) &&
+            doc.getAsOpt[String]("state").contains("reserved") &&
+            doc.getAsOpt[Boolean]("rated").contains(game.rated.yes)
+          if allowed then funit else fufail("Game has no human-versus-Maia pool reservation")
+
+  val gameRepo = GameRepo(db(config.gameColl), admitNoSweat)
 
   given idGenerator: IdGenerator = wire[IdGenerator]
 

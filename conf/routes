@@ -1,6 +1,16 @@
 # Run `./lila.sh playRoutes` after modifying this file
 
 # Lobby
+GET   /club                            controllers.NoSweat.home
+GET   /club/me                         controllers.NoSweat.me
+GET   /club/roster                     controllers.NoSweat.roster
+POST  /club/challenge                  controllers.NoSweat.challenge
+POST  /club/login                      controllers.NoSweat.login
+POST  /club/play                       controllers.NoSweat.play
+GET   /club/internal/games             controllers.NoSweat.games
+POST  /club/internal/:id/move           controllers.NoSweat.move(id: GameId)
+POST  /club/internal/:id/failure        controllers.NoSweat.failure(id: GameId)
+GET   /club/game/:id                    controllers.NoSweat.game(id: GameId)
 GET   /                                controllers.Lobby.home
 GET   /lobby/seeks                     controllers.Lobby.seeks
 

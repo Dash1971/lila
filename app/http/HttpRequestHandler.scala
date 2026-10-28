@@ -10,12 +10,25 @@ final class HttpRequestHandler(
     errorHandler: HttpErrorHandler,
     configuration: HttpConfiguration,
     filters: Seq[EssentialFilter],
-    controllerComponents: ControllerComponents
+    controllerComponents: ControllerComponents,
+    noSweatEnabled: Boolean = false
 ) extends DefaultHttpRequestHandler(() => router, errorHandler, configuration, filters)
     with lila.web.ResponseHeaders:
 
   override def routeRequest(request: RequestHeader): Option[Handler] =
-    if request.method == "OPTIONS"
+    if noSweatEnabled && request.method == "GET" && request.path == "/signup" then
+      Some(controllerComponents.actionBuilder(_ => Results.Redirect("/login")))
+    else if noSweatEnabled && request.method == "POST" &&
+      (request.path == "/login" || request.path.startsWith("/signup") ||
+        request.path.startsWith("/setup/") || request.path.startsWith("/api/challenge") ||
+        request.path == "/api/bot/account/upgrade")
+    then
+      Some(
+        controllerComponents.actionBuilder(_ =>
+          Results.Forbidden("Use the playing pool; direct challenges are unavailable.")
+        )
+      )
+    else if request.method == "OPTIONS"
     then optionsHandler.some
     else router.handlerFor(request)
 

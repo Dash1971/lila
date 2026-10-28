@@ -4,6 +4,7 @@ import { pubsub } from 'lib/pubsub';
 import { colors } from 'lib/setup/color';
 import { wsPingInterval } from 'lib/socket';
 import { storage, type LichessStorage } from 'lib/storage';
+import { alert } from 'lib/view';
 
 import Filter from './filter';
 import * as hookRepo from './hookRepo';
@@ -74,6 +75,7 @@ export default class LobbyController {
       else if (this.hasOngoingRealTimeGame(false)) this.stores.tab.set('now_playing');
       this.tab = this.stores.tab.get();
     }
+    if (opts.noSweat && this.tab !== 'now_playing') this.tab = 'pools';
     this.mode = this.stores.mode.get();
     this.sort = this.me ? this.stores.sort.get() : 'time';
 
@@ -258,12 +260,40 @@ export default class LobbyController {
   };
 
   clickPool = (id: string) => {
+    if (this.opts.noSweat) {
+      const pool = this.pools.find(p => p.id === id)!;
+      void this.matchMaia({ minutes: pool.lim, increment: pool.inc, rated: !!this.me }, id);
+      return;
+    }
     if (!this.me) {
       xhr.anonPoolSeek(this.pools.find(p => p.id === id)!);
       this.setTab('real_time');
     } else if (this.poolMember?.id === id) this.leavePool();
     else this.enterPool({ id });
     this.redraw();
+  };
+
+  matchMaia = async (setup: Record<string, string | number | boolean>, id = 'custom') => {
+    if (this.redirecting || this.poolMember) return;
+    this.poolMember = { id };
+    this.redraw();
+    try {
+      const response = await fetch('/club/play', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(setup),
+      });
+      const game = await response.json();
+      if (!response.ok) throw new Error(game.error || 'Pairing is temporarily unavailable');
+      this.setRedirecting();
+      site.redirect(game.url);
+    } catch (error) {
+      await alert(error instanceof Error ? error.message : 'Pairing is temporarily unavailable');
+    } finally {
+      this.poolMember = undefined;
+      this.redraw();
+    }
   };
 
   enterPool = (member: PoolMember) => {

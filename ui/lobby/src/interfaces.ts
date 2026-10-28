@@ -53,6 +53,7 @@ export interface LobbyOpts {
   showRatings: boolean;
   data: LobbyData;
   bots?: boolean;
+  noSweat?: boolean;
 }
 
 export interface LobbyMe {

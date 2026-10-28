@@ -109,8 +109,11 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
   val noRobots = raw("""<meta content="noindex,nofollow" name="robots">""")
 
   val favicons = raw:
-    s"""<link rel="alternate icon" type="image/png" href="/assets/logo/lichess-favicon-64.png">""" +
-      s"""<link id="favicon" rel="icon" type="image/svg+xml" href="/assets/logo/lichess-favicon.svg">"""
+    if siteName.startsWith("No Sweat Chess") then
+      """<link id="favicon" rel="icon" type="image/svg+xml" href="/assets/nosweat/icon.svg"><link rel="stylesheet" href="/assets/nosweat/brand.css">"""
+    else
+      s"""<link rel="alternate icon" type="image/png" href="/assets/logo/lichess-favicon-64.png">""" +
+        s"""<link id="favicon" rel="icon" type="image/svg+xml" href="/assets/logo/lichess-favicon.svg">"""
 
   def blindModeForm(using ctx: Context) = raw:
     val btnText =
@@ -309,8 +312,21 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
           a(cls := "site-title", href := langHref("/"), testId("site-title"))(
             if ctx.kid.yes then span(title := trans.site.kidMode.txt(), cls := "kiddo")(":)")
             else ctx.isBot.option(botImage),
-            div(cls := "site-icon", dataIcon := Icon.Logo),
-            div(cls := "site-name")(siteNameFrag)
+            if siteName.startsWith("No Sweat Chess") then
+              frag(
+                img(cls := "nosweat-header-icon", src := assetPath("nosweat/icon.svg"), alt := ""),
+                img(
+                  cls := "nosweat-wordmark nosweat-dark",
+                  src := assetPath("nosweat/textmark.svg"),
+                  alt := "nosweatchess"
+                ),
+                img(
+                  cls := "nosweat-wordmark nosweat-light",
+                  src := assetPath("nosweat/textmark-light.svg"),
+                  alt := "nosweatchess"
+                )
+              )
+            else frag(div(cls := "site-icon", dataIcon := Icon.Logo), div(cls := "site-name")(siteNameFrag))
           ),
           (!isAppealUser).option(
             frag(

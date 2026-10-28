@@ -236,6 +236,34 @@ final class UserRepo(c: Coll)(using Executor) extends lila.core.user.UserRepo(c)
       coll.insert.one(doc) >> byId(name.id)
 
   def existsPri[U: UserIdOf](u: U): Fu[Boolean] = coll.exists(bid(u.id))
+
+  // Nostr is an identity credential, never a password or an email recovery path.
+  def byNostr(pubkey: String): Fu[Option[User]] = coll.one[User](bdoc("nostr" -> pubkey))
+
+  def createNostr(name: UserName, pubkey: String): Fu[Option[User]] =
+    val doc = newUser(
+      name,
+      HashedPassword(Array.emptyByteArray),
+      EmailAddress(s"$pubkey@nostr.invalid"),
+      false,
+      false,
+      None,
+      KidMode.No
+    ) ++ bdoc("nostr" -> pubkey, "len" -> name.value.length)
+    coll.insert.one(doc).flatMap(_ => byNostr(pubkey))
+
+  def createNoSweatBot(name: UserName): Fu[Option[User]] =
+    val doc = newUser(
+      name,
+      HashedPassword(Array.emptyByteArray),
+      EmailAddress(s"bot-${name.id}@nosweat.invalid"),
+      false,
+      false,
+      None,
+      KidMode.No
+    ) ++
+      bdoc("len" -> name.value.length, "title" -> PlayerTitle.BOT, "noSweatBot" -> true)
+    coll.insert.one(doc).flatMap(_ => byId(name.id))
   def existsSec[U: UserIdOf](u: U): Fu[Boolean] = coll.secondary.exists(bid(u.id))
 
   def filterExists(ids: Set[UserId]): Fu[List[UserId]] =

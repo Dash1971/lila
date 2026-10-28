@@ -15,7 +15,8 @@ import lila.db.dsl.{ *, given }
 import lila.db.isDuplicateKey
 import lila.game.GameExt.*
 
-final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c):
+final class GameRepo(c: Coll, admit: Game => Funit = _ => funit)(using Executor)
+    extends lila.core.game.GameRepo(c):
 
   export BSONHandlers.{ statusHandler, gameHandler }
   import BSONHandlers.given
@@ -428,11 +429,12 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
       F.checkAt -> checkInHours.map(nowInstant.plusHours(_)),
       F.playingUids -> (g2.started && userIds.nonEmpty).option(userIds)
     )
-    coll.insert
-      .one(bson)
-      .addFailureEffect:
-        case wr: WriteResult if isDuplicateKey(wr) => lila.mon.game.idCollision.increment()
-      .void
+    admit(g2).flatMap: _ =>
+      coll.insert
+        .one(bson)
+        .addFailureEffect:
+          case wr: WriteResult if isDuplicateKey(wr) => lila.mon.game.idCollision.increment()
+        .void
 
   def removeRecentChallengesOf(userId: UserId) =
     coll.delete.one:

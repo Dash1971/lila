@@ -79,7 +79,9 @@ final class Auth(env: Env, accountC: => Account) extends LilaController(env):
       then Ok(s"ok:${routes.Auth.checkYourEmail}")
       else BadRequest.async(accountC.renderCheckYourEmail)
 
-  def login = Open(serveLogin)
+  def login =
+    if env.noSweat.enabled then Open(Ok.page(views.noSweatLogin()))
+    else Open(serveLogin)
   def loginLang = LangPage(routes.Auth.login)(serveLogin)
 
   private def serveLogin(using ctx: Context, referrer: Option[ValidReferrer]) = NoBot:

@@ -58,6 +58,11 @@ export function initModule(opts: LobbyOpts) {
   pubsub.after('socket.hasConnected').then(() => {
     const gameId = new URLSearchParams(location.search).get('hook_like');
     if (!gameId) return;
+    if (opts.noSweat) {
+      void lobbyCtrl.matchMaia({ like: gameId });
+      history.replaceState(null, '', '/');
+      return;
+    }
     const { ratingMin, ratingMax } = lobbyCtrl.setupCtrl.makeSetupStore('hook')();
     xhr.text(
       xhr.url(`/setup/hook/${site.sri}/like/${gameId}`, { deltaMin: ratingMin, deltaMax: ratingMax }),

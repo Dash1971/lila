@@ -19,7 +19,9 @@ export default function table(ctrl: LobbyController) {
       gameType: 'hook',
       label: i18n.site.createLobbyGame,
       disabled: hookDisabled,
-      title: 'Create a custom game that any online player can join.',
+      title: opts.noSweat
+        ? 'Play a matched Maia opponent.'
+        : 'Create a custom game that any online player can join.',
     },
     {
       gameType: 'friend',
@@ -37,7 +39,8 @@ export default function table(ctrl: LobbyController) {
       disabled: hasOngoingRealTimeGame,
     },
   ];
-  if (opts.bots)
+  if (opts.noSweat) lobbyButtons.splice(1);
+  if (opts.bots && !opts.noSweat)
     lobbyButtons.push({
       gameType: 'bots',
       label: 'play bot',
