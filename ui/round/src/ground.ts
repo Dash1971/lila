@@ -45,6 +45,7 @@ export function makeConfig(ctrl: RoundController): CgConfig {
       move: hooks.onMove,
       dropNewPiece: hooks.onNewPiece,
       insert(elements) {
+        elements.board.addEventListener('contextmenu', () => ctrl.clearQueuedPremoves());
         const firstPly = util.firstPly(ctrl.data);
         const isSecond = plyColor(firstPly) !== data.player.color;
         const showUntil = firstPly + 2 + Number(isSecond);
@@ -77,7 +78,8 @@ export function makeConfig(ctrl: RoundController): CgConfig {
         set: hooks.onPremove,
         unset: hooks.onCancelPremove,
       },
-      additionalPremoveRequirements: premove.additionalPremoveRequirements,
+      additionalPremoveRequirements: ctx =>
+        ctrl.stackedPremoves() || premove.additionalPremoveRequirements(ctx),
     },
     predroppable: {
       enabled: data.pref.enablePremove && data.game.variant.key === 'crazyhouse',
@@ -119,6 +121,7 @@ export const sync = (ctrl: RoundController, step: Step, playing: boolean): void 
     turnColor: plyColor(step.ply),
     movable: movableState(ctrl.data, playing),
     drawable: { autoShapes: endgameShapesForStep(ctrl, step) },
+    highlight: { custom: new Map() },
   });
 
 export const endgameShapesForStep = (ctrl: RoundController, step: Step): DrawShape[] =>

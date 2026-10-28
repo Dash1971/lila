@@ -50,6 +50,20 @@ export default function (ctrl: RoundController): LooseVNode {
             redraw: ctrl.redraw,
           }),
 
+        !spectator &&
+          d.game.variant.key === 'standard' &&
+          d.pref.enablePremove &&
+          cmnToggleWrap({
+            id: 'stacked-premoves',
+            name: 'Allow multiple premoves',
+            checked: ctrl.stackPreference.getOrDefault(true),
+            change: v => {
+              ctrl.clearQueuedPremoves();
+              ctrl.chessground.cancelMove();
+              ctrl.stackPreference.set(v);
+            },
+            redraw: ctrl.redraw,
+          }),
         menu.voiceInput(boolPrefXhrToggle('voice', !!ctrl.voiceMove), !spectator),
         !portraitMobile &&
           menu.keyboardInput(boolPrefXhrToggle('keyboardMove', !!ctrl.keyboardMove), !spectator),

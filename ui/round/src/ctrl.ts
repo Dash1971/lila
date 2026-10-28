@@ -51,6 +51,7 @@ import type {
 } from './interfaces';
 import { init as keyboardInit } from './keyboard';
 import MoveOn from './moveOn';
+import { PremoveSequence, type QueuedMove } from './premoveSequence';
 import Server from './server';
 import { make as makeSocket, type RoundSocket } from './socket';
 import * as title from './title';
@@ -63,6 +64,116 @@ import * as xhr from './xhr';
 type GoneBerserk = Partial<ByColor<boolean>>;
 
 export default class RoundController implements MoveRootCtrl {
+  readonly premoveSequence: PremoveSequence = new PremoveSequence();
+  readonly stackPreference: LichessBooleanStorage = storage.boolean('nosweat.stackedPremoves');
+  stackPromotion?: QueuedMove;
+  private projected = false;
+  private optimisticFen?: string;
+  private queueOnline = true;
+
+  stackedPremoves = (): boolean =>
+    this.data.game.variant.key === 'standard' &&
+    !this.data.player.spectator &&
+    !this.data.local &&
+    !this.nvui &&
+    this.data.pref.enablePremove &&
+    this.stackPreference.getOrDefault(true);
+
+  clearQueuedPremoves = (): void => {
+    this.premoveSequence.clear();
+    if (this.stackPromotion) this.promotion?.dismiss();
+    this.stackPromotion = undefined;
+    if (this.projected && this.chessground) {
+      this.projected = false;
+      if (this.optimisticFen)
+        this.chessground.set({
+          fen: this.optimisticFen,
+          turnColor: this.data.opponent.color,
+          movable: { dests: new Map() },
+        });
+      else ground.sync(this, this.stepAt(this.ply), this.isPlaying());
+    }
+    if (this.chessground) {
+      this.chessground.state.premovable.current = undefined;
+      this.chessground.state.premovable.events.set = this.makeCgHooks().onPremove;
+      this.chessground.set({ highlight: { custom: new Map() } });
+      this.chessground.setAutoShapes(ground.endgameShapesForStep(this, this.stepAt(this.ply)));
+    }
+    this.redraw();
+  };
+
+  private readonly projectPremoves = (): void => {
+    if (
+      !this.stackedPremoves() ||
+      !this.premoveSequence.moves.length ||
+      this.replaying() ||
+      !this.isPlaying() ||
+      this.chessground.state.turnColor === this.data.player.color
+    )
+      return;
+    this.projected = true;
+    this.chessground.set({
+      fen: this.premoveSequence.project(
+        this.optimisticFen ?? this.stepAt(this.ply).fen,
+        this.data.player.color,
+      ),
+      check: false,
+      lastMove: undefined,
+      movable: { dests: new Map() },
+    });
+    this.chessground.set({
+      highlight: {
+        custom: new Map(
+          [...this.premoveSequence.destinations].map(([key, dest]) => [
+            key,
+            dest ? 'nosweat-premove-dest' : 'nosweat-premove-origin',
+          ]),
+        ),
+      },
+    });
+  };
+
+  private readonly queuePremove = (move: QueuedMove): void => {
+    if (
+      !this.queueOnline ||
+      !this.stackedPremoves() ||
+      this.replaying() ||
+      !this.isPlaying() ||
+      this.chessground.state.turnColor === this.data.player.color
+    )
+      return;
+    this.chessground.state.premovable.current = undefined;
+    this.premoveSequence.add(this.optimisticFen ?? this.stepAt(this.ply).fen, this.data.player.color, move);
+    this.projectPremoves();
+    this.redraw();
+  };
+
+  private readonly playQueuedPremove = (): boolean => {
+    if (
+      !this.queueOnline ||
+      !this.stackedPremoves() ||
+      this.stackPromotion ||
+      !this.isPlaying() ||
+      this.replaying() ||
+      this.data.game.player !== this.data.player.color
+    )
+      return false;
+    const move = this.premoveSequence.take(
+      this.stepAt(this.ply).fen,
+      this.data.player.color,
+      util.parsePossibleMoves(this.data.possibleMoves),
+    );
+    if (!move) {
+      this.clearQueuedPremoves();
+      return false;
+    }
+    this.chessground.move(move.orig, move.dest);
+    if (move.promotion) promote(this.chessground, move.dest, move.promotion);
+    this.chessground.set({ turnColor: this.data.opponent.color, movable: { dests: new Map() } });
+    this.sendMove(move.orig, move.dest, move.promotion, { premove: true, preConfirmed: true });
+    return true;
+  };
+
   data: RoundData;
   socket: RoundSocket;
   chessground: CgApi;
@@ -155,6 +266,23 @@ export default class RoundController implements MoveRootCtrl {
       this.redraw();
     });
 
+    pubsub.on('socket.resync', () => {
+      this.queueOnline = false;
+      this.clearQueuedPremoves();
+    });
+    pubsub.on('socket.online', online => {
+      this.queueOnline = online;
+      if (!online) this.clearQueuedPremoves();
+    });
+    pubsub.on('socket.close', () => {
+      this.queueOnline = false;
+      this.clearQueuedPremoves();
+    });
+    pubsub.on('socket.open', () => {
+      this.clearQueuedPremoves();
+      this.queueOnline = true;
+    });
+    window.addEventListener('pagehide', this.clearQueuedPremoves);
     pubsub.on('zen', toggleZenMode);
 
     if (!this.opts.noab && this.isPlaying()) ab.init(this);
@@ -167,6 +295,7 @@ export default class RoundController implements MoveRootCtrl {
   };
 
   private readonly onUserMove = (orig: Key, dest: Key, meta: MoveMetadata) => {
+    if (!meta.premove) this.clearQueuedPremoves();
     if (!this.keyboardMove?.usedSan && !this.opts.noab) ab.move(this, meta, pubsub.emit);
     if (!this.startPromotion(orig, dest, meta)) this.sendMove(orig, dest, undefined, meta);
   };
@@ -198,10 +327,35 @@ export default class RoundController implements MoveRootCtrl {
       this.keyboardMove?.justSelected(),
     );
 
-  private readonly onPremove = (orig: Key, dest: Key, meta: MoveMetadata) =>
-    this.startPromotion(orig, dest, meta);
+  private readonly onPremove = (orig: Key, dest: Key, meta: MoveMetadata) => {
+    if (!this.stackedPremoves()) {
+      this.startPromotion(orig, dest, meta);
+      return;
+    }
+    if (this.stackPromotion) return;
+    this.chessground.state.premovable.current = undefined;
+    this.stackPromotion = { orig, dest };
+    const promoting = this.promotion.start(
+      orig,
+      dest,
+      {
+        submit: (from, to, role) => this.sendMove(from, to, role, meta),
+        premove: (from, to, role) => {
+          this.stackPromotion = undefined;
+          this.queuePremove({ orig: from, dest: to, promotion: role });
+        },
+      },
+      meta,
+    );
+    if (!promoting) {
+      this.stackPromotion = undefined;
+      this.queuePremove({ orig, dest });
+    }
+  };
 
-  private readonly onCancelPremove = () => this.promotion.cancelPrePromotion();
+  private readonly onCancelPremove = () => {
+    if (!this.stackedPremoves()) this.promotion.cancelPrePromotion();
+  };
 
   private readonly onNewPiece = (piece: Piece, key: Key): void => {
     if (piece.role === 'pawn' && (key[1] === '1' || key[1] === '8')) return;
@@ -228,15 +382,20 @@ export default class RoundController implements MoveRootCtrl {
 
   lastPly = (): number => util.lastPly(this.data);
 
-  makeCgHooks = (): any => ({
-    onUserMove: this.onUserMove,
-    onUserNewPiece: this.onUserNewPiece,
-    onMove: this.data.local ? undefined : this.onMove,
-    onNewPiece: this.onNewPiece,
-    onPremove: this.onPremove,
-    onCancelPremove: this.onCancelPremove,
-    onPredrop: this.onPredrop,
-  });
+  makeCgHooks = (): any => {
+    const generation = this.premoveSequence.generation;
+    return {
+      onUserMove: this.onUserMove,
+      onUserNewPiece: this.onUserNewPiece,
+      onMove: this.data.local ? undefined : this.onMove,
+      onNewPiece: this.onNewPiece,
+      onPremove: (orig: Key, dest: Key, meta: MoveMetadata) => {
+        if (generation === this.premoveSequence.generation) this.onPremove(orig, dest, meta);
+      },
+      onCancelPremove: this.onCancelPremove,
+      onPredrop: this.onPredrop,
+    };
+  };
 
   replaying = (): boolean => this.ply !== this.lastPly() && !this.data.local;
 
@@ -253,11 +412,13 @@ export default class RoundController implements MoveRootCtrl {
   isPlaying = (): boolean => game.isPlayerPlaying(this.data);
 
   jump = (ply: Ply): boolean => {
+    this.clearQueuedPremoves();
     ply = Math.max(util.firstPly(this.data), Math.min(this.lastPly(), ply));
     const isForwardStep = ply === this.ply + 1;
     this.ply = ply;
     this.justDropped = undefined;
     this.preDrop = undefined;
+    this.optimisticFen = undefined;
     const s = this.stepAt(ply);
     const config: CgConfig = {
       fen: s.fen,
@@ -316,7 +477,9 @@ export default class RoundController implements MoveRootCtrl {
   ): void => {
     const socketOpts: SocketSendOpts = {
       sign: this.sign,
-      ackable: true,
+      // Queued commands are never retained for transport replay after reconnect.
+      // Native transient-move reconciliation restores the authoritative board on loss.
+      ackable: !(meta.premove && this.stackedPremoves()),
     };
     if (this.clock) {
       socketOpts.withLag = !this.shouldSendMoveTime || !this.clock.isRunning();
@@ -330,7 +493,7 @@ export default class RoundController implements MoveRootCtrl {
         }
       }
     }
-    this.socket.send(tpe, data, socketOpts);
+    this.socket.send(tpe, data, socketOpts, meta.premove && this.stackedPremoves());
 
     this.justDropped = meta.justDropped;
     this.justCaptured = meta.justCaptured;
@@ -370,6 +533,7 @@ export default class RoundController implements MoveRootCtrl {
       this.redraw();
       return;
     }
+    if (this.stackedPremoves()) this.optimisticFen = this.chessground.getFen();
     this.actualSendMove('move', move, { justCaptured: meta.captured, premove: meta.premove });
   };
 
@@ -413,6 +577,11 @@ export default class RoundController implements MoveRootCtrl {
   apiMove = (o: ApiMove): true => {
     const d = this.data;
     const playing = this.isPlaying();
+    if (this.projected) {
+      this.projected = false;
+      ground.sync(this, this.stepAt(this.ply), playing);
+    }
+    this.optimisticFen = undefined;
     d.game.turns = o.ply;
     d.game.player = plyColor(o.ply);
     const playedColor = plyOpponentColor(o.ply);
@@ -497,6 +666,8 @@ export default class RoundController implements MoveRootCtrl {
       if (this.data.steps.length > 2) this.data.expiration = undefined;
       else this.data.expiration.movedAt = Date.now();
     }
+    if (!this.isPlaying()) this.clearQueuedPremoves();
+    else if (playedColor === d.player.color) this.projectPremoves();
     this.redraw();
     if (playing && playedColor === d.player.color) {
       this.transientMove?.clear();
@@ -509,10 +680,16 @@ export default class RoundController implements MoveRootCtrl {
       // https://github.com/lichess-org/lila/issues/343
       const premoveDelay = d.game.variant.key === 'atomic' ? 100 : 1;
       const premovePly = this.ply;
+      const queueGeneration = this.premoveSequence.generation;
       const premoveFen = step.fen;
       setTimeout(() => {
         if (this.ply !== premovePly || this.stepAt(this.ply).fen !== premoveFen) return;
-        if (this.nvui) this.nvui.playPremove();
+        if (this.stackedPremoves()) {
+          if (queueGeneration !== this.premoveSequence.generation || !this.playQueuedPremove()) {
+            this.clearQueuedPremoves();
+            this.showYourMoveNotification();
+          }
+        } else if (this.nvui) this.nvui.playPremove();
         else if (!this.chessground.playPremove() && !this.playPredrop()) {
           this.promotion.cancel();
           this.showYourMoveNotification();
@@ -545,6 +722,8 @@ export default class RoundController implements MoveRootCtrl {
   }
 
   reload = (d: RoundData): void => {
+    this.optimisticFen = undefined;
+    this.clearQueuedPremoves();
     const posChanged = d.steps.length !== this.data.steps.length;
     if (posChanged) this.ply = util.lastPly(d);
     util.upgradeServerData(d);
@@ -572,6 +751,8 @@ export default class RoundController implements MoveRootCtrl {
   };
 
   endWithData = (o: ApiEnd): void => {
+    this.optimisticFen = undefined;
+    this.clearQueuedPremoves();
     const d = this.data;
     const ply = this.lastPly();
     const step = this.stepAt(ply);
@@ -981,6 +1162,7 @@ export default class RoundController implements MoveRootCtrl {
           if (!this.nvui && d.pref.submitMove) {
             site.mousetrap
               .bind('esc', () => {
+                this.clearQueuedPremoves();
                 this.submitMove(false);
                 this.chessground.cancelMove();
               })

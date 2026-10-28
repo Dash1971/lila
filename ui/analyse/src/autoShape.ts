@@ -215,7 +215,7 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
     }
   }
 
-  return shapes;
+  return shapes.concat(ctrl.noSweat?.shapes() ?? []);
 }
 
 function hiliteVariations(ctrl: AnalyseCtrl, autoShapes: DrawShape[]) {

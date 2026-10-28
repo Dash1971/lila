@@ -9,6 +9,7 @@ import type { WithGround } from './ground';
 
 export type Hooks = {
   submit: (orig: Key, dest: Key, role: Role) => void;
+  premove?: (orig: Key, dest: Key, role: Role) => void;
   show?: (ctrl: PromotionCtrl, roles: Role[] | false) => void;
 };
 
@@ -51,7 +52,7 @@ export class PromotionCtrl {
           this.variant() === 'atomic' &&
           (premovePiece ? g.state.pieces.get(dest)?.color === opposite(premovePiece.color) : !!meta?.captured)
         ) {
-          if (premovePiece) this.setPrePromotion(dest, 'queen');
+          if (premovePiece) this.setPrePromotion(dest, 'queen', hooks, orig);
           else this.doPromote({ orig, dest, hooks }, 'queen');
           return true;
         }
@@ -66,7 +67,7 @@ export class PromotionCtrl {
             (this.autoQueenPref === AutoQueen.OnPremove && premovePiece) ||
             forceAutoQueen)
         ) {
-          if (premovePiece) this.setPrePromotion(dest, 'queen');
+          if (premovePiece) this.setPrePromotion(dest, 'queen', hooks, orig);
           else this.doPromote({ orig, dest, hooks }, 'queen');
           return true;
         }
@@ -121,7 +122,7 @@ export class PromotionCtrl {
     const promoting = this.promoting;
     if (promoting) {
       this.promoting = undefined;
-      if (promoting.pre) this.setPrePromotion(promoting.dest, role);
+      if (promoting.pre) this.setPrePromotion(promoting.dest, role, promoting.hooks, promoting.orig);
       else this.doPromote(promoting, role);
       promoting.hooks.show?.(this, false);
       this.redraw();
@@ -133,7 +134,11 @@ export class PromotionCtrl {
     promoting.hooks.submit(promoting.orig, promoting.dest, role);
   }
 
-  private setPrePromotion(dest: Key, role: Role): void {
+  private setPrePromotion(dest: Key, role: Role, hooks?: Hooks, orig?: Key): void {
+    if (hooks?.premove && orig) {
+      hooks.premove(orig, dest, role);
+      return;
+    }
     this.prePromotionRole = role;
     this.withGround(g =>
       g.setAutoShapes([

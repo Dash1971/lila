@@ -27,6 +27,10 @@ export const init = (ctrl: RoundController): LichessMousetrap =>
       ctrl.userJump(ctrl.data.steps.length - 1);
       ctrl.redraw();
     })
+    .bind('esc', () => {
+      ctrl.clearQueuedPremoves();
+      ctrl.chessground.cancelMove();
+    })
     .bind('f', ctrl.flipNow)
     .bind('z', () => pubsub.emit('zen'))
     .bind('F', ctrl.yeet)

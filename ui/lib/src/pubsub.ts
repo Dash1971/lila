@@ -29,6 +29,7 @@ export interface PubsubEvents {
   'ply.trigger': () => void;
   'round.suggestion': (text: string | null) => void;
   'socket.close': () => void;
+  'socket.resync': () => void;
   'socket.in.blockedBy': (userId: string) => void;
   'socket.in.challenges': (data: any) => void;
   'socket.in.chat_reinstate': (userId: string) => void;

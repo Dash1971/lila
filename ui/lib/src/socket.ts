@@ -301,6 +301,7 @@ class WsSocket {
       case false:
         break;
       case 'resync':
+        pubsub.emit('socket.resync');
         setTimeout(() => site.reload('lila-ws resync'), 500);
         break;
       case 'ack':

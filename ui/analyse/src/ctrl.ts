@@ -55,6 +55,7 @@ import LiveAnnotate from './liveAnnotate';
 import MotifCtrl from './motif/motifCtrl';
 import Navigate from './navigate';
 import { nextGlyphSymbol, add3or5FoldGlyphs } from './nodeFinder';
+import { NoSweatAnalysis } from './noSweatAnalysis';
 import pgnImport from './pgnImport';
 import { make as makePractice, type PracticeCtrl } from './practice/practiceCtrl';
 import { make as makeRetro, type RetroCtrl } from './retrospect/retroCtrl';
@@ -73,6 +74,7 @@ export default class AnalyseCtrl implements CevalHandler {
   element: HTMLElement;
   tree: TreeWrapper;
   socket: Socket;
+  noSweat?: NoSweatAnalysis;
   chessground: ChessgroundApi;
   ceval: CevalCtrl;
   evalCache: EvalCache;
@@ -186,6 +188,8 @@ export default class AnalyseCtrl implements CevalHandler {
     this.pendingDeletionPath = propWithEffect(null, this.redraw);
     this.initialPath = this.makeInitialPath();
     this.setPath(this.initialPath);
+    if (this.isCevalAllowed() && this.data.game.variant.key === 'standard')
+      this.noSweat = new NoSweatAnalysis(this);
 
     this.showGround();
     this.resetAutoShapes();
@@ -353,6 +357,7 @@ export default class AnalyseCtrl implements CevalHandler {
   }
 
   private showGround(): void {
+    this.noSweat?.positionChanged();
     if (this.node.pos().isErr || this.node.outcome()) this.ceval.reset();
     this.withCg(cg => {
       cg.set(this.makeCgOpts());
