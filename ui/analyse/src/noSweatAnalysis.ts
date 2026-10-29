@@ -20,6 +20,7 @@ import {
   position,
   standardUci,
   legalUcis,
+  leadingPolicy,
   type Candidate,
 } from './noSweatCore';
 import { ReviewFish, type Review } from './noSweatFish';
@@ -660,10 +661,7 @@ export class NoSweatAnalysis {
         hl(
           'span',
           candidates.length
-            ? candidates
-                .slice(0, 3)
-                .map(c => `${san(this.ctrl.node.fen, c.uci)} ${(100 * c.probability).toFixed(1)}%`)
-                .join(' · ')
+            ? leadingPolicy(this.ctrl.node.fen, candidates)
             : position(this.ctrl.node.fen).isEnd()
               ? 'No legal moves'
               : !this.enabled

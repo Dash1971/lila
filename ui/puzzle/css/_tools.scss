@@ -164,3 +164,47 @@
     color: $c-font-clearer;
   }
 }
+
+.nosweat-puzzle-policy {
+  font-size: 0.85em;
+
+  summary {
+    cursor: pointer;
+    color: $c-font-dim;
+    padding: 0.3em 0;
+  }
+
+  &__scroll {
+    max-height: 8rem;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead {
+    position: sticky;
+    top: 0;
+    background: $c-bg-box;
+  }
+
+  td,
+  th {
+    padding: 0.3em 0.2em;
+    border-bottom: $border;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+
+    &:first-child {
+      text-align: left;
+    }
+  }
+
+  button {
+    padding: 0.1em 0.2em;
+    text-transform: none;
+  }
+}

@@ -1,11 +1,13 @@
+import { parseUci } from 'chessops/util';
+
 import { winningChances } from 'lib/ceval';
 import { fenColor } from 'lib/game';
-import { engineArrows, engineShapes } from 'lib/nosweat/arrows';
-import { san } from 'lib/nosweat/core';
+import { engineArrows, engineShapes, engineColors } from 'lib/nosweat/arrows';
+import { san, leadingPolicy, type Candidate } from 'lib/nosweat/core';
 import { readEnginePreferences } from 'lib/nosweat/preferences';
 import { loadBrowserMaia, ReviewMaia, reviewAllowed } from 'lib/nosweat/reviewMaia';
 import { storage } from 'lib/storage';
-import { hl } from 'lib/view';
+import { hl, bind } from 'lib/view';
 
 import type PuzzleCtrl from './ctrl';
 
@@ -60,19 +62,69 @@ export class PuzzleMaia {
     if (!this.allowed()) return undefined;
     const prefs = this.preferences();
     if (!prefs.maiaArrows) return undefined;
-    const move = (uci?: string) => (uci ? san(this.ctrl.node.fen, uci) : this.engine.status);
-    return hl('div.pv_box', { attrs: { 'aria-label': 'Maia analysis channels', 'aria-live': 'polite' } }, [
+    const fen = this.ctrl.node.fen;
+    const status = this.ctrl.node.outcome() ? 'No legal moves' : this.engine.status || 'Analyzing…';
+    const row = (rating: number, candidates: Candidate[], color: string) =>
+      hl('div.nosweat-maia-line', [
+        hl('strong', { attrs: { style: 'color:' + color } }, 'M' + rating),
+        hl('span', candidates.length ? leadingPolicy(fen, candidates) : status),
+      ]);
+    const probability = (value?: number) =>
       hl(
-        'div',
-        { attrs: { style: 'color:#e89b3c' } },
-        `M${prefs.selfElo} ${move(this.engine.primary[0]?.uci)}`,
-      ),
-      prefs.secondMaiaEnabled &&
-        hl(
-          'div',
-          { attrs: { style: 'color:#e85d68' } },
-          `M${prefs.secondMaiaElo} ${move(this.engine.secondary[0]?.uci)}`,
-        ),
+        'td',
+        {
+          attrs: value === undefined ? {} : { title: `${(100 * value).toPrecision(6)}%` },
+        },
+        value === undefined ? '—' : value > 0 && value < 0.001 ? '<0.1%' : `${(100 * value).toFixed(1)}%`,
+      );
+    const secondary = new Map(this.engine.secondary.map(c => [c.uci, c.probability]));
+    return hl('section.nosweat-engine-lines', { attrs: { 'aria-label': 'Maia analysis channels' } }, [
+      row(prefs.selfElo, this.engine.primary, engineColors.maia),
+      prefs.secondMaiaEnabled && row(prefs.secondMaiaElo, this.engine.secondary, engineColors.maiaSecond),
+      hl('details.nosweat-puzzle-policy', [
+        hl('summary', 'All legal moves'),
+        hl('div.nosweat-puzzle-policy__scroll', [
+          hl('table', { attrs: { 'aria-label': 'Maia move probabilities' } }, [
+            hl(
+              'thead',
+              hl('tr', [
+                hl('th', { attrs: { scope: 'col' } }, 'Move'),
+                hl(
+                  'th',
+                  { attrs: { scope: 'col', style: 'color:' + engineColors.maia } },
+                  'M' + prefs.selfElo,
+                ),
+                prefs.secondMaiaEnabled &&
+                  hl(
+                    'th',
+                    { attrs: { scope: 'col', style: 'color:' + engineColors.maiaSecond } },
+                    'M' + prefs.secondMaiaElo,
+                  ),
+              ]),
+            ),
+            hl(
+              'tbody',
+              this.engine.primary.map(candidate =>
+                hl('tr', { key: candidate.uci }, [
+                  hl(
+                    'td',
+                    hl(
+                      'button.fbt',
+                      {
+                        attrs: { type: 'button', title: 'Explore ' + san(fen, candidate.uci) },
+                        hook: bind('click', () => this.ctrl.sendMove(parseUci(candidate.uci)!)),
+                      },
+                      san(fen, candidate.uci),
+                    ),
+                  ),
+                  probability(candidate.probability),
+                  prefs.secondMaiaEnabled && probability(secondary.get(candidate.uci)),
+                ]),
+              ),
+            ),
+          ]),
+        ]),
+      ]),
     ]);
   }
 }

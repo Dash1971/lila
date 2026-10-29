@@ -58,6 +58,13 @@ export interface Candidate {
   uci: string;
   probability: number;
 }
+// Shared summary for native analysis and puzzle review.
+export function leadingPolicy(fen: string, candidates: Candidate[]): string {
+  return candidates
+    .slice(0, 3)
+    .map(c => `${san(fen, c.uci)} ${(100 * c.probability).toFixed(1)}%`)
+    .join(' · ');
+}
 export function policy(fen: string, logits: Float32Array): Candidate[] {
   if (logits.length !== 4352 || !logits.every(Number.isFinite)) throw new Error('Invalid Maia policy');
   const black = position(fen).turn === 'black';
