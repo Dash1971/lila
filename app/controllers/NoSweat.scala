@@ -58,17 +58,64 @@ final class NoSweat(env: Env) extends LilaController(env):
     handle:
       sameOrigin
       val raw = context.body.body
+      if (Json.parse(raw) \ "action").asOpt[String].exists(_ != "login") then
+        throw NoSweatError(401, "Login signature required")
       for
         verified <- club.adapter(
           "/verify",
           Json.obj("authorization" -> context.req.headers.get("Authorization"), "rawBody" -> raw)
         )
         user <- club.nostrUser((verified \ "pubkey").as[String], (Json.parse(raw) \ "username").asOpt[String])
+        _ <- club.checkSecondFactor(user, (Json.parse(raw) \ "twoFactorToken").asOpt[String])
         session <- env.security.api.saveAuthentication(user.id, None, IsPwned(false))
       yield Ok(Json.obj("username" -> user.username.value, "url" -> "/"))
         .withCookies(env.security.lilaCookie.withSession(remember = true) { s =>
           s + (env.security.api.sessionIdKey -> session.value)
         })
+
+  def securityPage = Auth: context ?=>
+    me ?=> handle(Ok.page(views.noSweatSecurity(me.value)))
+
+  def securityApply = AuthBody(parse.tolerantText(4096)): context ?=>
+    me ?=>
+      handle:
+        sameOrigin
+        val raw = context.body.body
+        val data = Json.parse(raw)
+        val action = (data \ "action").as[String]
+        if !Set("enable-two-factor", "disable-two-factor").contains(action) then
+          throw NoSweatError(400, "Invalid security action")
+        for
+          verified <- club.adapter(
+            "/verify",
+            Json.obj(
+              "authorization" -> context.req.headers.get("Authorization"),
+              "rawBody" -> raw
+            )
+          )
+          _ = if !(verified \ "action").asOpt[String].contains(action) then
+            throw NoSweatError(401, "Security action signature required")
+          identity <- env.user.repo.byNostr((verified \ "pubkey").as[String])
+          user = identity
+            .filter(_.id == me.userId)
+            .getOrElse(throw NoSweatError(403, "Sign with this account’s Nostr key"))
+          codes <-
+            if action == "enable-two-factor" then
+              club.enableSecondFactor(
+                user,
+                (data \ "secret").as[String],
+                (data \ "twoFactorToken").as[String]
+              )
+            else
+              club
+                .disableSecondFactor(user, (data \ "twoFactorToken").asOpt[String])
+                .inject(List.empty[String])
+          _ <- env.security.store.closeAllSessionsOf(user.id)
+          session <- env.security.api.saveAuthentication(user.id, None, IsPwned(false))
+        yield Ok(Json.obj("enabled" -> (action == "enable-two-factor"), "recoveryCodes" -> codes))
+          .withCookies(env.security.lilaCookie.withSession(remember = true) { s =>
+            s + (env.security.api.sessionIdKey -> session.value)
+          })
 
   def play = OpenBodyOf(parse.tolerantText(4096)): context ?=>
     handle:

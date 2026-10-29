@@ -29,7 +29,7 @@ export function userHtml(ctrl: RoundController, player: Player, position: TopOrB
         class: {
           online: player.onGame,
           offline: !player.onGame,
-          long: user.username.length > 16,
+          long: (user.displayName || user.username).length > 16,
           connecting,
         },
       },
@@ -94,7 +94,7 @@ const myWsLagAsSignal = () => {
 
 export const userTxt = (player: Player): string =>
   player.user
-    ? (player.user.title ? player.user.title + ' ' : '') + player.user.username
+    ? (player.user.title ? player.user.title + ' ' : '') + (player.user.displayName || player.user.username)
     : player.ai
       ? i18n.site.aiNameLevelAiLevel('Stockfish', player.ai)
       : i18n.site.anonymous;

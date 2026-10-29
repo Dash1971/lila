@@ -26,6 +26,13 @@ object noSweatLogin:
           div(cls := "form3")(
             label(cls := "form-label", `for` := "nostr-username")("Username (optional, for new accounts)"),
             input(id := "nostr-username", cls := "form-control", maxlength := 20, autocomplete := "username"),
+            label(cls := "form-label", `for` := "nostr-token")("Authenticator or recovery code (if enabled)"),
+            input(
+              id := "nostr-token",
+              cls := "form-control",
+              autocomplete := "one-time-code",
+              maxlength := 64
+            ),
             button(id := "nostr-extension", cls := "button button-green")("Sign in with browser signer"),
             div(id := "nostr-saved", hidden)(
               button(id := "nostr-use-saved", cls := "button")("Sign in with saved key"),

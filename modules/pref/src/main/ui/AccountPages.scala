@@ -137,6 +137,13 @@ final class AccountPages(helpers: Helpers, ui: AccountUi, flagApi: lila.core.use
         standardFlash,
         postForm(cls := "form3 dirty-alert", action := routes.Account.profileApply)(
           div(cls := "form-group")(trans.site.allInformationIsPublicAndOptional()),
+          form3.group(
+            form("displayName"),
+            "Public name",
+            help = Some(
+              "Shown on your profile and in games. You can set or change it at any time; your account and game history stay the same."
+            )
+          )(form3.input(_)(maxlength := 30)),
           form3.split(
             ctx.kid.no.option(
               form3

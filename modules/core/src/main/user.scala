@@ -59,7 +59,10 @@ object user:
 
     def hasTitle: Boolean = title.exists(PlayerTitle.BOT != _)
 
-    def light = LightUser(id, username, title, flair, patronMonths, plan.color)
+    def publicName: String = profile.flatMap(_.displayName).filter(_.nonEmpty).getOrElse(username.value)
+
+    def light =
+      LightUser(id, username, title, flair, patronMonths, plan.color, profile.flatMap(_.displayName))
 
     def profileOrDefault = profile | Profile.default
 
@@ -143,7 +146,8 @@ object user:
       rcfRating: Option[Int] = None,
       cfcRating: Option[Int] = None,
       dsbRating: Option[Int] = None,
-      links: Option[String] = None
+      links: Option[String] = None,
+      displayName: Option[String] = None
   ):
     def nonEmptyRealName: Option[RealName] = ne(realName)
 

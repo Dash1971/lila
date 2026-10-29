@@ -53,7 +53,7 @@ export class LinksCtrl extends PaneCtrl {
               licon.Gear,
               this.root.opts.playing ? { target: '_blank' } : undefined,
             ),
-            d.noSweat ? 'Edit profile' : i18n.preferences.preferences,
+            d.noSweat ? 'Profile & settings' : i18n.preferences.preferences,
           ),
           d.coach && hl('a.text', linkCfg('/coach/edit', licon.GraduateCap), i18n.site.coachManager),
           d.streamer && hl('a.text', linkCfg('/streamer/edit', licon.Mic), i18n.site.streamerManager),

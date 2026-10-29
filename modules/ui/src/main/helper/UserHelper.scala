@@ -107,7 +107,7 @@ trait UserHelper:
     )(
       withOnline.so(lineIcon(user.patronAndColor)),
       titleTag(user.title),
-      user.name,
+      user.publicName,
       user.flair.map(userFlair)
     )
 
@@ -151,7 +151,7 @@ trait UserHelper:
   )(using Translate) = frag(
     withOnline.so(lineIcon(user)),
     withTitle.option(titleTag(user.title)),
-    name | user.username,
+    name | user.publicName,
     withFlair.so(userFlair(user)),
     withPerfRating.map(userRating)
   )
@@ -174,8 +174,10 @@ trait UserHelper:
       href := userUrl(username, params = params)
     )(
       withOnline.so(if modIcon then moderatorIcon else lineIcon(patron)),
-      titleTag(title),
-      truncate.fold(username.value)(username.value.take),
+      titleTag(title), {
+        val publicName = lightUserSync(userId).fold(username.value)(_.publicName)
+        truncate.fold(publicName)(publicName.take)
+      },
       flair.map(userFlair)
     )
 
@@ -188,7 +190,7 @@ trait UserHelper:
     )(
       withOnline.so(lineIcon(user)),
       user.map(titleTag),
-      name
+      user.fold(name.value)(_.publicName)
     )
 
   def userUrl(username: UserName, params: String = ""): Option[String] =

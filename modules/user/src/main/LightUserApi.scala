@@ -78,7 +78,8 @@ final class LightUserApi(repo: UserRepo, cacheApi: CacheApi)(using Executor)
             title = doc.getAsOpt[chess.PlayerTitle](F.title),
             flair = doc.getAsOpt[Flair](F.flair).filter(FlairApi.exists),
             patronMonths = patronMonths | PatronMonths.zero,
-            patronColor = patronColor
+            patronColor = patronColor,
+            displayName = doc.child(F.profile).flatMap(_.getAsOpt[String]("displayName"))
           )
 
   val projection =
@@ -87,7 +88,8 @@ final class LightUserApi(repo: UserRepo, cacheApi: CacheApi)(using Executor)
       F.username -> true,
       F.title -> true,
       F.plan -> true,
-      F.flair -> true
+      F.flair -> true,
+      s"${F.profile}.displayName" -> true
     )
 
   export realNameCache.{ sync as realName, preloadMany as preloadRealNames }

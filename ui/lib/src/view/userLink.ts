@@ -4,6 +4,7 @@ import { type MaybeVNodes } from './snabbdom';
 
 export type AnyUser = {
   name: string;
+  displayName?: string;
   online?: boolean; // light up .line
   attrs?: Attrs;
   title?: string;
@@ -48,7 +49,7 @@ export const userTitle = ({ title }: Pick<AnyUser, 'title'>): VNode | undefined 
     ? h('span.utitle', title === 'BOT' ? { attrs: { 'data-bot': true } } : {}, [title, '\xa0'])
     : undefined;
 
-export const fullName = (u: AnyUser): MaybeVNodes => [userTitle(u), u.name, userFlair(u)];
+export const fullName = (u: AnyUser): MaybeVNodes => [userTitle(u), u.displayName || u.name, userFlair(u)];
 
 export const userRating = (u: Pick<AnyUser, 'rating' | 'provisional' | 'brackets'>): string | undefined => {
   if (u.rating) {

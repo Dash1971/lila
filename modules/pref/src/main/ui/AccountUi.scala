@@ -87,47 +87,12 @@ final class AccountUi(helpers: Helpers):
           a(activeCls("notification"), href := routes.Pref.form("notification"))(
             trans.site.notifications()
           ),
-          a(activeCls("kid"), href := routes.Account.kid)(
-            trans.site.kidMode()
-          ),
           div(cls := "sep"),
-          a(activeCls("username"), href := routes.Account.username)(
-            trans.site.changeUsername()
-          ),
-          Granter
-            .opt(_.Coach)
-            .option(
-              a(activeCls("coach"), href := routes.Coach.edit)(
-                trans.coach.lichessCoach()
-              )
-            ),
-          a(activeCls("password"), href := routes.Account.passwd)(
-            trans.site.changePassword()
-          ),
-          a(activeCls("email"), href := routes.Account.email)(
-            trans.site.changeEmail()
-          ),
-          a(activeCls("twofactor"), href := routes.Account.twoFactor)(
+          a(activeCls("twofactor"), href := "/club/security")(
             trans.tfa.twoFactorAuth()
-          ),
-          a(activeCls("oauth.token"), href := routes.OAuthToken.index)(
-            trans.oauthScope.apiAccessTokens()
           ),
           a(activeCls("security"), href := routes.Account.security)(
             trans.site.security()
-          ),
-          div(cls := "sep"),
-          a(activeCls("network"), href := routes.Pref.network)(
-            trans.preferences.network()
-          ),
-          ctx.noBot.option(
-            a(href := routes.DgtCtrl.index)(
-              trans.dgt.dgtBoard()
-            )
-          ),
-          div(cls := "sep"),
-          a(activeCls("close"), href := routes.Account.close)(
-            trans.settings.closeAccount()
           )
         )
       )

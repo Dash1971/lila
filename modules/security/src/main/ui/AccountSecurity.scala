@@ -26,10 +26,7 @@ final class AccountSecurity(helpers: Helpers)(
           standardFlash.map(div(cls := "box__pad")(_)),
           div(cls := "box__pad security__header")(
             p(
-              trans.site.activeSessionsDescription.rawHtml(
-                routes.Account.email.url,
-                routes.Account.passwd.url
-              )
+              "These browsers are signed in to your account. Revoke any session you do not recognize. Manage your Nostr key in your signer and two-factor authentication in account settings."
             ),
             (sessions.sizeIs > 1).option:
               postForm(cls := "revoke-all", action := routes.Account.signout("all")):

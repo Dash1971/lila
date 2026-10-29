@@ -42,7 +42,7 @@ object header:
     )(
       u.isPatron.not.so(lineIcon(u)),
       titleTag(u.title),
-      u.username,
+      u.publicName,
       if ctx.blind
       then s" : ${if isOnline.exec(u.id) then trans.site.online.txt() else trans.site.offline.txt()}"
       else
@@ -62,6 +62,10 @@ object header:
               userDom(u)
             )
           case None => h1(userDom(u)),
+        u.profile
+          .flatMap(_.displayName)
+          .filter(_ != u.username.value)
+          .map(_ => span(cls := "user-show__handle")(s"@${u.username.value}")),
         div(cls := "trophies")(
           views.user.bits.perfTrophies(u, info.ranks),
           otherTrophies(info),

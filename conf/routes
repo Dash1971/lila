@@ -6,6 +6,8 @@ GET   /club/me                         controllers.NoSweat.me
 GET   /club/roster                     controllers.NoSweat.roster
 POST  /club/challenge                  controllers.NoSweat.challenge
 POST  /club/login                      controllers.NoSweat.login
+GET   /club/security                   controllers.NoSweat.securityPage
+POST  /club/security                   controllers.NoSweat.securityApply
 POST  /club/play                       controllers.NoSweat.play
 GET   /club/internal/games             controllers.NoSweat.games
 POST  /club/internal/:id/move           controllers.NoSweat.move(id: GameId)

@@ -33,6 +33,7 @@ object Json:
     def write(u: LightUser): JsObject = writeNoId(u) + ("id" -> JsString(u.id.value))
     def writeNoId(u: LightUser): JsObject = PlayJson
       .obj("name" -> u.name)
+      .add("displayName", u.displayName)
       .add("title", u.title)
       .add("flair", u.flair)
       .add("patron", u.isPatron)

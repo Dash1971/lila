@@ -10,6 +10,7 @@ import lila.core.config.CollName
 import lila.core.game.{ GameRule, Source, WithInitialFen }
 import lila.core.perf.PerfKey
 import lila.db.dsl.{ *, given }
+import lila.user.BSONFields as UserFields
 
 final case class NoSweatError(status: Int, reason: String) extends RuntimeException(reason)
 
@@ -188,6 +189,116 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
 
   def isNostr(user: UserModel): Fu[Boolean] =
     env.user.repo.withColl(_.exists(bdoc("_id" -> user.id, "nostr" -> bdoc("$exists" -> true))))
+
+  // Native TOTP storage/algorithm; atomic consumption prevents concurrent code reuse.
+  private def identityUpdate(selector: Bdoc, update: Bdoc): Fu[Boolean] =
+    env.user.repo.withColl(_.update.one(selector, update).map(_.n == 1))
+
+  private def factorRateLimit(user: UserModel): Funit =
+    val now = System.currentTimeMillis()
+    for
+      _ <- identityUpdate(
+        bdoc(
+          "_id" -> user.id,
+          "$or" -> List(
+            bdoc("nosweatFactorWindow" -> bdoc("$lt" -> (now - 60000))),
+            bdoc("nosweatFactorWindow" -> bdoc("$exists" -> false))
+          )
+        ),
+        bdoc("$set" -> bdoc("nosweatFactorWindow" -> now, "nosweatFactorAttempts" -> 0))
+      )
+      allowed <- identityUpdate(
+        bdoc("_id" -> user.id, "nosweatFactorAttempts" -> bdoc("$lt" -> 5)),
+        bdoc("$inc" -> bdoc("nosweatFactorAttempts" -> 1))
+      )
+    yield requireThat(allowed, 429, "Too many authentication attempts. Try again in a minute.")
+
+  private def recoveryHash(code: String): String =
+    java.util.HexFormat
+      .of()
+      .formatHex(
+        java.security.MessageDigest
+          .getInstance("SHA-256")
+          .digest(code.replace("-", "").toLowerCase.getBytes(java.nio.charset.StandardCharsets.UTF_8))
+      )
+
+  def checkSecondFactor(user: UserModel, submitted: Option[String]): Funit =
+    import lila.user.TotpSecret.totp
+    user.totpSecret.fold(funit): secret =>
+      val token = submitted.getOrElse("").trim
+      if token.isEmpty then fufail(NoSweatError(401, "Enter your authenticator or recovery code"))
+      else
+        factorRateLimit(user).flatMap: _ =>
+          val period = System.currentTimeMillis() / 30000
+          val counter = Option
+            .when(token.matches("[0-9]{6}"))(
+              List(0L, -1L, 1L).map(period + _).find(n => secret.totp(n).value == token)
+            )
+            .flatten
+          val consumed = counter match
+            case Some(step) =>
+              identityUpdate(
+                bdoc(
+                  "_id" -> user.id,
+                  UserFields.totpSecret -> secret.secret,
+                  "$or" -> List(
+                    bdoc("nosweatTotpStep" -> bdoc("$lt" -> step)),
+                    bdoc("nosweatTotpStep" -> bdoc("$exists" -> false))
+                  )
+                ),
+                bdoc("$set" -> bdoc("nosweatTotpStep" -> step))
+              )
+            case None if token.replace("-", "").matches("(?i)[0-9a-f]{32}") =>
+              val hash = recoveryHash(token)
+              identityUpdate(
+                bdoc("_id" -> user.id, UserFields.totpSecret -> secret.secret, "nosweatRecovery" -> hash),
+                bdoc("$pull" -> bdoc("nosweatRecovery" -> hash))
+              )
+            case _ => fuccess(false)
+          consumed.map(ok => requireThat(ok, 401, "Invalid or already used authentication code"))
+
+  def enableSecondFactor(user: UserModel, base32: String, token: String): Fu[List[String]] =
+    import lila.user.TotpSecret.totp
+    requireThat(user.totpSecret.isEmpty, 409, "Two-factor authentication is already enabled")
+    requireThat(base32.matches("[A-Z2-7]{32}"), 400, "Invalid authenticator secret")
+    val secret = lila.user.TotpSecret.decode(base32)
+    factorRateLimit(user).flatMap: _ =>
+      val period = System.currentTimeMillis() / 30000
+      val step = List(0L, -1L, 1L).map(period + _).find(n => secret.totp(n).value == token)
+      requireThat(step.isDefined && token.matches("[0-9]{6}"), 400, "Enter a valid authenticator code")
+      val codes = List.fill(8)(
+        java.util.HexFormat
+          .of()
+          .formatHex(scalalib.SecureRandom.nextBytes(16))
+          .grouped(8)
+          .mkString("-")
+      )
+      identityUpdate(
+        bdoc("_id" -> user.id, UserFields.totpSecret -> bdoc("$exists" -> false)),
+        bdoc(
+          "$set" -> bdoc(
+            UserFields.totpSecret -> secret.secret,
+            "nosweatTotpStep" -> step.get,
+            "nosweatRecovery" -> codes.map(recoveryHash)
+          )
+        )
+      ).map: saved =>
+        requireThat(saved, 409, "Two-factor authentication is already enabled")
+        codes
+
+  def disableSecondFactor(user: UserModel, token: Option[String]): Funit =
+    requireThat(user.totpSecret.isDefined, 409, "Two-factor authentication is not enabled")
+    checkSecondFactor(user, token).flatMap: _ =>
+      identityUpdate(
+        bdoc("_id" -> user.id, UserFields.totpSecret -> user.totpSecret.get.secret),
+        bdoc(
+          "$unset" -> bdoc(
+            UserFields.totpSecret -> true,
+            "nosweatTotpStep" -> true,
+            "nosweatRecovery" -> true
+          )
+        )
+      ).map(ok => requireThat(ok, 409, "Security settings changed. Reload this page."))
 
   private def current(): Fu[List[(Bdoc, GameModel)]] =
     records

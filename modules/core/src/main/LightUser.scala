@@ -14,9 +14,11 @@ case class LightUser(
     title: Option[PlayerTitle],
     flair: Option[Flair],
     patronMonths: PatronMonths,
-    patronColor: Option[PatronColorChoice]
+    patronColor: Option[PatronColorChoice],
+    displayName: Option[String] = None
 ):
-  def titleName: String = title.fold(name.value)(_.value + " " + name)
+  def publicName: String = displayName.filter(_.nonEmpty).getOrElse(name.value)
+  def titleName: String = title.fold(publicName)(_.value + " " + publicName)
   def isBot = title.contains(PlayerTitle.BOT)
   def isPatron = patronMonths.isOngoing
   def isPatronLifetime = patronMonths.isLifetime

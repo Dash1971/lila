@@ -46,7 +46,8 @@ final class UserForm:
       "rcfRating" -> optional(number(min = 0, max = 3000)),
       "cfcRating" -> optional(number(min = 200, max = 3000)),
       "dsbRating" -> optional(number(min = 0, max = 3000)),
-      "links" -> optional(cleanFewSymbolsAndNonEmptyText(maxLength = 3000))
+      "links" -> optional(cleanFewSymbolsAndNonEmptyText(maxLength = 3000)),
+      "displayName" -> optional(cleanFewSymbolsAndNonEmptyText(minLength = 3, maxLength = 30))
     )(Profile.apply)(unapply)
   .fill(user.profileOrDefault)
 
