@@ -67,6 +67,7 @@ export default function (ctrl: PuzzleCtrl): DrawShape[] {
       });
     } else shapes = shapes.concat(makeAutoShapesFromUci(opposite(color), n.threat.pvs[0].moves[0], 'red'));
   }
+  if (ctrl.maia && !hovering && !ctrl.threatMode()) shapes = ctrl.maia.shapes();
   const feedback = feedbackAnnotation(n);
   const hint =
     ctrl.hintSquare() !== undefined ? { orig: makeSquare(ctrl.hintSquare()!), brush: 'green' } : undefined;

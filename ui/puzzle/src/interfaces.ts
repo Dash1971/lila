@@ -63,6 +63,7 @@ export interface Angle {
 }
 
 export interface PuzzleData {
+  noSweat?: boolean;
   puzzle: Puzzle;
   angle: Angle;
   game: PuzzleGame;
@@ -85,8 +86,10 @@ export interface PuzzleGame {
     key: keyof typeof perfIcons;
     name: string;
   };
-  rated: boolean;
-  players: [PuzzlePlayer, PuzzlePlayer];
+  rated?: boolean;
+  initialFen?: FEN;
+  source?: string;
+  players: PuzzlePlayer[];
   pgn: string;
   clock?: string;
 }

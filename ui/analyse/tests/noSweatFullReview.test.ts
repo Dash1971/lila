@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
-import pgnImport from '../src/pgnImport';
 import { gameAccuracy, moveAccuracy, whiteWinPercent } from '../src/noSweatAccuracy';
 import { engineArrows, engineShapes, engineColors } from '../src/noSweatArrows';
 import { ClassifierClient } from '../src/noSweatClassifierClient';
@@ -11,6 +10,7 @@ import type { Review } from '../src/noSweatFish';
 import { GameReview, gameReviewKey, reviewQualities, type ReviewNode } from '../src/noSweatGameReview';
 import { readEnginePreferences } from '../src/noSweatPreferences';
 import { reviewClick } from '../src/noSweatReviewView';
+import pgnImport from '../src/pgnImport';
 const start = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 const line = (): ReviewNode[] => {
   const nodes: ReviewNode[] = [{ fen: start, path: '' }];
@@ -137,7 +137,7 @@ describe('Mobile Maia whole-game review', () => {
           const translation = html.match(/translate\(([-.\d]+),([-.\d]+)\)/);
           const tx = Number(translation?.[1] ?? 0);
           const ty = Number(translation?.[2] ?? 0);
-          const angle = Number(html.match(/rotate\(([-.\d]+)\)/)![1]) * Math.PI / 180;
+          const angle = (Number(html.match(/rotate\(([-.\d]+)\)/)![1]) * Math.PI) / 180;
           const distance = Number(html.match(/ L([-.\d]+) 0/)![1]);
           const square = (key: string) => {
             const file = key.charCodeAt(0) - 97;
@@ -146,10 +146,19 @@ describe('Mobile Maia whole-game review', () => {
           };
           const from = square(uci.slice(0, 2));
           const to = square(uci.slice(2, 4));
-          const pixel = (x: number, y: number) => [(from[0] + x / 100) * size / 8, (from[1] + y / 100) * size / 8];
+          const pixel = (x: number, y: number) => [
+            ((from[0] + x / 100) * size) / 8,
+            ((from[1] + y / 100) * size) / 8,
+          ];
           const origin = pixel(tx, ty);
           const tip = pixel(tx + Math.cos(angle) * distance, ty + Math.sin(angle) * distance);
-          const close = (actual: number[], square: number[]) => actual.forEach((n, axis) => assert.ok(Math.abs(n - (square[axis] + .5) * size / 8) < 1e-8, `${uci} ${orientation} ${size}: ${actual} vs ${square}`));
+          const close = (actual: number[], square: number[]) =>
+            actual.forEach((n, axis) =>
+              assert.ok(
+                Math.abs(n - ((square[axis] + 0.5) * size) / 8) < 1e-8,
+                `${uci} ${orientation} ${size}: ${actual} vs ${square}`,
+              ),
+            );
           close(origin, from);
           close(tip, to);
         }
@@ -157,10 +166,23 @@ describe('Mobile Maia whole-game review', () => {
     }
   });
   test('standard-only analysis rejects variant PGNs while retaining standard FEN positions', () => {
-    for (const variant of ['Atomic', 'Chess960', 'Crazyhouse', 'Antichess', 'Three-check', 'Horde', 'King of the Hill', 'Racing Kings'])
+    for (const variant of [
+      'Atomic',
+      'Chess960',
+      'Crazyhouse',
+      'Antichess',
+      'Three-check',
+      'Horde',
+      'King of the Hill',
+      'Racing Kings',
+    ])
       assert.throws(() => pgnImport(`[Variant "${variant}"]\n\n*`, true), /Only standard chess/);
     assert.equal(pgnImport('1. e4 e5 *', true).game!.variant.key, 'standard');
-    assert.equal(pgnImport('[SetUp "1"]\n[FEN "8/8/8/8/8/2k5/5p2/7K b - - 0 1"]\n\n1... f1=Q# *', true).game!.variant.key, 'standard');
+    assert.equal(
+      pgnImport('[SetUp "1"]\n[FEN "8/8/8/8/8/2k5/5p2/7K b - - 0 1"]\n\n1... f1=Q# *', true).game!.variant
+        .key,
+      'standard',
+    );
     assert.equal(pgnImport('[Variant "Atomic"]\n\n*').game!.variant.key, 'atomic');
   });
   test('engine settings validate persisted input instead of trusting browser JSON', () => {

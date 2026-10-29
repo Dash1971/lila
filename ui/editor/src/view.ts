@@ -272,23 +272,25 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
           ]),
         ]
       : [
-          ...(ctrl.cfg.standardOnly ? [] : [
-          div([
-            select(
-              {
-                id: 'variants',
-                on: {
-                  change(e) {
-                    const value = (e.target as HTMLSelectElement).value;
-                    if (value === 'chess960') ctrl.setRandom960Position();
-                    ctrl.setVariant(value as VariantKey);
-                  },
-                },
-              },
-              variants.map(variant => variantOption(variant, ctrl.variant)),
-            ),
-          ])
-          ]),
+          ...(ctrl.cfg.standardOnly
+            ? []
+            : [
+                div([
+                  select(
+                    {
+                      id: 'variants',
+                      on: {
+                        change(e) {
+                          const value = (e.target as HTMLSelectElement).value;
+                          if (value === 'chess960') ctrl.setRandom960Position();
+                          ctrl.setVariant(value as VariantKey);
+                        },
+                      },
+                    },
+                    variants.map(variant => variantOption(variant, ctrl.variant)),
+                  ),
+                ]),
+              ]),
           chess960PositionIdSelector,
           div('.actions', [
             fromImageButton(ctrl, licon.Eye),

@@ -10,13 +10,38 @@ import lila.core.LightUser
 final private class GameJson(
     gameRepo: lila.core.game.GameRepo,
     cacheApi: lila.memo.CacheApi,
-    lightUserApi: lila.core.user.LightUserApi
+    lightUserApi: lila.core.user.LightUserApi,
+    val catalogPuzzles: Boolean = false
 )(using Executor, lila.core.i18n.Translator):
 
   given play.api.i18n.Lang = lila.core.i18n.defaultLang
 
   def apply(gameId: GameId, plies: Ply, bc: Boolean): Fu[JsObject] =
     (if bc then bcCache else cache).get(writeKey(gameId, plies))
+
+  // The open puzzle export contains the position and line, not the original game.
+  // Keep its real source link and FEN; never manufacture players or game metadata.
+  def apply(puzzle: Puzzle): Fu[JsObject] =
+    if !catalogPuzzles then apply(puzzle.gameId, puzzle.initialPly, false)
+    else
+      gameRepo
+        .gameFromSecondary(puzzle.gameId)
+        .flatMap:
+          case Some(game) => noCache(game, puzzle.initialPly)
+          case None =>
+            val move = Fen
+              .read(puzzle.fen)
+              .flatMap(_.move(puzzle.line.head).toOption)
+              .getOrElse(sys.error(s"Invalid catalog puzzle ${puzzle.id}"))
+            fuccess(
+              Json.obj(
+                "id" -> puzzle.gameId,
+                "players" -> Json.arr(),
+                "pgn" -> move.toSanStr,
+                "initialFen" -> puzzle.fen,
+                "source" -> s"https://lichess.org/${puzzle.gameId}/${puzzle.color.name}#${puzzle.initialPly + 1}"
+              )
+            )
 
   def noCache(game: Game, plies: Ply): Fu[JsObject] =
     lightUserApi.preloadMany(game.userIds).inject(generate(game, plies))

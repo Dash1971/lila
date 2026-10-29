@@ -48,7 +48,8 @@ final class Env(
     path = db(config.pathColl)
   )
 
-  private val gameJson: GameJson = wire[GameJson]
+  private val catalogPuzzles = appConfig.getOptional[Boolean]("nosweat.enabled").getOrElse(false)
+  private val gameJson = new GameJson(gameRepo, cacheApi, lightUserApi, catalogPuzzles)
 
   val jsonView = wire[JsonView]
 
@@ -116,7 +117,7 @@ final class Env(
   scheduler.scheduleAtFixedRate(10.minutes, 1.day): () =>
     tagger.addAllMissing
 
-  if mode.isProd then
+  if mode.isProd && !catalogPuzzles then
     scheduler.scheduleAtFixedRate(10.minutes, 10.minutes): () =>
       pathApi.isStale.foreach: stale =>
         if stale then logger.error("Puzzle paths appear to be stale! check that the regen cron is up")

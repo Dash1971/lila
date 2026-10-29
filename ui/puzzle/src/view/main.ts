@@ -62,8 +62,8 @@ function controls(ctrl: PuzzleCtrl): VNode {
         ),
       },
       [
-        jumpButton(licon.JumpFirst, 'first', !node.ply),
-        jumpButton(licon.JumpPrev, 'prev', !node.ply),
+        jumpButton(licon.JumpFirst, 'first', node.ply === ctrl.tree.root.ply),
+        jumpButton(licon.JumpPrev, 'prev', node.ply === ctrl.tree.root.ply),
         jumpButton(licon.JumpNext, 'next', !nextNode),
         jumpButton(licon.JumpLast, 'last', !nextNode, notOnLastMove),
         boardMenuToggleButton(ctrl.menu, i18n.site.menu),
@@ -136,7 +136,9 @@ export default function (ctrl: PuzzleCtrl): VNode {
         hl(
           'div.ceval-wrap',
           { class: { none: !ctrl.showEvaluation() } },
-          ctrl.showEvaluation() ? [cevalView.renderCeval(ctrl), cevalView.renderPvs(ctrl)] : [],
+          ctrl.showEvaluation()
+            ? [cevalView.renderCeval(ctrl), cevalView.renderPvs(ctrl), ctrl.maia?.view()]
+            : [],
         ),
         renderAnalyse(ctrl),
         feedbackView(ctrl),

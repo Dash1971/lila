@@ -55,7 +55,6 @@ export class LinksCtrl extends PaneCtrl {
             ),
             d.noSweat ? 'Edit profile' : i18n.preferences.preferences,
           ),
-          d.noSweat && hl('a.text', linkCfg('/pref/game-display', licon.Gear), i18n.preferences.preferences),
           d.coach && hl('a.text', linkCfg('/coach/edit', licon.GraduateCap), i18n.site.coachManager),
           d.streamer && hl('a.text', linkCfg('/streamer/edit', licon.Mic), i18n.site.streamerManager),
           hl('form.logout', { attrs: { method: 'post', action: '/logout' } }, [

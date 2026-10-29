@@ -40,6 +40,7 @@ import type {
 import keyboard from './keyboard';
 import moveTest from './moveTest';
 import { pgnToTree, mergeSolution, nextCorrectMove } from './moveTree';
+import { PuzzleMaia } from './noSweatMaia';
 import Report from './report';
 import PuzzleSession from './session';
 import PuzzleStreak from './streak';
@@ -50,6 +51,7 @@ export default class PuzzleCtrl implements CevalHandler {
   next: Deferred<PuzzleData | ReplayEnd> = defer<PuzzleData>();
   tree: TreeWrapper;
   ceval: CevalCtrl;
+  maia?: PuzzleMaia;
   autoNext: StoredProp<boolean>;
   rated: StoredProp<boolean>;
   ground: Prop<CgApi> = prop<CgApi | undefined>(undefined) as Prop<CgApi>;
@@ -125,7 +127,7 @@ export default class PuzzleCtrl implements CevalHandler {
           ...engine,
           endpoint: this.opts.externalEngineEndpoint,
         })) || [],
-      initialFen: undefined, // always standard starting position
+      initialFen: this.data.game.initialFen,
       emit: (ev, meta) => {
         if (!ev) {
           this.cevalEnabled(false);
@@ -146,6 +148,10 @@ export default class PuzzleCtrl implements CevalHandler {
       onUciHover: this.setAutoShapes,
     });
 
+    if (this.data.noSweat) {
+      this.ceval.storedPv(2);
+      this.maia = new PuzzleMaia(this);
+    }
     this.keyboardHelp = propWithEffect(location.hash === '#keyboard', this.redraw);
     keyboard(this);
     this.report = new Report();
@@ -187,6 +193,7 @@ export default class PuzzleCtrl implements CevalHandler {
     this.node = treeOps.last(this.nodeList)!;
     this.mainline = treeOps.mainlineNodeList(this.tree.root);
     this.showHint(false);
+    this.maia?.sync();
   };
 
   setChessground = (cg: CgApi): void => {
@@ -246,9 +253,11 @@ export default class PuzzleCtrl implements CevalHandler {
 
   initiate = (fromData: PuzzleData): void => {
     this.data = fromData;
-    this.tree = makeTree(pgnToTree(this.data.game.pgn.split(' ')));
+    this.tree = makeTree(pgnToTree(this.data.game.pgn.split(' '), this.data.game.initialFen));
     const initialPath = treePath.fromNodeList(treeOps.mainlineNodeList(this.tree.root));
     this.mode = 'play';
+    this.maia?.cancel();
+    if (this.ceval) this.ceval.init({ ...this.ceval.opts, initialFen: this.data.game.initialFen });
     this.next = defer();
     this.round = undefined;
     this.resultSent = false;
@@ -547,10 +556,12 @@ export default class PuzzleCtrl implements CevalHandler {
   isCevalAllowed = (): boolean => this.mode === 'view';
 
   startCevalIfEnabled = (): void => {
+    this.maia?.sync();
     if (this.cevalEnabled()) this.doStartCeval();
   };
 
   private readonly doStartCeval = throttle(800, () => {
+    if (!this.cevalEnabled()) return;
     this.ceval.reset();
     this.ceval.start(this.path, this.nodeList, this.threatMode(), this.data.puzzle.id);
   });
@@ -567,6 +578,7 @@ export default class PuzzleCtrl implements CevalHandler {
       this.ceval.reset();
     }
     this.autoScrollRequested = true;
+    this.maia?.sync();
     this.setAutoShapes();
     this.ceval.showEnginePrefs(false);
     this.redraw();
@@ -619,10 +631,10 @@ export default class PuzzleCtrl implements CevalHandler {
 
   userJumpPlyDelta = (plyDelta: Ply) => {
     // ensure we are jumping to a valid ply
-    let maxValidPly = this.mainline.length - 1;
+    let maxValidPly = last(this.mainline)!.ply;
     if (last(this.mainline)?.puzzle === 'fail' && this.mode !== 'view') maxValidPly -= 1;
-    const newPly = Math.min(Math.max(this.node.ply + plyDelta, 0), maxValidPly);
-    this.userJump(treePath.fromNodeList(this.mainline.slice(0, newPly + 1)));
+    const newPly = Math.min(Math.max(this.node.ply + plyDelta, this.tree.root.ply), maxValidPly);
+    this.userJump(treePath.fromNodeList(this.mainline.filter(node => node.ply <= newPly)));
   };
 
   toggleHint = (): void => {

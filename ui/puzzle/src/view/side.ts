@@ -59,6 +59,16 @@ const puzzleInfos = (ctrl: PuzzleCtrl): VNode => {
 
 function gameInfos(ctrl: PuzzleCtrl): VNode {
   const { game, puzzle } = ctrl.data;
+  if (game.source)
+    return hl('div.infos', [
+      hl('p', 'Lichess puzzle database · CC0'),
+      ctrl.mode === 'view' &&
+        hl(
+          'a',
+          { attrs: { href: game.source, target: '_blank', rel: 'noopener noreferrer' } },
+          'View original game',
+        ),
+    ]);
   const gameName = game.clock && game.perf ? `${game.clock} • ${game.perf.name}` : 'import';
   return hl('div.infos', { attrs: game.perf && dataIcon(perfIcons[game.perf.key]) }, [
     hl('div', [

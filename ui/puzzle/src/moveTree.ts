@@ -12,17 +12,18 @@ import type { TreeNode, TreePath } from 'lib/tree/types';
 
 import type PuzzleCtrl from './ctrl';
 
-export function pgnToTree(pgn: San[]): TreeNode {
-  const pos = Chess.default();
+export function pgnToTree(pgn: San[], initialFen = INITIAL_FEN): TreeNode {
+  const pos = Chess.fromSetup(parseFen(initialFen).unwrap()).unwrap();
+  const initialPly = (pos.fullmoves - 1) * 2 + (pos.turn === 'black' ? 1 : 0);
   const root: TreeNode = completeNode('standard')({
-    ply: 0,
-    fen: INITIAL_FEN,
+    ply: initialPly,
+    fen: initialFen,
   });
   let current = root;
   pgn.forEach((san, i) => {
     const move = parseSan(pos, san)!;
     pos.play(move);
-    const nextNode = makeNode(pos.clone(), move, i + 1, san);
+    const nextNode = makeNode(pos.clone(), move, initialPly + i + 1, san);
     current.children.push(nextNode);
     current = nextNode;
   });

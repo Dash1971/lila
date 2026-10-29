@@ -25,13 +25,10 @@ final class JsonView(
       replay: Option[PuzzleReplay],
       withInitialPos: Boolean = false
   )(using Translate)(using Option[Me], Perf): Fu[JsObject] =
-    gameJson(
-      gameId = puzzle.gameId,
-      plies = puzzle.initialPly,
-      bc = false
-    ).map: gameJson =>
+    gameJson(puzzle).map: gameJson =>
       puzzleAndGamejson(puzzle, gameJson, withInitialPos = withInitialPos)
         .add("user" -> userJson)
+        .add("noSweat" -> this.gameJson.catalogPuzzles)
         .add("replay" -> replay.map(replayJson))
         .add(
           "angle",
