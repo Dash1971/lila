@@ -33,7 +33,9 @@ export class StockfishWebEngine implements CevalEngine {
 
   async boot(): Promise<void> {
     const [root, js] = [this.info.assets.root, this.info.assets.js];
-    const scriptUrl = site.asset.url(`${root}/${js}`);
+    // Worker isolation headers changed after these immutable upstream files were
+    // first served. A policy version refreshes their cached response headers too.
+    const scriptUrl = site.asset.url(`${root}/${js}`) + '?worker-policy=coep-v1';
     const makeModule = await import(scriptUrl);
     const module: StockfishWeb = await makeModule.default({
       wasmMemory: sharedWasmMemory(this.info.minMem!),
