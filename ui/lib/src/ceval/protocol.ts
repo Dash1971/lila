@@ -142,8 +142,9 @@ export class Protocol {
       };
 
       if (multiPv === 1) {
-        if (depth === (this.currentEval?.depth ?? 0) + 1) {
-          // ignore skipped depth info lines before bestmove.
+        if (depth >= (this.currentEval?.depth ?? 0)) {
+          // A skipped depth or same-depth re-search starts a fresh rank window.
+          // Keeping the old first move can duplicate the new second choice.
           this.currentEval = {
             fen: this.work.currentFen,
             depth,
@@ -155,13 +156,18 @@ export class Protocol {
             engineId: this.info.id,
           };
         }
-      } else if (this.currentEval) {
+      } else if (this.currentEval?.depth === depth) {
         if (this.currentEval.pvs.length < multiPv) this.currentEval.pvs.push(pvData);
         else this.currentEval.pvs[multiPv - 1] = pvData;
-        this.currentEval.depth = Math.min(this.currentEval.depth, depth);
       }
 
-      if (multiPv === this.expectedPvs) this.emit();
+      if (
+        multiPv === this.expectedPvs &&
+        this.currentEval?.pvs.length === this.expectedPvs &&
+        this.currentEval.depth === depth &&
+        new Set(this.currentEval.pvs.map(pv => pv.moves[0])).size === this.expectedPvs
+      )
+        this.emit();
     } else if (
       command &&
       !['Stockfish', 'id', 'option', 'info'].includes(parts[0]) &&

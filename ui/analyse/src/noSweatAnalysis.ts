@@ -3,19 +3,29 @@ import { parseUci } from 'chessops/util';
 import { attributesModule, classModule, init } from 'snabbdom';
 
 import { frag } from 'lib';
+import { winningChances } from 'lib/ceval';
 import { storage } from 'lib/storage';
 import type { Glyph, TreeNode } from 'lib/tree/types';
-import { bind, hl, type VNode } from 'lib/view';
+import { hl, type VNode } from 'lib/view';
 
 import type AnalyseCtrl from './ctrl';
-import { maiaShapes, primaryArrowWidth } from './noSweatArrows';
+import { engineArrows, engineShapes, engineColors } from './noSweatArrows';
 import { ClassifierClient } from './noSweatClassifierClient';
 import type { ClassificationInput, ClassificationResult } from './noSweatClassify';
-import { encodeHistory, policy, san, scoreText, position, standardUci, type Candidate } from './noSweatCore';
+import {
+  encodeHistory,
+  policy,
+  san,
+  scoreText,
+  position,
+  standardUci,
+  legalUcis,
+  type Candidate,
+} from './noSweatCore';
 import { ReviewFish, type Review } from './noSweatFish';
 import { GameReview, reviewQualities, type ReviewNode, type ReviewQuality } from './noSweatGameReview';
 import { readEnginePreferences, type EnginePreferences } from './noSweatPreferences';
-import { reviewView, classificationLabels, classificationClasses } from './noSweatReviewView';
+import { reviewView, reviewClick, classificationLabels, classificationClasses } from './noSweatReviewView';
 
 interface MaiaClient {
   predict(input: {
@@ -56,6 +66,10 @@ export class NoSweatAnalysis {
   model = '5m';
   selfElo = 1500;
   opponentElo = 1500;
+  secondMaiaEnabled = true;
+  secondMaiaElo = 2400;
+  secondaryCandidates: Candidate[] = [];
+  private sideRedraw?: () => void;
   history = true;
   maiaArrows = true;
   fishArrows = true;
@@ -87,6 +101,9 @@ export class NoSweatAnalysis {
 
   constructor(readonly ctrl: AnalyseCtrl) {
     Object.assign(this, readEnginePreferences(storage.make('nosweat.enginePreferences.v2').get()));
+    this.enabled = !!ctrl.cevalEnabled();
+    ctrl.ceval.storedPv(2);
+    queueMicrotask(() => this.positionChanged());
     this.gameFish = new ReviewFish(() => this.refreshReview());
     this.gameClassifier = new ClassifierClient(
       () => new Worker(site.asset.url(site.asset.jsModule('analyse.nosweatWorker')), { type: 'module' }),
@@ -198,6 +215,8 @@ export class NoSweatAnalysis {
       model: this.model === '79m' ? '79m' : '5m',
       selfElo: this.selfElo,
       opponentElo: this.opponentElo,
+      secondMaiaEnabled: this.secondMaiaEnabled,
+      secondMaiaElo: this.secondMaiaElo,
       history: this.history,
       maiaArrows: this.maiaArrows,
       fishArrows: this.fishArrows,
@@ -212,7 +231,7 @@ export class NoSweatAnalysis {
             `<option value="${value}" ${String(this[key]) === value ? 'selected' : ''}>${text}</option>`,
         )
         .join('')}</select></label>`;
-    const toggle = (key: 'history' | 'maiaArrows' | 'fishArrows', name: string) =>
+    const toggle = (key: 'history' | 'maiaArrows' | 'fishArrows' | 'secondMaiaEnabled', name: string) =>
       `<label class="setting"><span>${name}</span><input type="checkbox" data-engine-pref="${key}" ${this[key] ? 'checked' : ''}></label>`;
     const options: [string, string][] = ratings.map(n => [String(n), String(n)]);
     const view = frag<HTMLElement>(`<fieldset class="nosweat-engine-settings"><legend>Engines</legend>
@@ -220,8 +239,9 @@ export class NoSweatAnalysis {
         ['5m', 'Maia3 5M · light'],
         ['79m', 'Maia3 79M'],
       ])}
-      ${select('selfElo', 'Maia rating', options)}${select('opponentElo', 'Opponent rating', options)}
-      ${toggle('history', 'Use move history')}${toggle('maiaArrows', 'Show Maia arrows')}${toggle('fishArrows', 'Show comparison arrow')}
+      ${select('selfElo', 'Primary Maia rating', options)}${select('opponentElo', 'Primary opponent input', options)}
+      ${toggle('secondMaiaEnabled', 'Second Maia')}${select('secondMaiaElo', 'Second Maia rating', options)}
+      ${toggle('history', 'Use move history')}${toggle('maiaArrows', 'Show Maia arrows')}${toggle('fishArrows', 'Show Stockfish arrows')}
       ${select(
         'quality',
         'Game review quality',
@@ -235,7 +255,7 @@ export class NoSweatAnalysis {
         const value =
           input instanceof HTMLInputElement
             ? input.checked
-            : key === 'selfElo' || key === 'opponentElo'
+            : key === 'selfElo' || key === 'opponentElo' || key === 'secondMaiaElo'
               ? Number(input.value)
               : input.value;
         const next = readEnginePreferences(JSON.stringify({ ...this.enginePreferences(), [key]: value }));
@@ -256,13 +276,17 @@ export class NoSweatAnalysis {
     this.ctrl.isCevalAllowed() &&
     !document.hidden;
   private readonly historyFens = (): string[] => this.ctrl.nodeList.map(n => n.fen);
-  private readonly key = (fens = this.historyFens(), rating = this.selfElo): string =>
+  private readonly key = (
+    fens = this.historyFens(),
+    rating = this.selfElo,
+    opponent = this.opponentElo,
+  ): string =>
     JSON.stringify([
       'maia3-policy-v1',
       this.model,
       this.config?.models[this.model].sha256,
       rating,
-      this.opponentElo,
+      opponent,
       this.history,
       this.history ? fens.slice(-8) : fens.slice(-1),
     ]);
@@ -289,11 +313,13 @@ export class NoSweatAnalysis {
   positionChanged(force = false): void {
     this.gameReview.observe(this.mainlineNodes(), this.quality);
     this.reviewRedraw?.();
-    const context = this.key() + this.ctrl.path;
+    const context =
+      this.key() + JSON.stringify([this.secondMaiaEnabled, this.secondMaiaElo]) + this.ctrl.path;
     if (!force && context === this.context) return;
     this.context = context;
     this.cancel();
     this.candidates = [];
+    this.secondaryCandidates = [];
     this.scores.clear();
     this.byRating.clear();
     this.fishBest = undefined;
@@ -305,6 +331,7 @@ export class NoSweatAnalysis {
       this.status = 'Terminal position — no moves to predict';
       return;
     }
+    this.status = 'Analyzing Maia…';
     const generation = this.generation;
     this.timer = setTimeout(() => {
       this.refresh(generation).catch(e => this.failure(e, generation));
@@ -336,14 +363,19 @@ export class NoSweatAnalysis {
     });
     return this.client!;
   }
-  private predict(fens: string[], rating: number, generation: number): Promise<Candidate[]> {
+  private predict(
+    fens: string[],
+    rating: number,
+    generation: number,
+    opponent = this.opponentElo,
+  ): Promise<Candidate[]> {
     const task = this.maiaTail
       .catch(() => {})
       .then(async () => {
         if (!this.valid(generation)) throw new Error('Cancelled');
         const client = await this.prepare();
         if (!this.valid(generation)) throw new Error('Cancelled');
-        const key = this.key(fens, rating);
+        const key = this.key(fens, rating, opponent);
         const cached = this.cache.get(key);
         if (cached) return cached;
         this.progress = setInterval(() => {
@@ -356,7 +388,7 @@ export class NoSweatAnalysis {
           const logits = await client.predict({
             tokens: encodeHistory(fens, this.history),
             selfElo: rating,
-            opponentElo: this.opponentElo,
+            opponentElo: opponent,
             includeValue: false,
           });
           if (!this.valid(generation)) throw new Error('Cancelled');
@@ -375,12 +407,53 @@ export class NoSweatAnalysis {
   private async refresh(generation: number): Promise<void> {
     this.status = 'Preparing local Maia…';
     this.ctrl.redraw();
-    const candidates = await this.predict(this.historyFens(), this.selfElo, generation);
+    const fens = this.historyFens();
+    const results = await Promise.allSettled([
+      this.predict(fens, this.selfElo, generation),
+      ...(this.secondMaiaEnabled
+        ? [this.predict(fens, this.secondMaiaElo, generation, this.secondMaiaElo)]
+        : []),
+    ]);
     if (!this.valid(generation)) return;
-    this.candidates = candidates;
+    this.candidates = results[0].status === 'fulfilled' ? results[0].value : [];
+    this.secondaryCandidates = results[1]?.status === 'fulfilled' ? results[1].value : [];
+    this.error = results.some(r => r.status === 'rejected')
+      ? 'A Maia channel is unavailable. Try pausing and enabling analysis again.'
+      : '';
     this.status = '';
     this.ctrl.setAutoShapes();
     this.ctrl.redraw();
+  }
+  setEnabled(enabled: boolean): void {
+    this.enabled = enabled;
+    if (!enabled) this.release();
+    else this.ctrl.ceval.storedPv(2);
+    this.positionChanged(true);
+  }
+  mountSide(element: HTMLElement): void {
+    const root = document.createElement('div');
+    element.prepend(root);
+    const patch = init([classModule, attributesModule]);
+    let vnode: VNode | HTMLElement = root;
+    this.sideRedraw = () => {
+      vnode = patch(vnode, this.candidateView());
+    };
+    this.sideRedraw();
+  }
+  redrawSide(): void {
+    this.sideRedraw?.();
+  }
+  private nativeLines() {
+    return this.ctrl.cevalEnabled() && !this.ctrl.threatMode()
+      ? (this.ctrl.node.ceval?.pvs ?? []).slice(0, 2)
+      : [];
+  }
+  private scoreFor(uci: string): Scored | undefined {
+    const line = this.nativeLines().find(pv => this.normalUci(pv.moves[0]) === uci);
+    return line ? { score: line, depth: this.ctrl.node.ceval!.depth } : this.scores.get(uci);
+  }
+  private currentFishBest(): string | undefined {
+    return this.normalUci(this.nativeLines()[0]?.moves[0]) ?? this.fishBest;
   }
   private normalUci(uci?: string): string | undefined {
     if (!uci) return undefined;
@@ -389,13 +462,24 @@ export class NoSweatAnalysis {
   }
   private readonly played = (): string | undefined => this.normalUci(this.ctrl.node.children[0]?.uci);
   private readonly rows = (): Candidate[] => {
-    const chosen = new Set(
-      this.allMoves ? this.candidates.map(c => c.uci) : this.candidates.slice(0, 5).map(c => c.uci),
-    );
+    const chosen = new Set([
+      ...(this.allMoves
+        ? [...this.candidates, ...this.secondaryCandidates]
+        : [...this.candidates.slice(0, 3), ...this.secondaryCandidates.slice(0, 3)]
+      ).map(c => c.uci),
+      ...this.nativeLines().flatMap(pv => {
+        const uci = this.normalUci(pv.moves[0]);
+        return uci ? [uci] : [];
+      }),
+    ]);
     const played = this.played();
     if (played) chosen.add(played);
-    if (this.fishBest) chosen.add(this.fishBest);
-    return this.candidates.filter(c => chosen.has(c.uci));
+    const best = this.currentFishBest();
+    if (best) chosen.add(best);
+    const legal = new Set(legalUcis(this.ctrl.node.fen));
+    return [...chosen]
+      .filter(uci => legal.has(uci))
+      .map(uci => ({ uci, probability: this.candidates.find(c => c.uci === uci)?.probability ?? 0 }));
   };
   private readonly preview = (uci: string): void => {
     this.returnPath ??= this.ctrl.path;
@@ -414,7 +498,7 @@ export class NoSweatAnalysis {
   }
   compare = (): void => {
     const generation = this.generation;
-    if (this.compareBusy || !this.candidates.length) return;
+    if (this.compareBusy || (!this.candidates.length && !this.secondaryCandidates.length)) return;
     this.compareBusy = true;
     this.error = '';
     (async () => {
@@ -427,7 +511,10 @@ export class NoSweatAnalysis {
       for (const line of root.current.lines)
         this.scores.set(line.moves[0], { score: line, depth: root.current.depth });
       // Bound this comparison to the compact set, even when all legal moves are displayed.
-      const chosen = new Set(this.candidates.slice(0, 5).map(c => c.uci));
+      const chosen = new Set(
+        [...this.candidates.slice(0, 3), ...this.secondaryCandidates.slice(0, 3)].map(c => c.uci),
+      );
+      root.current.lines.forEach(line => chosen.add(line.moves[0]));
       const played = this.played();
       if (played) chosen.add(played);
       if (this.fishBest) chosen.add(this.fishBest);
@@ -534,113 +621,330 @@ export class NoSweatAnalysis {
     })().catch(e => this.failure(e, generation));
   };
   shapes(): DrawShape[] {
-    if (!this.enabled || !this.ctrl.isCevalAllowed() || document.hidden || !this.candidates.length) return [];
-    const shapes: DrawShape[] = [];
-    if (this.maiaArrows) shapes.push(...maiaShapes(this.candidates));
-    if (this.fishArrows && this.fishBest)
-      shapes.push({
-        orig: this.fishBest.slice(0, 2) as Key,
-        dest: this.fishBest.slice(2, 4) as Key,
-        brush: 'paleBlue',
-        modifiers: { lineWidth: primaryArrowWidth },
-      });
-    return shapes;
+    if (!this.enabled || !this.ctrl.isCevalAllowed() || document.hidden || this.ctrl.threatMode()) return [];
+    const lines = this.nativeLines();
+    const stockfish =
+      this.fishArrows && this.ctrl.showBestMoveArrows()
+        ? lines.map((line, i) => ({
+            uci: this.normalUci(line.moves[0])!,
+            width: i
+              ? Math.max(
+                  3.125,
+                  ((12 -
+                    Math.max(0, winningChances.povDiff(position(this.ctrl.node.fen).turn, lines[0], line)) *
+                      50) *
+                    100) /
+                    64,
+                )
+              : 25,
+          }))
+        : [];
+    return engineShapes(
+      engineArrows(
+        stockfish,
+        this.maiaArrows ? this.candidates[0]?.uci : undefined,
+        this.maiaArrows && this.secondMaiaEnabled ? this.secondaryCandidates[0]?.uci : undefined,
+      ),
+      this.ctrl.bottomColor(),
+    );
   }
   view(): VNode | undefined {
-    if (!this.ctrl.isCevalAllowed() || this.ctrl.data.game.variant.key !== 'standard') return undefined;
+    if (!this.ctrl.isCevalAllowed()) return undefined;
+    const row = (rating: number, candidates: Candidate[], secondary: boolean) =>
+      hl('div.nosweat-maia-line', [
+        hl(
+          'strong',
+          { attrs: { style: 'color:' + (secondary ? engineColors.maiaSecond : engineColors.maia) } },
+          'M' + rating,
+        ),
+        hl(
+          'span',
+          candidates.length
+            ? candidates
+                .slice(0, 3)
+                .map(c => `${san(this.ctrl.node.fen, c.uci)} ${(100 * c.probability).toFixed(1)}%`)
+                .join(' · ')
+            : position(this.ctrl.node.fen).isEnd()
+              ? 'No legal moves'
+              : !this.enabled
+                ? 'Paused'
+                : this.status
+                  ? 'Analyzing…'
+                  : 'Unavailable',
+        ),
+      ]);
+    return hl('section.nosweat-engine-lines', { attrs: { 'aria-label': 'Maia analysis channels' } }, [
+      row(this.selfElo, this.candidates, false),
+      this.secondMaiaEnabled && row(this.secondMaiaElo, this.secondaryCandidates, true),
+    ]);
+  }
+  private candidateView(): VNode {
     const fen = this.ctrl.node.fen;
-    const played = this.played();
-    const annotation = this.annotations.get(this.annotationKey());
     const button = (text: string, action: () => void, disabled = false) =>
       hl(
         'button.fbt',
         {
           attrs: { type: 'button', disabled },
-          hook: bind('click', action),
+          hook: reviewClick(action),
         },
         text,
       );
-    return hl('section.nosweat-analysis', { attrs: { 'aria-label': 'Maia and Stockfish analysis' } }, [
-      hl('div.nosweat-analysis__heading', [
-        hl('strong', 'Maia + Stockfish'),
-        button(this.enabled ? 'Pause' : 'Enable local analysis', () => {
-          this.enabled = !this.enabled;
-          if (!this.enabled) this.release();
-          this.positionChanged(true);
-          this.ctrl.setAutoShapes();
-          this.ctrl.redraw();
-        }),
-      ]),
-      hl(
-        'p.nosweat-analysis__note',
-        this.enabled
-          ? 'Maia likelihood · Stockfish quality (White’s perspective)'
-          : 'Human move predictions alongside Stockfish.',
-      ),
-      this.enabled &&
-        hl('div', [
-          this.returnPath !== undefined &&
-            button('Return to original position', () => {
-              const path = this.returnPath!;
-              this.returnPath = undefined;
-              this.ctrl.userJump(path);
-              this.ctrl.redraw();
-            }),
-          this.candidates.length > 0 &&
-            hl('table.nosweat-candidates', [
-              hl('thead', [hl('tr', [hl('th', 'Move'), hl('th', 'Maia'), hl('th', 'Stockfish')])]),
-              hl(
-                'tbody',
-                this.rows().map(c => {
-                  const scored = this.scores.get(c.uci);
-                  return hl('tr', { key: c.uci }, [
-                    hl('td', [
-                      button(san(fen, c.uci), () => this.preview(c.uci)),
-                      c.uci === played && hl('small', 'Played'),
-                      c.uci === this.fishBest && hl('small', 'SF choice'),
-                    ]),
-                    hl('td', (100 * c.probability).toFixed(1) + '%'),
-                    hl(
-                      'td',
-                      {
-                        attrs: {
-                          title: scored ? 'Depth ' + scored.depth : 'This move has not been evaluated',
-                        },
-                      },
-                      scored
-                        ? scoreText(scored.score)
-                        : this.scores.has(c.uci)
-                          ? this.compareBusy
-                            ? 'Pending…'
-                            : 'Unavailable'
-                          : '—',
-                    ),
-                  ]);
-                }),
+    const likelihood = (values: Candidate[], uci: string) =>
+      values.length ? ((values.find(c => c.uci === uci)?.probability ?? 0) * 100).toFixed(1) + '%' : '—';
+    const rating = (secondary: boolean) => {
+      const value = secondary ? this.secondMaiaElo : this.selfElo;
+      return hl('label.nosweat-rating-picker', [
+        hl(
+          'span',
+          { attrs: { style: 'color:' + (secondary ? engineColors.maiaSecond : engineColors.maia) } },
+          secondary ? 'Maia 2' : 'Maia 1',
+        ),
+        hl(
+          'select',
+          {
+            attrs: { 'aria-label': secondary ? 'Second Maia rating' : 'Primary Maia rating' },
+            hook: {
+              insert: vnode => {
+                const input = vnode.elm as HTMLSelectElement;
+                input.value = String(value);
+                input.onchange = () => this.chooseRating(Number(input.value), secondary);
+              },
+              update: (_, vnode) => {
+                (vnode.elm as HTMLSelectElement).value = String(value);
+              },
+            },
+          },
+          ratings.map(n => hl('option', { attrs: { value: n } }, String(n))),
+        ),
+      ]);
+    };
+    const played = this.played();
+    const annotation = this.annotations.get(this.annotationKey());
+    return hl(
+      'section.nosweat-candidate-panel',
+      { attrs: { 'aria-label': 'Candidate moves and rating explorer' } },
+      [
+        hl('div.nosweat-panel-heading', [
+          hl('h2', 'Candidate moves'),
+          button(this.enabled ? 'Pause' : 'Enable analysis', () => this.ctrl.cevalEnabled(!this.enabled)),
+        ]),
+        hl('div.nosweat-rating-inputs', [rating(false), this.secondMaiaEnabled && rating(true)]),
+        hl('small.nosweat-panel-note', 'Maia: move likelihood · SF: White’s evaluation'),
+        this.returnPath !== undefined && hl('small', 'Selected: ' + (this.ctrl.node.san ?? 'position')),
+        this.returnPath !== undefined &&
+          button('Return to original position', () => {
+            const path = this.returnPath!;
+            this.returnPath = undefined;
+            this.ctrl.userJump(path);
+            this.ctrl.redraw();
+          }),
+        this.enabled &&
+          hl('div', [
+            this.rows().length > 0 &&
+              hl('table.nosweat-candidates', [
+                hl(
+                  'thead',
+                  hl('tr', [
+                    hl('th', 'Move'),
+                    hl('th', { attrs: { style: 'color:' + engineColors.maia } }, 'M' + this.selfElo),
+                    this.secondMaiaEnabled &&
+                      hl(
+                        'th',
+                        { attrs: { style: 'color:' + engineColors.maiaSecond } },
+                        'M' + this.secondMaiaElo,
+                      ),
+                    hl('th', 'SF'),
+                  ]),
+                ),
+                hl(
+                  'tbody',
+                  this.rows().map(c => {
+                    const scored = this.scoreFor(c.uci);
+                    return hl('tr', { key: fen + c.uci, attrs: { 'data-move': c.uci } }, [
+                      hl('td', [
+                        button(san(fen, c.uci), () => this.preview(c.uci)),
+                        c.uci === played && hl('small', 'Played'),
+                        c.uci === this.currentFishBest() && hl('small', 'SF choice'),
+                      ]),
+                      hl('td', likelihood(this.candidates, c.uci)),
+                      this.secondMaiaEnabled && hl('td', likelihood(this.secondaryCandidates, c.uci)),
+                      hl(
+                        'td',
+                        { attrs: { title: scored ? 'Stockfish depth ' + scored.depth : 'Not evaluated' } },
+                        scored
+                          ? scoreText(scored.score)
+                          : this.scores.has(c.uci)
+                            ? this.compareBusy
+                              ? 'Pending…'
+                              : 'Unavailable'
+                            : '—',
+                      ),
+                    ]);
+                  }),
+                ),
+              ]),
+            hl('div.nosweat-panel-actions', [
+              button(
+                'Compare candidates',
+                this.compare,
+                this.compareBusy || (!this.candidates.length && !this.secondaryCandidates.length),
+              ),
+              button(this.allMoves ? 'Top candidates' : 'All legal moves', () => {
+                this.allMoves = !this.allMoves;
+                this.ctrl.redraw();
+              }),
+              button(
+                'Review this move',
+                this.classifyMove,
+                this.compareBusy || this.ctrl.nodeList.length < 2,
               ),
             ]),
-          hl('div.nosweat-analysis__actions', [
-            button('Compare candidates', this.compare, this.compareBusy || !this.candidates.length),
-            button(this.allMoves ? 'Top candidates' : 'All legal moves', () => {
-              this.allMoves = !this.allMoves;
-              this.ctrl.redraw();
-            }),
-            button('Moves by rating', this.sampleRatings, this.compareBusy || !this.candidates.length),
-            button('Review this move', this.classifyMove, this.compareBusy || this.ctrl.nodeList.length < 2),
+            annotation &&
+              hl(
+                'p.nosweat-annotation',
+                `${this.ctrl.node.san ?? 'Move'}: ${annotation.symbol ? label[annotation.symbol] + ' (' + annotation.symbol + ')' : 'No special annotation'}. Accuracy ${annotation.accuracy.toFixed(1)}%.`,
+              ),
+            hl(
+              'details.nosweat-rating-explorer',
+              {
+                hook: {
+                  insert: vnode => {
+                    (vnode.elm as HTMLDetailsElement).ontoggle = event => {
+                      this.ratingTable = (event.target as HTMLDetailsElement).open;
+                    };
+                  },
+                },
+              },
+              [
+                hl('summary', 'Moves by rating'),
+                hl(
+                  'small',
+                  'Mover input 600–2600; opponent stays ' +
+                    this.opponentElo +
+                    '. Model inputs are not calibrated Elo.',
+                ),
+                button(
+                  this.byRating.size ? 'Refresh rating samples' : 'Sample ratings',
+                  this.sampleRatings,
+                  this.compareBusy || !this.candidates.length,
+                ),
+                this.byRating.size > 0 && this.renderRatingChart(),
+                this.byRating.size > 0 && this.renderRatings(),
+              ],
+            ),
+            this.status && hl('p', { attrs: { role: 'status' } }, this.status),
+            this.error && hl('p.error', { attrs: { role: 'alert' } }, this.error),
           ]),
-          annotation &&
-            hl('p.nosweat-annotation', [
-              `${this.ctrl.node.san ?? 'Move'}: ${annotation.symbol ? label[annotation.symbol] + ' (' + annotation.symbol + ')' : 'No special annotation'}. ` +
-                `Accuracy ${annotation.accuracy.toFixed(1)}%; CP loss ${annotation.cpLoss.toFixed(0)}.`,
-              annotation.withheld &&
-                hl('small', 'Standout label withheld: the complete decision was not corroborated.'),
-              hl('small', 'En Croissant / Mobile Maia · computed separately from PGN annotations'),
-            ]),
-          this.ratingTable && this.renderRatings(),
-          this.status && hl('p', { attrs: { role: 'status' } }, this.status),
-          this.error && hl('p.error', { attrs: { role: 'alert' } }, this.error),
-        ]),
+      ],
+    );
+  }
+  private chooseRating(rating: number, secondary = false, keepOpponent = false): void {
+    if (secondary) this.secondMaiaElo = rating;
+    else {
+      this.selfElo = rating;
+      if (!keepOpponent) this.opponentElo = rating;
+    }
+    storage.make('nosweat.enginePreferences.v2').set(JSON.stringify(this.enginePreferences()));
+    this.positionChanged(true);
+    this.ctrl.redraw();
+  }
+  private renderRatingChart(): VNode {
+    const moves = this.ratingMoves().slice(0, 5);
+    const colors = ['#e89b3c', '#e85d68', '#3d9be9', '#8bc34a', '#b49be6'];
+    const max = Math.max(
+      0.1,
+      ...[...this.byRating.values()].flatMap(values =>
+        values.filter(c => moves.includes(c.uci)).map(c => c.probability),
+      ),
+    );
+    return hl('div.nosweat-rating-chart', [
+      hl(
+        'svg',
+        {
+          attrs: {
+            viewBox: '0 0 240 125',
+            role: 'img',
+            'aria-label': 'Maia move likelihood by rating; exact values in the table below',
+          },
+        },
+        [
+          hl('line', { attrs: { x1: 30, y1: 90, x2: 230, y2: 90, stroke: 'currentColor', opacity: 0.3 } }),
+          ...moves.map((uci, index) =>
+            hl('polyline', {
+              attrs: {
+                fill: 'none',
+                stroke: colors[index],
+                'stroke-width': 2,
+                points: samples
+                  .flatMap((n, i) => {
+                    const p = this.byRating.get(n)?.find(c => c.uci === uci)?.probability;
+                    return p === undefined ? [] : [`${30 + i * 50},${90 - (p / max) * 75}`];
+                  })
+                  .join(' '),
+              },
+            }),
+          ),
+          hl(
+            'text',
+            { attrs: { x: 0, y: 14, fill: 'currentColor', 'font-size': 9 } },
+            (max * 100).toFixed(0) + '%',
+          ),
+          hl('text', { attrs: { x: 0, y: 93, fill: 'currentColor', 'font-size': 9 } }, '0%'),
+          ...moves.flatMap((uci, index) =>
+            samples.flatMap((rating, i) => {
+              const probability = this.byRating.get(rating)?.find(c => c.uci === uci)?.probability;
+              return probability === undefined
+                ? []
+                : [
+                    hl(
+                      'a',
+                      {
+                        attrs: {
+                          href: '#',
+                          'aria-label': `${san(this.ctrl.node.fen, uci)} at Maia ${rating}: ${(probability * 100).toFixed(1)}%`,
+                        },
+                        hook: reviewClick(event => {
+                          event.preventDefault();
+                          this.chooseRating(rating, false, true);
+                        }),
+                      },
+                      [
+                        hl('circle', {
+                          attrs: {
+                            cx: 30 + i * 50,
+                            cy: 90 - (probability / max) * 75,
+                            r: 3,
+                            fill: colors[index],
+                          },
+                        }),
+                      ],
+                    ),
+                  ];
+            }),
+          ),
+          hl('text', { attrs: { x: 30, y: 106, fill: 'currentColor', 'font-size': 10 } }, '600'),
+          hl('text', { attrs: { x: 205, y: 106, fill: 'currentColor', 'font-size': 10 } }, '2600'),
+        ],
+      ),
+      hl(
+        'div.nosweat-chart-legend',
+        moves.map((uci, i) =>
+          hl(
+            'button.fbt',
+            {
+              attrs: { style: 'color:' + colors[i], type: 'button' },
+              hook: reviewClick(() => this.preview(uci)),
+            },
+            san(this.ctrl.node.fen, uci),
+          ),
+        ),
+      ),
     ]);
+  }
+  private ratingMoves(): string[] {
+    const moves = new Set(this.rows().map(c => c.uci));
+    for (const values of this.byRating.values()) for (const c of values.slice(0, 3)) moves.add(c.uci);
+    return [...moves];
   }
   private renderRatings(): VNode {
     const moves = new Set(this.rows().map(c => c.uci));
@@ -657,11 +961,7 @@ export class NoSweatAnalysis {
                   'button.fbt',
                   {
                     attrs: { type: 'button', 'aria-label': 'Use Maia mover input ' + n },
-                    hook: bind('click', () => {
-                      this.selfElo = n;
-                      this.positionChanged(true);
-                      this.ctrl.redraw();
-                    }),
+                    hook: reviewClick(() => this.chooseRating(n, false, true)),
                   },
                   String(n),
                 ),
@@ -676,7 +976,7 @@ export class NoSweatAnalysis {
               hl('td', [
                 hl(
                   'button.fbt',
-                  { hook: bind('click', () => this.preview(move)) },
+                  { hook: reviewClick(() => this.preview(move)) },
                   san(this.ctrl.node.fen, move),
                 ),
               ]),

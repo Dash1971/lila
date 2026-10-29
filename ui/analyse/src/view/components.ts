@@ -104,6 +104,7 @@ export function renderMain(
           forceInnerCoords(ctrl, needsInnerCoords);
         },
         postpatch(old, vnode) {
+          ctrl.noSweat?.redrawSide();
           if (old.data!.gaugeOn !== gaugeOn) dispatchChessgroundResize();
           vnode.data!.gaugeOn = gaugeOn;
         },

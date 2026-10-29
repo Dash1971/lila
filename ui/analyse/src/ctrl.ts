@@ -324,6 +324,7 @@ export default class AnalyseCtrl implements CevalHandler {
       this.retro = makeRetro(this, this.bottomColor());
     if (this.practice) this.startCevalIfEnabled();
     this.explorer.onFlip();
+    this.setAutoShapes();
     this.onChange();
     this.redraw();
   };
@@ -795,6 +796,7 @@ export default class AnalyseCtrl implements CevalHandler {
       this.showCevalProp(enable);
       this.cevalEnabledProp(enable);
     }
+    if (this.noSweat && enable !== this.noSweat.enabled) this.noSweat.setEnabled(enable);
     if (enable && this.ceval.wasUnloadedByAnotherWindow) this.ceval.reset();
     if (enable !== unforcedState) {
       if (enable) this.startCevalIfEnabled();

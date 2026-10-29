@@ -62,6 +62,8 @@ function analyseView(ctrl: AnalyseCtrl, deps?: typeof studyDeps): VNode {
             $(elm).replaceWith(ctrl.opts.$side);
             wikiToggleBox();
           }
+          const side = ctrl.opts.$side?.[0] ?? elm;
+          ctrl.noSweat?.mountSide(side);
         }),
       },
       [

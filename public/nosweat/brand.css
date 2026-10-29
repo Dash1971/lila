@@ -43,3 +43,31 @@ cg-board square.nosweat-premove-dest { background:rgb(20 30 85 / .28); }
 .nosweat-computed-glyph.dubious { color:#fab005; }
 .nosweat-computed-glyph.mistake { color:#fd7e14; }
 .nosweat-computed-glyph.blunder { color:#fa5252; }
+
+.nosweat-engine-lines { background:var(--c-bg-box); padding:.35em .6em; flex-shrink:0; }
+.nosweat-maia-line { display:flex; gap:.5em; font-size:.85em; padding:.2em 0; line-height:1.5; }
+.nosweat-maia-line strong { min-width:3.5em; }
+.nosweat-maia-line span { overflow:hidden; text-overflow:ellipsis; }
+.nosweat-candidate-panel { background:var(--c-bg-box); padding:.7em; border-radius:4px; margin-bottom:1em; min-width:0; }
+.nosweat-panel-heading { display:flex; justify-content:space-between; align-items:center; gap:.3em; }
+.nosweat-panel-heading h2 { font-size:1.15em; margin:0; }
+.nosweat-panel-heading button { font-size:.8em; }
+.nosweat-rating-inputs { display:flex; gap:.5em; margin:.7em 0; flex-wrap:wrap; }
+.nosweat-rating-picker { display:flex; align-items:center; gap:.3em; flex:1; font-size:.9em; }
+.nosweat-rating-picker select { min-width:0; padding:.3em; }
+.nosweat-panel-note { display:block; color:var(--c-font-dim); font-size:.8em; margin:.5em 0; }
+.nosweat-candidate-panel table { width:100%; border-collapse:collapse; font-size:.85em; }
+.nosweat-candidate-panel th,.nosweat-candidate-panel td { padding:.35em .15em; border-bottom:1px solid var(--c-border); text-align:right; }
+.nosweat-candidate-panel th:first-child,.nosweat-candidate-panel td:first-child { text-align:left; }
+.nosweat-candidates small { display:block; font-size:.75em; color:var(--c-font-dim); }
+.nosweat-candidate-panel .fbt { text-transform:none; }
+.nosweat-panel-actions { display:flex; flex-wrap:wrap; gap:.25em; margin:.5em 0; }
+.nosweat-panel-actions button { padding:.4em; font-size:.8em; }
+.nosweat-rating-explorer { border-top:1px solid var(--c-border); margin-top:.7em; padding-top:.7em; }
+.nosweat-rating-explorer summary { cursor:pointer; }
+.nosweat-rating-explorer small { display:block; font-size:.8em; line-height:1.5; margin:.5em 0; color:var(--c-font-dim); }
+.nosweat-rating-chart svg { width:100%; }
+.nosweat-chart-legend { display:flex; flex-wrap:wrap; font-size:.8em; }
+.nosweat-rating-scroll { max-width:100%; overflow:auto; }
+.nosweat-rating-explorer .nosweat-ratings { min-width:320px; }
+.nosweat-candidate-panel [role=status],.nosweat-candidate-panel .error { font-size:.85em; line-height:1.4; }

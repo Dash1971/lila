@@ -48,7 +48,7 @@ export function reviewView(
     );
   const phase =
     report?.state === 'evaluating'
-      ? 'Analysing positions'
+      ? 'Analyzing positions'
       : report?.state === 'classifying'
         ? 'Classifying moves'
         : 'Verifying standout moves';
@@ -59,7 +59,7 @@ export function reviewView(
       running
         ? button('Stop', stop)
         : button(
-            report?.state === 'stopped' ? 'Resume analysis' : complete ? 'Analyse again' : 'Analyse game',
+            report?.state === 'stopped' ? 'Resume analysis' : complete ? 'Analyze again' : 'Analyze game',
             start,
             !available,
           ),

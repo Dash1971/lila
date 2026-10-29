@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
 import { gameAccuracy, moveAccuracy, whiteWinPercent } from '../src/noSweatAccuracy';
-import { maiaShapes, primaryArrowWidth } from '../src/noSweatArrows';
+import { engineArrows, engineShapes, engineColors } from '../src/noSweatArrows';
 import { ClassifierClient } from '../src/noSweatClassifierClient';
 import { classify, type ClassificationResult } from '../src/noSweatClassify';
 import { after } from '../src/noSweatCore';
@@ -87,17 +87,42 @@ describe('Mobile Maia whole-game review', () => {
     near(gameAccuracy([{ cp: 0 }, { cp: -10 }], false).black, 100);
     assert.throws(() => whiteWinPercent({}), /Missing/);
   });
-  test('Maia arrows have the primary SF width even for very unlikely moves', () => {
-    const shapes = maiaShapes([
-      { uci: 'e2e4', probability: 0.99 },
-      { uci: 'd2d4', probability: 0.009 },
-      { uci: 'g1f3', probability: 0.001 },
-    ]);
-    assert.equal(primaryArrowWidth, 15);
+  test('two separate Maia channels draw only their top moves at full width', () => {
+    const arrows = engineArrows([{ uci: 'e2e4' }, { uci: 'd2d4', width: 12 }], 'c2c4', 'g1f3');
+    assert.equal(arrows.length, 4);
     assert.deepEqual(
-      shapes.map(s => s.modifiers?.lineWidth),
-      [15, 15, 15],
+      arrows.map(a => a.head),
+      [
+        [engineColors.stockfish],
+        [engineColors.stockfishSecond],
+        [engineColors.maia],
+        [engineColors.maiaSecond],
+      ],
     );
+    assert.deepEqual(
+      arrows.map(a => a.width),
+      [25, 12, 25, 25],
+    );
+    const shapes = engineShapes(arrows, 'white');
+    assert.equal(shapes.length, 4);
+    assert.ok(shapes.every(s => s.customSvg?.html.includes('nosweat-engine-arrow')));
+  });
+  test('Mobile Maia agreement fixtures retain the SF shaft and merge Maia heads', () => {
+    const sf = [{ uci: 'e2e4' }, { uci: 'd2d4' }];
+    const both = engineArrows(sf, 'e2e4', 'e2e4');
+    assert.equal(both.length, 2);
+    assert.deepEqual(both[0].tail, [engineColors.stockfish]);
+    assert.deepEqual(both[0].head, [engineColors.maia, engineColors.maiaSecond]);
+    const withoutSf = engineArrows(sf, 'c2c4', 'c2c4');
+    assert.deepEqual(withoutSf[2].tail, [engineColors.maia, engineColors.maiaSecond]);
+    assert.deepEqual(withoutSf[2].head, withoutSf[2].tail);
+    const second = engineArrows(sf, 'd2d4');
+    assert.deepEqual(second[1].tail, [engineColors.stockfishSecond]);
+    assert.deepEqual(second[1].head, [engineColors.maia]);
+    assert.equal(second[1].width, 25);
+    assert.equal(engineArrows([{ uci: '(none)' }], undefined, 'bad').length, 0);
+    assert.match(engineShapes(both, 'white')[0].customSvg!.html, /rotate\(-90\)/);
+    assert.match(engineShapes(both, 'black')[0].customSvg!.html, /rotate\(90\)/);
   });
   test('engine settings validate persisted input instead of trusting browser JSON', () => {
     assert.equal(readEnginePreferences('{').selfElo, 1500);
@@ -117,6 +142,8 @@ describe('Mobile Maia whole-game review', () => {
         quality: 'thorough',
         selfElo: 2600,
         opponentElo: 600,
+        secondMaiaEnabled: true,
+        secondMaiaElo: 2400,
         history: false,
         maiaArrows: false,
         fishArrows: true,

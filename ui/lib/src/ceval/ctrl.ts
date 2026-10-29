@@ -274,12 +274,13 @@ export class CevalCtrl {
       !step.ceval?.cloud &&
       (isThreat ? (step.threat?.millis ?? 0) : (step.ceval?.millis ?? 0)) >= search.by.movetime &&
       step.ceval?.pvs.length === search.multiPv &&
+      new Set(step.ceval.pvs.map(pv => pv.moves[0])).size === step.ceval.pvs.length &&
       step.ceval?.engineId === this.engines.active()?.id
     );
   }
 
   preferLatestEval(latest: ClientEval, stored: ClientEval | undefined): boolean {
-    if (!stored) return true;
+    if (!stored || new Set(stored.pvs.map(pv => pv.moves[0])).size !== stored.pvs.length) return true;
 
     // If one has the correct multipv and the other doesn't, prefer the right multipv regardless of strength
     const multipv = this.search.multiPv;
