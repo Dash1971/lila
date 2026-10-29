@@ -78,7 +78,7 @@ object page:
             content := p.openGraph.fold(trans.site.siteDescription.txt())(o => o.description),
             name := "description"
           ),
-          link(rel := "mask-icon", href := staticAssetPath("logo/lichess.svg"), attr("color") := "black"),
+          maskIcon,
           favicons,
           preventIndexing.option(noRobots),
           noTranslate,

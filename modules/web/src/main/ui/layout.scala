@@ -17,8 +17,17 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
   import helpers.{ *, given }
   import assetHelper.{ defaultCsp, netConfig, cashTag, siteName }
 
+  private val isMuteChess =
+    siteName.startsWith("MuteChess") || siteName.startsWith("Mute Chess") ||
+      siteName.startsWith("No Sweat Chess")
+
   val doctype = raw("<!DOCTYPE html>")
-  def htmlTag(using lang: Lang) = html(st.lang := lang.code, dir := isRTL(lang).option("rtl"))
+  def htmlTag(using lang: Lang) =
+    html(
+      st.lang := lang.code,
+      dir := isRTL(lang).option("rtl"),
+      attr("data-brand") := isMuteChess.option("mutechess")
+    )
   val topComment = raw("""<!-- Lichess is open source! See https://lichess.org/source -->""")
   val charset = raw("""<meta charset="utf-8">""")
   val viewport = raw:
@@ -105,12 +114,20 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
     style := "display:inline;width:34px;height:34px;vertical-align:top;margin-right:5px;vertical-align:text-top"
   )
 
-  val manifests = raw("""<link rel="manifest" href="/manifest.json">""")
+  val manifests = raw:
+    if isMuteChess then """<link rel="manifest" href="/assets/nosweat/manifest.json?v=quiet-signal1">"""
+    else """<link rel="manifest" href="/manifest.json">"""
+  val maskIcon =
+    link(
+      rel := "mask-icon",
+      href := staticAssetPath(if isMuteChess then "nosweat/icon.svg" else "logo/lichess.svg"),
+      attr("color") := "black"
+    )
   val noRobots = raw("""<meta content="noindex,nofollow" name="robots">""")
 
   val favicons = raw:
-    if siteName.startsWith("Mute Chess") then
-      """<link id="favicon" rel="icon" type="image/svg+xml" href="/assets/nosweat/icon.svg"><link rel="stylesheet" href="/assets/nosweat/brand.css?v=channels1">"""
+    if isMuteChess then
+      """<link rel="alternate icon" type="image/png" href="/assets/nosweat/favicon-32.png?v=quiet-signal1"><link id="favicon" rel="icon" type="image/svg+xml" href="/assets/nosweat/favicon.svg?v=quiet-signal1"><link rel="stylesheet" href="/assets/nosweat/brand.css?v=channels1"><link rel="stylesheet" href="/assets/nosweat/quiet-signal.css?v=quiet-signal1">"""
     else
       s"""<link rel="alternate icon" type="image/png" href="/assets/logo/lichess-favicon-64.png">""" +
         s"""<link id="favicon" rel="icon" type="image/svg+xml" href="/assets/logo/lichess-favicon.svg">"""
@@ -309,12 +326,26 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
       header(id := "top")(
         div(cls := "site-title-nav")(
           (!isAppealUser).option(topnavToggle),
-          a(cls := "site-title", href := langHref("/"), testId("site-title"))(
+          a(
+            cls := "site-title",
+            href := langHref("/"),
+            aria.label := isMuteChess.option("Mute Chess home"),
+            testId("site-title")
+          )(
             if ctx.kid.yes then span(title := trans.site.kidMode.txt(), cls := "kiddo")(":)")
             else ctx.isBot.option(botImage),
-            if siteName.startsWith("Mute Chess") then
+            if isMuteChess then
               frag(
-                img(cls := "nosweat-header-icon", src := assetPath("nosweat/icon.svg"), alt := ""),
+                img(
+                  cls := "nosweat-header-icon nosweat-dark",
+                  src := assetPath("nosweat/icon.svg"),
+                  alt := ""
+                ),
+                img(
+                  cls := "nosweat-header-icon nosweat-light",
+                  src := assetPath("nosweat/icon-light.svg"),
+                  alt := ""
+                ),
                 img(
                   cls := "nosweat-wordmark nosweat-dark",
                   src := assetPath("nosweat/textmark.svg"),

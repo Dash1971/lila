@@ -61,8 +61,8 @@ case class Pref(
   def realTheme3d = Theme3d(theme3d)
   def realPieceSet3d = PieceSet3d.get(pieceSet3d)
 
-  val themeColorLight = "#dbd7d1"
-  val themeColorDark = "#2e2a24"
+  val themeColorLight = "#eef2e9"
+  val themeColorDark = "#101719"
   def themeColor = if bg == Bg.LIGHT || bg == Bg.LIGHT_TRANSP then themeColorLight else themeColorDark
 
   def realSoundSet = SoundSet(soundSet)

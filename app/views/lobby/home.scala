@@ -38,10 +38,14 @@ object home:
       .css("lobby")
       .graph(
         OpenGraph(
-          image = assetFullUrl("logo/lichess-tile-wide.png").some,
-          title = "The best free, adless Chess server",
+          image = assetFullUrl(if env.noSweat.enabled then "nosweat/social.png"
+          else "logo/lichess-tile-wide.png").some,
+          title = if env.noSweat.enabled then "Mute Chess — Stay human. Play bots."
+          else "The best free, adless Chess server",
           url = netBaseUrl.into(Url),
-          description = trans.site.siteDescription.txt()
+          description =
+            if env.noSweat.enabled then "Free, open-source chess with human-like Maia opponents."
+            else trans.site.siteDescription.txt()
         )
       )
       .hrefLangs(lila.ui.LangPath("/")):
@@ -85,6 +89,13 @@ object home:
               div(cls := "lobby__timeline")(
                 ctx.blind.option(h2(trans.site.timeline())),
                 views.timeline.entries(userTimeline)
+              )
+            else if env.noSweat.enabled then
+              div(cls := "about-side mutechess-intro")(
+                ctx.blind.option(h2(trans.site.about())),
+                strong("Stay human. Play bots."),
+                p("Free, open-source chess against human-like Maia opponents."),
+                a(href := "/source")(trans.site.sourceCode())
               )
             else
               div(cls := "about-side")(
@@ -138,7 +149,7 @@ object home:
           ctx.noBot.option(bits.underboards(tours, simuls)),
           div(cls := "lobby__about")(
             ctx.blind.option(h2(trans.site.about())),
-            a(href := "/about")(trans.site.aboutX("Lichess")),
+            a(href := "/about")(trans.site.aboutX(if env.noSweat.enabled then "Mute Chess" else "Lichess")),
             a(href := "/faq")(trans.faq.faqAbbreviation()),
             a(href := "/contact")(trans.contact.contact()),
             a(href := "/app")(trans.site.mobileApp()),

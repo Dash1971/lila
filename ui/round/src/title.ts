@@ -6,14 +6,16 @@ const initialTitle = document.title;
 
 let curFaviconIdx = 0;
 
-const F = ['/assets/logo/lichess-favicon.svg', '/assets/logo/lichess-favicon-invert.svg'].map(
-  (path, i) => () => {
-    if (curFaviconIdx !== i) {
-      (document.getElementById('favicon') as HTMLAnchorElement).href = path;
-      curFaviconIdx = i;
-    }
-  },
-);
+const faviconPaths =
+  document.documentElement.dataset.brand === 'mutechess'
+    ? ['/assets/nosweat/favicon.svg?v=quiet-signal1', '/assets/nosweat/favicon-alert.svg?v=quiet-signal1']
+    : ['/assets/logo/lichess-favicon.svg', '/assets/logo/lichess-favicon-invert.svg'];
+const F = faviconPaths.map((path, i) => () => {
+  if (curFaviconIdx !== i) {
+    (document.getElementById('favicon') as HTMLAnchorElement).href = path;
+    curFaviconIdx = i;
+  }
+});
 
 let tickerTimer: Timeout | undefined;
 function resetTicker() {

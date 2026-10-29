@@ -18,8 +18,9 @@ function notify(msg: string | (() => string)) {
   if (document.hasFocus() || Date.now() - parseInt(store.get()!, 10) < 1000) return;
   store.set(String(Date.now()));
   if ($.isFunction(msg)) msg = msg();
-  const notification = new Notification('lichess.org', {
-    icon: site.asset.url('logo/lichess-favicon-256.png'),
+  const muteChess = document.documentElement.dataset.brand === 'mutechess';
+  const notification = new Notification(muteChess ? 'Mute Chess' : 'lichess.org', {
+    icon: site.asset.url(muteChess ? 'nosweat/app-icon-192.png' : 'logo/lichess-favicon-256.png'),
     body: msg,
   });
   notification.onclick = () => window.focus();
