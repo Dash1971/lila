@@ -161,7 +161,9 @@ export const renderUnderboard = ({ ctrl, deps, study }: ViewContext): VNode =>
       hook:
         ctrl.synthetic || playable(ctrl.data) ? undefined : onInsert(elm => serverSideUnderboard(elm, ctrl)),
     },
-    study ? deps?.studyView.underboard(ctrl) : [renderInputs(ctrl)],
+    study
+      ? deps?.studyView.underboard(ctrl)
+      : [ctrl.synthetic && ctrl.noSweat?.reviewView(), renderInputs(ctrl)],
   );
 
 export function renderInputs(ctrl: AnalyseCtrl): VNode | undefined {

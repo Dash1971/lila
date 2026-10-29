@@ -98,15 +98,17 @@ export interface ClassificationInput {
   positions: string[];
   reviews: Review[];
   move: string;
+  confirmation?: Review[];
 }
 export interface ClassificationResult {
   symbol: Annotation;
+  provisional?: Annotation;
   accuracy: number;
   cpLoss: number;
   withheld: boolean;
   version: string;
 }
-export function classify(input: ClassificationInput): ClassificationResult {
+export function classify(input: ClassificationInput, evaluateMaterial = naiveMaterial): ClassificationResult {
   const { positions, reviews, move } = input;
   const n = reviews.length;
   if (n < 2 || positions.length !== n) throw new Error('Incomplete decision window');
@@ -116,17 +118,36 @@ export function classify(input: ClassificationInput): ClassificationResult {
   const color = position(positions[n - 2]).turn;
   const sacrifice =
     !position(positions[n - 1]).isEnd() &&
-    naiveMaterial(positions[n - 2]) > -naiveMaterial(positions[n - 1]) + 100;
+    evaluateMaterial(positions[n - 2]) > -evaluateMaterial(positions[n - 1]) + 100;
   const predicate = (b: Snapshot, a: Snapshot, p?: Snapshot): Annotation =>
     annotation(p?.lines[0], b, a.lines[0], color, move, sacrifice);
   let symbol = predicate(before.current, after.current, previous?.current);
+  const provisional = symbol;
   let withheld = false;
   if (symbol === '!!' || symbol === '!') {
     const needsPrevious = symbol === '!' && n > 2;
-    const previousBefore = before.previous;
-    const previousAfter = after.terminal ? after.current : after.previous;
-    const previousPrevious = needsPrevious ? previous?.previous : undefined;
+    const checked = input.confirmation;
+    const previousBefore = checked ? checked[checked.length - 2]?.current : before.previous;
+    const previousAfter = checked
+      ? checked[checked.length - 1]?.current
+      : after.terminal
+        ? after.current
+        : after.previous;
+    const previousPrevious = checked ? checked[checked.length - 3]?.current : previous?.previous;
+    const sufficient =
+      !checked ||
+      checked.every((r, i) => {
+        const original = reviews[reviews.length - checked.length + i];
+        return (
+          original &&
+          r.quality === original.quality &&
+          r.current.depth >= original.current.depth &&
+          (!original.terminal ||
+            JSON.stringify(r.current.lines[0]) === JSON.stringify(original.current.lines[0]))
+        );
+      });
     if (
+      !sufficient ||
       !previousBefore ||
       !previousAfter ||
       (needsPrevious && !previousPrevious) ||
@@ -136,14 +157,16 @@ export function classify(input: ClassificationInput): ClassificationResult {
       withheld = true;
     }
   }
+
   return {
     symbol,
+    provisional,
     withheld,
     accuracy: accuracy(before.current.lines[0], after.current.lines[0], color),
     cpLoss: Math.max(
       0,
       normalized(before.current.lines[0], color) - normalized(after.current.lines[0], color),
     ),
-    version: 'ec015-mobilemaia-window-v1',
+    version: 'ec015-mobilemaia-window-v2',
   };
 }

@@ -1,12 +1,21 @@
 import type { DrawShape } from '@lichess-org/chessground/draw';
 import { parseUci } from 'chessops/util';
+import { attributesModule, classModule, init } from 'snabbdom';
 
+import { frag } from 'lib';
+import { storage } from 'lib/storage';
+import type { Glyph, TreeNode } from 'lib/tree/types';
 import { bind, hl, type VNode } from 'lib/view';
 
 import type AnalyseCtrl from './ctrl';
+import { maiaShapes, primaryArrowWidth } from './noSweatArrows';
+import { ClassifierClient } from './noSweatClassifierClient';
 import type { ClassificationInput, ClassificationResult } from './noSweatClassify';
 import { encodeHistory, policy, san, scoreText, position, standardUci, type Candidate } from './noSweatCore';
 import { ReviewFish, type Review } from './noSweatFish';
+import { GameReview, reviewQualities, type ReviewNode, type ReviewQuality } from './noSweatGameReview';
+import { readEnginePreferences, type EnginePreferences } from './noSweatPreferences';
+import { reviewView, classificationLabels, classificationClasses } from './noSweatReviewView';
 
 interface MaiaClient {
   predict(input: {
@@ -39,6 +48,11 @@ const label: Record<string, string> = {
 
 export class NoSweatAnalysis {
   enabled = false;
+  quality: ReviewQuality = 'fast';
+  readonly gameReview: GameReview;
+  private readonly gameFish: ReviewFish;
+  private readonly gameClassifier: ClassifierClient;
+  private reviewRedraw?: () => void;
   model = '5m';
   selfElo = 1500;
   opponentElo = 1500;
@@ -72,18 +86,168 @@ export class NoSweatAnalysis {
   private compareBusy = false;
 
   constructor(readonly ctrl: AnalyseCtrl) {
+    Object.assign(this, readEnginePreferences(storage.make('nosweat.enginePreferences.v2').get()));
+    this.gameFish = new ReviewFish(() => this.refreshReview());
+    this.gameClassifier = new ClassifierClient(
+      () => new Worker(site.asset.url(site.asset.jsModule('analyse.nosweatWorker')), { type: 'module' }),
+    );
+    this.gameReview = new GameReview({
+      search: (fen, signal, depth, time) => this.gameFish.search(fen, [], signal, depth, time),
+      classify: (input, signal) => this.gameClassifier.classify(input, signal),
+      changed: () => this.refreshReview(),
+    });
     this.fish = new ReviewFish(s => {
       this.status = s;
       this.ctrl.redraw();
     });
-    window.addEventListener('pagehide', this.release);
+    window.addEventListener('pagehide', this.shutdown);
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
+        this.gameReview.stop();
+        this.gameClassifier.release();
         this.cancel();
         this.status = 'Paused while this tab is hidden';
         this.ctrl.redraw();
       } else if (this.enabled) this.positionChanged(true);
     });
+  }
+  private readonly refreshReview = (): void => {
+    this.reviewRedraw?.();
+    this.ctrl.setAutoShapes();
+    this.ctrl.redraw();
+  };
+  private readonly shutdown = (): void => {
+    this.release();
+    this.gameReview.stop();
+    this.gameClassifier.release();
+    this.gameFish.destroy();
+  };
+  private mainlineNodes(): ReviewNode[] {
+    let path = '';
+    try {
+      return this.ctrl.mainline.map((node, i, line) => {
+        if (i) path += node.id;
+        const move = node.uci && parseUci(node.uci);
+        return {
+          fen: node.fen,
+          path,
+          san: node.san,
+          uci: i && move ? standardUci(position(line[i - 1].fen), move) : undefined,
+        };
+      });
+    } catch {
+      return [];
+    }
+  }
+  startGameReview = (): void => {
+    if (!this.ctrl.isCevalAllowed()) return;
+    if (this.gameReview.report?.state === 'failed') this.gameFish.destroy();
+    void this.gameReview.start(this.mainlineNodes(), this.quality).finally(() => {
+      if (!this.gameReview.running) this.gameClassifier.release();
+    });
+  };
+  reviewView(): VNode {
+    return reviewView(
+      this.gameReview.report,
+      this.gameReview.running,
+      this.startGameReview,
+      () => this.gameReview.stop(),
+      path => {
+        this.ctrl.userJump(path);
+        this.ctrl.redraw();
+      },
+      this.ctrl.path,
+      this.mainlineNodes().length > 1,
+    );
+  }
+  mountReview(element: HTMLElement): void {
+    const patch = init([classModule, attributesModule]);
+    element.replaceChildren();
+    const root = document.createElement('div');
+    element.append(root);
+    let vnode: VNode | HTMLElement = root;
+    this.reviewRedraw = () => {
+      vnode = patch(vnode, this.reviewView());
+    };
+    this.reviewRedraw();
+  }
+  computedGlyph(path: string, node: TreeNode): Glyph | undefined {
+    const result = this.gameReview.resultAt(path, node.fen);
+    const ids: Record<string, number> = { '!': 1, '?': 2, '!!': 3, '??': 4, '!?': 5, '?!': 6 };
+    if (!result?.symbol) return undefined;
+    return {
+      id: ids[result.symbol],
+      symbol: result.symbol,
+      name: 'Computer review: ' + classificationLabels[result.symbol],
+      comp: true,
+    };
+  }
+  computedMoveView(path: string, node: TreeNode): VNode | undefined {
+    const glyph = this.computedGlyph(path, node);
+    if (!glyph) return undefined;
+    return hl(
+      'span.nosweat-computed-glyph.' + classificationClasses[glyph.symbol],
+      {
+        attrs: { title: glyph.name, 'aria-label': glyph.name },
+      },
+      glyph.symbol,
+    );
+  }
+  private enginePreferences(): EnginePreferences {
+    return {
+      model: this.model === '79m' ? '79m' : '5m',
+      selfElo: this.selfElo,
+      opponentElo: this.opponentElo,
+      history: this.history,
+      maiaArrows: this.maiaArrows,
+      fishArrows: this.fishArrows,
+      quality: this.quality,
+    };
+  }
+  engineSettings(): HTMLElement {
+    const select = (key: keyof EnginePreferences, name: string, options: [string, string][]) =>
+      `<label class="setting"><span>${name}</span><select data-engine-pref="${key}" aria-label="${name}">${options
+        .map(
+          ([value, text]) =>
+            `<option value="${value}" ${String(this[key]) === value ? 'selected' : ''}>${text}</option>`,
+        )
+        .join('')}</select></label>`;
+    const toggle = (key: 'history' | 'maiaArrows' | 'fishArrows', name: string) =>
+      `<label class="setting"><span>${name}</span><input type="checkbox" data-engine-pref="${key}" ${this[key] ? 'checked' : ''}></label>`;
+    const options: [string, string][] = ratings.map(n => [String(n), String(n)]);
+    const view = frag<HTMLElement>(`<fieldset class="nosweat-engine-settings"><legend>Engines</legend>
+      ${select('model', 'Maia model', [
+        ['5m', 'Maia3 5M · light'],
+        ['79m', 'Maia3 79M'],
+      ])}
+      ${select('selfElo', 'Maia rating', options)}${select('opponentElo', 'Opponent rating', options)}
+      ${toggle('history', 'Use move history')}${toggle('maiaArrows', 'Show Maia arrows')}${toggle('fishArrows', 'Show comparison arrow')}
+      ${select(
+        'quality',
+        'Game review quality',
+        Object.entries(reviewQualities).map(([key, value]) => [key, value.name]),
+      )}
+      <small>Maia downloads 36 MB for 5M or 331 MB for 79M on first use. Ratings are model inputs, not calibrated Elo.</small>
+      </fieldset>`);
+    view.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-engine-pref]').forEach(input => {
+      input.addEventListener('change', () => {
+        const key = input.dataset.enginePref as keyof EnginePreferences;
+        const value =
+          input instanceof HTMLInputElement
+            ? input.checked
+            : key === 'selfElo' || key === 'opponentElo'
+              ? Number(input.value)
+              : input.value;
+        const next = readEnginePreferences(JSON.stringify({ ...this.enginePreferences(), [key]: value }));
+        if (next.model !== this.model) this.release();
+        Object.assign(this, next);
+        storage.make('nosweat.enginePreferences.v2').set(JSON.stringify(next));
+        this.positionChanged(true);
+        this.ctrl.setAutoShapes();
+        this.refreshReview();
+      });
+    });
+    return view;
   }
   private readonly valid = (generation: number): boolean =>
     generation === this.generation &&
@@ -123,6 +287,8 @@ export class NoSweatAnalysis {
     this.fish.destroy();
   };
   positionChanged(force = false): void {
+    this.gameReview.observe(this.mainlineNodes(), this.quality);
+    this.reviewRedraw?.();
     const context = this.key() + this.ctrl.path;
     if (!force && context === this.context) return;
     this.context = context;
@@ -370,38 +536,15 @@ export class NoSweatAnalysis {
   shapes(): DrawShape[] {
     if (!this.enabled || !this.ctrl.isCevalAllowed() || document.hidden || !this.candidates.length) return [];
     const shapes: DrawShape[] = [];
-    if (this.maiaArrows)
-      for (const c of this.candidates.slice(0, 3))
-        shapes.push({
-          orig: c.uci.slice(0, 2) as Key,
-          dest: c.uci.slice(2, 4) as Key,
-          brush: 'yellow',
-          modifiers: { lineWidth: Math.max(2, Math.round(10 * c.probability)) },
-        });
+    if (this.maiaArrows) shapes.push(...maiaShapes(this.candidates));
     if (this.fishArrows && this.fishBest)
       shapes.push({
         orig: this.fishBest.slice(0, 2) as Key,
         dest: this.fishBest.slice(2, 4) as Key,
         brush: 'paleBlue',
+        modifiers: { lineWidth: primaryArrowWidth },
       });
     return shapes;
-  }
-  private control(labelText: string, value: number, change: (n: number) => void): VNode {
-    return hl('label', [
-      labelText,
-      hl(
-        'select',
-        {
-          attrs: { 'aria-label': labelText },
-          hook: bind('change', e => {
-            change(Number((e.target as HTMLSelectElement).value));
-            this.positionChanged(true);
-            this.ctrl.redraw();
-          }),
-        },
-        ratings.map(n => hl('option', { attrs: { value: n, selected: n === value } }, String(n))),
-      ),
-    ]);
   }
   view(): VNode | undefined {
     if (!this.ctrl.isCevalAllowed() || this.ctrl.data.game.variant.key !== 'standard') return undefined;
@@ -417,18 +560,6 @@ export class NoSweatAnalysis {
         },
         text,
       );
-    const check = (name: string, value: boolean, change: () => void) =>
-      hl('label', [
-        hl('input', {
-          attrs: { type: 'checkbox', checked: value },
-          hook: bind('change', () => {
-            change();
-            this.ctrl.setAutoShapes();
-            this.ctrl.redraw();
-          }),
-        }),
-        name,
-      ]);
     return hl('section.nosweat-analysis', { attrs: { 'aria-label': 'Maia and Stockfish analysis' } }, [
       hl('div.nosweat-analysis__heading', [
         hl('strong', 'Maia + Stockfish'),
@@ -444,44 +575,10 @@ export class NoSweatAnalysis {
         'p.nosweat-analysis__note',
         this.enabled
           ? 'Maia likelihood · Stockfish quality (White’s perspective)'
-          : 'Runs in your browser. First download: 36 MB for 5M, 331 MB for 79M.',
+          : 'Human move predictions alongside Stockfish.',
       ),
-      hl('div.nosweat-analysis__settings', [
-        hl('label', [
-          'Model',
-          hl(
-            'select',
-            {
-              attrs: { 'aria-label': 'Maia analysis model' },
-              hook: bind('change', e => {
-                this.release();
-                this.model = (e.target as HTMLSelectElement).value;
-                this.positionChanged(true);
-                this.ctrl.redraw();
-              }),
-            },
-            ['5m', '79m'].map(m =>
-              hl(
-                'option',
-                { attrs: { value: m, selected: this.model === m } },
-                m === '5m' ? 'Maia3 5M · light' : 'Maia3 79M · live-bot model',
-              ),
-            ),
-          ),
-        ]),
-        this.control('Mover input', this.selfElo, n => (this.selfElo = n)),
-        this.control('Opponent input', this.opponentElo, n => (this.opponentElo = n)),
-        check('8-position history', this.history, () => {
-          this.history = !this.history;
-          this.positionChanged(true);
-        }),
-      ]),
       this.enabled &&
         hl('div', [
-          hl('div.nosweat-analysis__options', [
-            check('Maia arrows (amber)', this.maiaArrows, () => (this.maiaArrows = !this.maiaArrows)),
-            check('Comparison arrow (blue)', this.fishArrows, () => (this.fishArrows = !this.fishArrows)),
-          ]),
           this.returnPath !== undefined &&
             button('Return to original position', () => {
               const path = this.returnPath!;
@@ -542,10 +639,6 @@ export class NoSweatAnalysis {
           this.ratingTable && this.renderRatings(),
           this.status && hl('p', { attrs: { role: 'status' } }, this.status),
           this.error && hl('p.error', { attrs: { role: 'alert' } }, this.error),
-          hl(
-            'small',
-            'Ratings are Maia conditioning inputs, not calibrated Elo. Raw legal-move probabilities; no Temperature/Top-P filtering.',
-          ),
         ]),
     ]);
   }

@@ -22,3 +22,24 @@ main.lobby .lobby__app__content{background-image:url("/assets/nosweat/watermark-
 .nosweat-candidates button,.nosweat-ratings button { text-transform:none; }
 cg-board square.nosweat-premove-origin { background:rgb(20 30 85 / .16); }
 cg-board square.nosweat-premove-dest { background:rgb(20 30 85 / .28); }
+
+.nosweat-engine-settings .setting { display:flex; align-items:center; justify-content:space-between; gap:1em; padding:.35em 0; }
+.nosweat-engine-settings select { max-width:13em; padding:.3em; }
+.nosweat-engine-settings small { display:block; margin-top:.7em; color:var(--c-font-dim); }
+.nosweat-game-review { padding:1em; background:var(--c-bg-box); border-radius:4px; }
+.nosweat-review-heading { display:flex; align-items:center; justify-content:space-between; gap:1em; margin-bottom:.7em; }
+.nosweat-review-heading h2 { margin:0; font-size:1.15em; }
+.nosweat-game-review table { width:100%; text-align:center; border-collapse:collapse; margin:.6em 0; }
+.nosweat-game-review th:first-child { text-align:left; }
+.nosweat-game-review th,.nosweat-game-review td { padding:.3em .5em; border-bottom:1px solid var(--c-border); }
+.nosweat-accuracy td { font-size:1.5em; }
+.nosweat-classifications button { min-width:3em; padding:.15em .5em; }
+.nosweat-review-graph { width:100%; max-height:150px; color:var(--c-font); background:var(--c-bg-low); }
+.nosweat-review-graph a:focus circle { stroke:var(--c-primary); stroke-width:3; }
+.nosweat-computed-glyph { font-weight:bold; margin-left:.12em; }
+.nosweat-computed-glyph.brilliant { color:#15aabf; }
+.nosweat-computed-glyph.good { color:#12b886; }
+.nosweat-computed-glyph.interesting { color:#82c91e; }
+.nosweat-computed-glyph.dubious { color:#fab005; }
+.nosweat-computed-glyph.mistake { color:#fd7e14; }
+.nosweat-computed-glyph.blunder { color:#fa5252; }

@@ -106,10 +106,12 @@ export async function showSettingsDialog(ctrl: AnalyseCtrl): Promise<Dialog> {
     scrollableDiv.style.height = `${height}px`;
   };
   if (!isTouchDevice()) window.addEventListener('resize', flexTamer);
+  const view = settingsView(ctrl.settings);
+  if (ctrl.noSweat) view.querySelector('.column:last-child')?.append(ctrl.noSweat.engineSettings());
   return domDialog({
     class: 'analysis-settings-dialog',
     htmlText: '<h2>Analysis settings</h2>',
-    insert: [{ nodes: settingsView(ctrl.settings) }],
+    insert: [{ nodes: view }],
     modal: !isTouchDevice(),
     easyClose: 'clickOutside',
     show: true,

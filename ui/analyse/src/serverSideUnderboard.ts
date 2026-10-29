@@ -15,6 +15,28 @@ export const stockfishName = 'Stockfish 19';
 
 export default function (element: HTMLElement, ctrl: AnalyseCtrl) {
   $(element).replaceWith(ctrl.opts.$underboard);
+  // Browser review is available even for short games the server cannot analyse.
+  if (ctrl.noSweat) {
+    const menu = document.querySelector('.analyse__underboard__menu');
+    const panels = document.querySelector('.analyse__underboard__panels');
+    if (menu && panels) {
+      if (!menu.querySelector('[data-panel="computer-analysis"]')) {
+        const button = document.createElement('button');
+        button.className = 'computer-analysis';
+        button.dataset.panel = 'computer-analysis';
+        button.setAttribute('role', 'tab');
+        button.textContent = button.title = i18n.site.computerAnalysis;
+        menu.prepend(button);
+      }
+      let panel = panels.querySelector<HTMLElement>('.computer-analysis');
+      if (!panel) {
+        panel = document.createElement('div');
+        panel.className = 'computer-analysis';
+        panels.prepend(panel);
+      }
+      ctrl.noSweat.mountReview(panel);
+    }
+  }
   const data = ctrl.data;
   const $panels = $('.analyse__underboard__panels > div');
   const $menu = $('.analyse__underboard__menu');
@@ -58,6 +80,7 @@ export default function (element: HTMLElement, ctrl: AnalyseCtrl) {
       }
     });
     pubsub.on('analysis.server.progress', (d: AnalyseData) => {
+      if (ctrl.noSweat) return;
       if (!advChart) startAdvantageChart();
       else advChart.updateData(d, ctrl.mainline);
       const deleteBtn = document.querySelector<HTMLElement>('.analysis-chart .delete')!;
@@ -75,7 +98,7 @@ export default function (element: HTMLElement, ctrl: AnalyseCtrl) {
     `<div id="acpl-chart-container-loader"><span>${stockfishName}<br>server analysis</span>${spinnerHtml}</div>`;
 
   function startAdvantageChart() {
-    if (advChart || site.blindMode) return;
+    if (ctrl.noSweat || advChart || site.blindMode) return;
     const loading = !ctrl.hasFullComputerAnalysis();
     const $panel = $panels.filter('.computer-analysis');
     if (!$('#acpl-chart-container').length) {

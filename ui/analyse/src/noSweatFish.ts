@@ -10,6 +10,7 @@ export interface Review {
   current: Snapshot;
   previous?: Snapshot;
   terminal?: boolean;
+  quality?: string;
 }
 const info: BrowserEngineInfo = {
   id: 'nosweat-review-sf19-small',

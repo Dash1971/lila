@@ -186,6 +186,8 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
   }
   if (ctrl.showMoveAnnotations()) {
     const glyphs = ctrl.visibleGlyphs();
+    const computed = ctrl.noSweat?.computedGlyph(ctrl.path, ctrl.node);
+    if (computed && !glyphs.some(g => g.id <= 6)) glyphs.push(computed);
     const liveGlyph = ctrl.liveAnnotate?.get(ctrl.path);
     if (liveGlyph && ctrl.settings.showLiveAnnotations && !glyphs.some(g => g.id <= 6))
       glyphs.push(liveGlyph);
