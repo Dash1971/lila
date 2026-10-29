@@ -1,4 +1,3 @@
-type ReviewQuality = 'fast' | 'balanced' | 'thorough';
 export interface EnginePreferences {
   model: '5m' | '79m';
   selfElo: number;
@@ -8,7 +7,6 @@ export interface EnginePreferences {
   history: boolean;
   maiaArrows: boolean;
   fishArrows: boolean;
-  quality: ReviewQuality;
 }
 export const defaultEnginePreferences: EnginePreferences = {
   model: '5m',
@@ -19,7 +17,6 @@ export const defaultEnginePreferences: EnginePreferences = {
   history: true,
   maiaArrows: true,
   fishArrows: true,
-  quality: 'fast',
 };
 export function readEnginePreferences(raw: string | null): EnginePreferences {
   let input: Partial<EnginePreferences> = {};
@@ -41,6 +38,5 @@ export function readEnginePreferences(raw: string | null): EnginePreferences {
     history: boolean('history'),
     maiaArrows: boolean('maiaArrows'),
     fishArrows: boolean('fishArrows'),
-    quality: input.quality === 'balanced' || input.quality === 'thorough' ? input.quality : 'fast',
   };
 }

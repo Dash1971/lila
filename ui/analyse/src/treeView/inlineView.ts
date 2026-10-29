@@ -188,7 +188,6 @@ export class InlineView {
         ctrl.allowedEval(node) || false,
         glyphs,
       ),
-      ctrl.showMoveGlyphs() && ctrl.noSweat?.computedMoveView(path, node),
     ]);
   }
 

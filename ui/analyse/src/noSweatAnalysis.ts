@@ -5,13 +5,10 @@ import { attributesModule, classModule, init } from 'snabbdom';
 import { frag } from 'lib';
 import { winningChances } from 'lib/ceval';
 import { storage } from 'lib/storage';
-import type { Glyph, TreeNode } from 'lib/tree/types';
 import { hl, type VNode } from 'lib/view';
 
 import type AnalyseCtrl from './ctrl';
 import { engineArrows, engineShapes, engineColors } from './noSweatArrows';
-import { ClassifierClient } from './noSweatClassifierClient';
-import type { ClassificationInput, ClassificationResult } from './noSweatClassify';
 import {
   encodeHistory,
   policy,
@@ -23,10 +20,9 @@ import {
   leadingPolicy,
   type Candidate,
 } from './noSweatCore';
+import { reviewClick } from './noSweatEvents';
 import { ReviewFish, type Review } from './noSweatFish';
-import { GameReview, reviewQualities, type ReviewNode, type ReviewQuality } from './noSweatGameReview';
 import { readEnginePreferences, type EnginePreferences } from './noSweatPreferences';
-import { reviewView, reviewClick, classificationLabels, classificationClasses } from './noSweatReviewView';
 
 interface MaiaClient {
   predict(input: {
@@ -48,22 +44,8 @@ interface Scored {
 }
 const ratings = Array.from({ length: 21 }, (_, i) => 600 + i * 100);
 const samples = [600, 1100, 1600, 2100, 2600];
-const label: Record<string, string> = {
-  '!!': 'Brilliant',
-  '!': 'Good',
-  '!?': 'Interesting',
-  '?!': 'Dubious',
-  '?': 'Mistake',
-  '??': 'Blunder',
-};
-
 export class NoSweatAnalysis {
   enabled = false;
-  quality: ReviewQuality = 'fast';
-  readonly gameReview: GameReview;
-  private readonly gameFish: ReviewFish;
-  private readonly gameClassifier: ClassifierClient;
-  private reviewRedraw?: () => void;
   model = '5m';
   selfElo = 1500;
   opponentElo = 1500;
@@ -93,10 +75,6 @@ export class NoSweatAnalysis {
   private readonly cache = new Map<string, Candidate[]>();
   private readonly fish: ReviewFish;
   private readonly reviewCache = new Map<string, Review>();
-  private classifier?: Worker;
-  private classifierTimer?: ReturnType<typeof setTimeout>;
-  private classifierCancel?: () => void;
-  private readonly annotations = new Map<string, ClassificationResult>();
   private fishBest?: string;
   private compareBusy = false;
 
@@ -105,15 +83,6 @@ export class NoSweatAnalysis {
     this.enabled = !!ctrl.cevalEnabled();
     ctrl.ceval.storedPv(2);
     queueMicrotask(() => this.positionChanged());
-    this.gameFish = new ReviewFish(() => this.refreshReview());
-    this.gameClassifier = new ClassifierClient(
-      () => new Worker(site.asset.url(site.asset.jsModule('analyse.nosweatWorker')), { type: 'module' }),
-    );
-    this.gameReview = new GameReview({
-      search: (fen, signal, depth, time) => this.gameFish.search(fen, [], signal, depth, time),
-      classify: (input, signal) => this.gameClassifier.classify(input, signal),
-      changed: () => this.refreshReview(),
-    });
     this.fish = new ReviewFish(s => {
       this.status = s;
       this.ctrl.redraw();
@@ -121,8 +90,6 @@ export class NoSweatAnalysis {
     window.addEventListener('pagehide', this.shutdown);
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
-        this.gameReview.stop();
-        this.gameClassifier.release();
         this.cancel();
         this.status = 'Paused while this tab is hidden';
         this.ctrl.redraw();
@@ -130,87 +97,10 @@ export class NoSweatAnalysis {
     });
   }
   private readonly refreshReview = (): void => {
-    this.reviewRedraw?.();
     this.ctrl.setAutoShapes();
     this.ctrl.redraw();
   };
-  private readonly shutdown = (): void => {
-    this.release();
-    this.gameReview.stop();
-    this.gameClassifier.release();
-    this.gameFish.destroy();
-  };
-  private mainlineNodes(): ReviewNode[] {
-    let path = '';
-    try {
-      return this.ctrl.mainline.map((node, i, line) => {
-        if (i) path += node.id;
-        const move = node.uci && parseUci(node.uci);
-        return {
-          fen: node.fen,
-          path,
-          san: node.san,
-          uci: i && move ? standardUci(position(line[i - 1].fen), move) : undefined,
-        };
-      });
-    } catch {
-      return [];
-    }
-  }
-  startGameReview = (): void => {
-    if (!this.ctrl.isCevalAllowed()) return;
-    if (this.gameReview.report?.state === 'failed') this.gameFish.destroy();
-    void this.gameReview.start(this.mainlineNodes(), this.quality).finally(() => {
-      if (!this.gameReview.running) this.gameClassifier.release();
-    });
-  };
-  reviewView(): VNode {
-    return reviewView(
-      this.gameReview.report,
-      this.gameReview.running,
-      this.startGameReview,
-      () => this.gameReview.stop(),
-      path => {
-        this.ctrl.userJump(path);
-        this.ctrl.redraw();
-      },
-      this.ctrl.path,
-      this.mainlineNodes().length > 1,
-    );
-  }
-  mountReview(element: HTMLElement): void {
-    const patch = init([classModule, attributesModule]);
-    element.replaceChildren();
-    const root = document.createElement('div');
-    element.append(root);
-    let vnode: VNode | HTMLElement = root;
-    this.reviewRedraw = () => {
-      vnode = patch(vnode, this.reviewView());
-    };
-    this.reviewRedraw();
-  }
-  computedGlyph(path: string, node: TreeNode): Glyph | undefined {
-    const result = this.gameReview.resultAt(path, node.fen);
-    const ids: Record<string, number> = { '!': 1, '?': 2, '!!': 3, '??': 4, '!?': 5, '?!': 6 };
-    if (!result?.symbol) return undefined;
-    return {
-      id: ids[result.symbol],
-      symbol: result.symbol,
-      name: 'Computer review: ' + classificationLabels[result.symbol],
-      comp: true,
-    };
-  }
-  computedMoveView(path: string, node: TreeNode): VNode | undefined {
-    const glyph = this.computedGlyph(path, node);
-    if (!glyph) return undefined;
-    return hl(
-      'span.nosweat-computed-glyph.' + classificationClasses[glyph.symbol],
-      {
-        attrs: { title: glyph.name, 'aria-label': glyph.name },
-      },
-      glyph.symbol,
-    );
-  }
+  private readonly shutdown = (): void => this.release();
   private enginePreferences(): EnginePreferences {
     return {
       model: this.model === '79m' ? '79m' : '5m',
@@ -221,7 +111,6 @@ export class NoSweatAnalysis {
       history: this.history,
       maiaArrows: this.maiaArrows,
       fishArrows: this.fishArrows,
-      quality: this.quality,
     };
   }
   engineSettings(): HTMLElement {
@@ -243,11 +132,6 @@ export class NoSweatAnalysis {
       ${select('selfElo', 'Primary Maia rating', options)}${select('opponentElo', 'Primary opponent input', options)}
       ${toggle('secondMaiaEnabled', 'Second Maia')}${select('secondMaiaElo', 'Second Maia rating', options)}
       ${toggle('history', 'Use move history')}${toggle('maiaArrows', 'Show Maia arrows')}${toggle('fishArrows', 'Show Stockfish arrows')}
-      ${select(
-        'quality',
-        'Game review quality',
-        Object.entries(reviewQualities).map(([key, value]) => [key, value.name]),
-      )}
       <small>Maia downloads 36 MB for 5M or 331 MB for 79M on first use. Ratings are model inputs, not calibrated Elo.</small>
       </fieldset>`);
     view.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-engine-pref]').forEach(input => {
@@ -298,11 +182,6 @@ export class NoSweatAnalysis {
     clearTimeout(this.timer);
     clearInterval(this.progress);
     this.progress = undefined;
-    this.classifierCancel?.();
-    this.classifierCancel = undefined;
-    this.classifier?.terminate();
-    this.classifier = undefined;
-    clearTimeout(this.classifierTimer);
     this.compareBusy = false;
   }
   release = (): void => {
@@ -312,8 +191,6 @@ export class NoSweatAnalysis {
     this.fish.destroy();
   };
   positionChanged(force = false): void {
-    this.gameReview.observe(this.mainlineNodes(), this.quality);
-    this.reviewRedraw?.();
     const context =
       this.key() + JSON.stringify([this.secondMaiaEnabled, this.secondMaiaElo]) + this.ctrl.path;
     if (!force && context === this.context) return;
@@ -561,66 +438,6 @@ export class NoSweatAnalysis {
       this.ctrl.redraw();
     })().catch(e => this.failure(e, generation));
   };
-  private readonly annotationKey = (fens = this.historyFens()): string => JSON.stringify(fens.slice(-3));
-  private runClassifier(input: ClassificationInput, generation: number): Promise<ClassificationResult> {
-    return new Promise((resolve, reject) => {
-      const worker = (this.classifier = new Worker(
-        site.asset.url(site.asset.jsModule('analyse.nosweatWorker')),
-        { type: 'module' },
-      ));
-      const stop = (error?: Error, result?: ClassificationResult) => {
-        worker.terminate();
-        if (this.classifier === worker) this.classifier = undefined;
-        clearTimeout(this.classifierTimer);
-        this.classifierCancel = undefined;
-        if (error) reject(error);
-        else resolve(result!);
-      };
-      this.classifierCancel = () => stop(new Error('Cancelled'));
-      this.classifierTimer = setTimeout(
-        () => stop(new Error('Capture search timed out; annotation unavailable')),
-        10000,
-      );
-      worker.onerror = () => stop(new Error('Classification worker failed'));
-      worker.onmessage = ({ data }) => {
-        if (!this.valid(generation)) {
-          stop(new Error('Cancelled'));
-          return;
-        }
-        stop(data.error ? new Error(data.error) : undefined, data.result);
-      };
-      worker.postMessage(input);
-    });
-  }
-  classifyMove = (): void => {
-    if (this.compareBusy) return;
-    const generation = this.generation;
-    const nodes = this.ctrl.nodeList.slice(-3);
-    if (nodes.length < 2) return;
-    this.compareBusy = true;
-    this.error = '';
-    this.status = 'Reviewing the move with Stockfish…';
-    this.ctrl.redraw();
-    (async () => {
-      const positions = nodes.map(n => n.fen);
-      const reviews: Review[] = [];
-      for (const fen of positions) reviews.push(await this.review(fen, generation));
-      const parent = position(positions[positions.length - 2]);
-      const move = parseUci(nodes[nodes.length - 1].uci!);
-      if (!move) throw new Error('Move unavailable');
-      this.status = 'Checking material and annotation evidence…';
-      this.ctrl.redraw();
-      const result = await this.runClassifier(
-        { positions, reviews, move: standardUci(parent, move) },
-        generation,
-      );
-      if (!this.valid(generation)) return;
-      this.annotations.set(this.annotationKey(positions), result);
-      this.compareBusy = false;
-      this.status = '';
-      this.ctrl.redraw();
-    })().catch(e => this.failure(e, generation));
-  };
   shapes(): DrawShape[] {
     if (!this.enabled || !this.ctrl.isCevalAllowed() || document.hidden || this.ctrl.threatMode()) return [];
     const lines = this.nativeLines();
@@ -717,7 +534,6 @@ export class NoSweatAnalysis {
       ]);
     };
     const played = this.played();
-    const annotation = this.annotations.get(this.annotationKey());
     return hl(
       'section.nosweat-candidate-panel',
       { attrs: { 'aria-label': 'Candidate moves and rating explorer' } },
@@ -791,17 +607,7 @@ export class NoSweatAnalysis {
                 this.allMoves = !this.allMoves;
                 this.ctrl.redraw();
               }),
-              button(
-                'Review this move',
-                this.classifyMove,
-                this.compareBusy || this.ctrl.nodeList.length < 2,
-              ),
             ]),
-            annotation &&
-              hl(
-                'p.nosweat-annotation',
-                `${this.ctrl.node.san ?? 'Move'}: ${annotation.symbol ? label[annotation.symbol] + ' (' + annotation.symbol + ')' : 'No special annotation'}. Accuracy ${annotation.accuracy.toFixed(1)}%.`,
-              ),
             hl(
               'details.nosweat-rating-explorer',
               {
