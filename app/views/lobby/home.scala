@@ -10,14 +10,6 @@ object home:
 
   def apply(homepage: Homepage)(using ctx: Context) =
     import homepage.*
-    val donateLink =
-      a(cls := "lobby__support-link", href := routes.Plan.index())(
-        iconTag(patronIconChar),
-        span(cls := "lobby__support-link__text")(
-          strong(trans.patron.donate()),
-          span(trans.patron.becomePatron())
-        )
-      )
     Page("")
       .copy(fullTitle = s"$siteName • ${trans.site.freeOnlineChess.txt()}".some)
       .i18n(_.variant)
@@ -134,9 +126,7 @@ object home:
               )
             )
           ),
-          div(cls := "lobby__support")(donateLink),
           div(cls := "lobby__tv")(
-            donateLink,
             featured.map(g => views.game.mini(Pov.naturalOrientation(g), tv = true))
           ),
           div(cls := "lobby__puzzle")(

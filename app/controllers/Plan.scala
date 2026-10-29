@@ -23,25 +23,31 @@ final class Plan(env: Env) extends LilaController(env):
   import lila.plan.logger
 
   def index(page: Int = 1) = Open:
-    pageHit
-    Reasonable(page):
-      if HTTPRequest.isXhr(req) then
-        Ok.snipAsync:
-          env.plan.api.paginator(page).map(views.plan.topPatrons)
-      else
-        ctx.me.foldUse(indexAnon): me ?=>
-          import lila.plan.PlanApi.SyncResult.*
-          env.plan.api
-            .sync(me)
-            .flatMap:
-              case ReloadUser => Redirect(routes.Plan.index())
-              case Synced(Some(patron), None, None) =>
-                env.user.repo.email(me).flatMap { email =>
-                  renderIndex(email, patron.some)
-                }
-              case Synced(Some(patron), Some(stripeCus), _) => indexStripePatron(patron, stripeCus)
-              case Synced(Some(_), _, Some(payPalSub)) => indexPayPalPatron(payPalSub)
-              case _ => indexFreeUser
+    if env.noSweat.enabled then
+      ctx.me
+        .fold(fuccess(Option.empty[String]))(u => env.noSweat.nostrPublicKey(u.value))
+        .flatMap: pubkey =>
+          Ok.page(views.noSweatPatron(pubkey)).map(_.withHeaders("Cache-Control" -> "no-store"))
+    else
+      pageHit
+      Reasonable(page):
+        if HTTPRequest.isXhr(req) then
+          Ok.snipAsync:
+            env.plan.api.paginator(page).map(views.plan.topPatrons)
+        else
+          ctx.me.foldUse(indexAnon): me ?=>
+            import lila.plan.PlanApi.SyncResult.*
+            env.plan.api
+              .sync(me)
+              .flatMap:
+                case ReloadUser => Redirect(routes.Plan.index())
+                case Synced(Some(patron), None, None) =>
+                  env.user.repo.email(me).flatMap { email =>
+                    renderIndex(email, patron.some)
+                  }
+                case Synced(Some(patron), Some(stripeCus), _) => indexStripePatron(patron, stripeCus)
+                case Synced(Some(_), _, Some(payPalSub)) => indexPayPalPatron(payPalSub)
+                case _ => indexFreeUser
 
   def list = Open:
     ctx.me.foldUse(Redirect(routes.Plan.index()).toFuccess): me ?=>

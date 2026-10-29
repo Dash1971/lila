@@ -345,6 +345,10 @@ GET   /$lang<\w\w\w?>/learn            controllers.Learn.indexLang(lang: Languag
 
 # Patron
 GET   /patron                          controllers.Plan.index(page: Int ?= 1)
+GET   /club/patron                     controllers.NoSweat.patronPage
+GET   /club/patron/pending              controllers.NoSweat.patronPending
+POST  /club/patron/invoice              controllers.NoSweat.patronInvoice
+POST  /club/patron/receipt              controllers.NoSweat.patronReceipt
 GET   /patron/thanks                   controllers.Plan.thanks
 GET   /patron/list                     controllers.Plan.list
 POST  /patron/style                    controllers.Plan.style

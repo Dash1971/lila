@@ -46,10 +46,14 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
       s"Bearer $token".getBytes(java.nio.charset.StandardCharsets.UTF_8)
     )
 
-  def adapter(path: String, body: JsValue): Fu[JsValue] =
+  def adapter(
+      path: String,
+      body: JsValue,
+      timeout: scala.concurrent.duration.FiniteDuration = 5.seconds
+  ): Fu[JsValue] =
     ws.url(s"$adapterUrl$path")
       .withHttpHeaders("Authorization" -> s"Bearer $token", "Content-Type" -> "application/json")
-      .withRequestTimeout(5.seconds)
+      .withRequestTimeout(timeout)
       .post(Json.stringify(body))
       .map: response =>
         val result = Json.parse(response.body)
@@ -59,6 +63,93 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
             (result \ "error").asOpt[String].getOrElse("Adapter unavailable")
           )
         result
+
+  private val donations = env.mongo.mainDb(CollName("nosweat_donation"))
+
+  def nostrPublicKey(user: UserModel): Fu[Option[String]] =
+    env.user.repo.withColl(_.byId[Bdoc](user.id)).map(_.flatMap(_.getAsOpt[String]("nostr")))
+
+  def patronPending(user: UserModel): Fu[JsValue] =
+    donations
+      .find(bdoc("userId" -> user.id, "paid" -> false, "expiresAt" -> bdoc("$gt" -> nowInstant)))
+      .sort(sort.desc("createdAt"))
+      .cursor[Bdoc]()
+      .list(5)
+      .map: docs =>
+        Json.toJson(docs.flatMap(_.getAsOpt[String]("invoice")))
+
+  def patronInvoice(user: UserModel, data: JsValue): Fu[JsValue] =
+    for
+      pubkey <- nostrPublicKey(user)
+      _ = requireThat(
+        pubkey.contains((data \ "request" \ "pubkey").as[String]),
+        403,
+        "Sign with this account’s Nostr key"
+      )
+      now = System.currentTimeMillis()
+      _ <- identityUpdate(
+        bdoc(
+          "_id" -> user.id,
+          "$or" -> List(
+            bdoc("nosweatInvoiceWindow" -> bdoc("$lt" -> (now - 60000))),
+            bdoc("nosweatInvoiceWindow" -> bdoc("$exists" -> false))
+          )
+        ),
+        bdoc("$set" -> bdoc("nosweatInvoiceWindow" -> now, "nosweatInvoiceAttempts" -> 0))
+      )
+      allowed <- identityUpdate(
+        bdoc("_id" -> user.id, "nosweatInvoiceAttempts" -> bdoc("$lt" -> 5)),
+        bdoc("$inc" -> bdoc("nosweatInvoiceAttempts" -> 1))
+      )
+      _ = requireThat(allowed, 429, "Please wait a minute before creating another invoice")
+      result <- adapter("/patron/invoice", data, 20.seconds)
+      _ = requireThat(pubkey.contains((result \ "donor").as[String]), 403, "Wrong payment sender")
+      createdAt = java.time.Instant.ofEpochSecond((result \ "createdAt").as[Long])
+      _ <- donations.insert.one(
+        bdoc(
+          "_id" -> (result \ "paymentHash").as[String],
+          "userId" -> user.id,
+          "invoice" -> (result \ "invoice").as[String],
+          "donor" -> (result \ "donor").as[String],
+          "requestId" -> (result \ "requestId").as[String],
+          "createdAt" -> createdAt,
+          "expiresAt" -> createdAt.plusSeconds((result \ "expiresIn").as[Long]),
+          "paid" -> false
+        )
+      )
+    yield result
+
+  def patronReceipt(user: UserModel, data: JsValue): Fu[JsValue] =
+    for
+      checked <- adapter("/patron/receipt", data)
+      pubkey <- nostrPublicKey(user)
+      _ = requireThat(
+        pubkey.contains((checked \ "donor").as[String]),
+        403,
+        "This donation belongs to another account"
+      )
+      payment = (checked \ "paymentHash").as[String]
+      recorded <- donations.byId[Bdoc](payment)
+      doc = recorded.getOrElse(
+        throw NoSweatError(
+          400,
+          "No matching donation invoice. Create an invoice on this page for patron wings."
+        )
+      )
+      _ = requireThat(
+        doc.getAsOpt[UserId]("userId").contains(user.id) &&
+          doc.getAsOpt[String]("invoice").contains((checked \ "invoice").as[String]) &&
+          doc.getAsOpt[String]("requestId").contains((checked \ "requestId").as[String]),
+        400,
+        "Receipt does not match this donation"
+      )
+      until = java.time.Instant.ofEpochSecond((checked \ "paidAt").as[Long]).plusSeconds(30L * 86400)
+      _ <- env.plan.api.grantNoSweatZap(user, until)
+      _ <- donations.update.one(
+        bid(payment),
+        set("paid" -> true, "receiptId" -> (checked \ "receiptId").as[String], "patronUntil" -> until)
+      )
+    yield Json.obj("confirmed" -> true, "until" -> until.toString)
 
   private def initialize(): Funit =
     roster

@@ -1,0 +1,16 @@
+@import '../../../lib/css/plugin';
+@import '../../../lib/css/form/form3';
+
+#nostr-patron {
+  width: 100%;
+  max-width: 40em;
+  height: min-content;
+  margin: 0 auto;
+  border: $border;
+
+  .qrcode {
+    display: block;
+    max-width: 100%;
+    margin: 1em auto;
+  }
+}

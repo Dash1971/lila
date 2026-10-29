@@ -73,6 +73,28 @@ final class NoSweat(env: Env) extends LilaController(env):
           s + (env.security.api.sessionIdKey -> session.value)
         })
 
+  def patronPage = Open:
+    handle:
+      ctx.me
+        .fold(fuccess(Option.empty[String]))(u => club.nostrPublicKey(u.value))
+        .flatMap: pubkey =>
+          Ok.page(views.noSweatPatron(pubkey))
+
+  def patronPending = Auth: context ?=>
+    me ?=> handle(club.patronPending(me.value).map(Ok(_)))
+
+  def patronInvoice = AuthBody(parse.tolerantText(8192)): context ?=>
+    me ?=>
+      handle:
+        sameOrigin
+        club.patronInvoice(me.value, Json.parse(context.body.body)).map(Ok(_))
+
+  def patronReceipt = AuthBody(parse.tolerantText(16384)): context ?=>
+    me ?=>
+      handle:
+        sameOrigin
+        club.patronReceipt(me.value, Json.parse(context.body.body)).map(Ok(_))
+
   def securityPage = Auth: context ?=>
     me ?=> handle(Ok.page(views.noSweatSecurity(me.value)))
 

@@ -560,6 +560,23 @@ final class PlanApi(
   private[plan] def freeMonths(userStr: String, nbMonths: Int): Funit =
     userApi.byId(UserStr(userStr)).flatMapz(freeMonths(_, nbMonths))
 
+  // Only called after a wallet-signed receipt matches a server-issued invoice.
+  // Fixed paid-at expiry and $max make retries/crash recovery idempotent.
+  def grantNoSweatZap(user: User, until: Instant): Funit =
+    if user.plan.lifetime then funit
+    else
+      for
+        _ <- mongo.patron.update.one(
+          bid(user.id),
+          bdoc(
+            "$set" -> bdoc("free" -> Patron.Free(nowInstant, by = none)),
+            "$max" -> bdoc("expiresAt" -> until)
+          ),
+          upsert = true
+        )
+        _ <- setDbUserPlan(user.mapPlan(_.enable))
+      yield ()
+
   def freeMonths(user: User, nbMonths: Int): Funit =
     for _ <- mongo.patron.update
         .one(
