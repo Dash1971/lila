@@ -75,3 +75,17 @@ cg-board square.nosweat-premove-dest { background:rgb(20 30 85 / .28); }
 .nosweat-maia-line { flex-wrap:wrap; column-gap:.5em; row-gap:0; }
 .nosweat-maia-line > span:first-of-type { flex:1; min-width:0; }
 .nosweat-maia-line .nosweat-maia-score { flex-basis:100%; margin-left:4em; font-size:.9em; color:var(--c-font-dim); }
+
+/* Keep the entry page focused on choosing a time control. */
+.lobby.mutechess-play { width:100%; max-width:64em; margin-inline:auto; grid-template-columns:minmax(0,1fr); grid-template-rows:auto; grid-template-areas:'app' 'about'; }
+.mutechess-play .lobby__table { display:contents; }
+.mutechess-play .lobby__about { margin-top:1.5em; justify-content:center; }
+.nosweat-rating-explorer h3 { margin:.8em 0 .4em; font-size:1.1em; }
+.nosweat-rating-chart svg { width:100%; display:block; overflow:visible; }
+.nosweat-chart-legend { justify-content:flex-end; gap:.5em; }
+.nosweat-chart-legend .fbt { padding:.15em .3em; }
+.nosweat-rating-chart [role=button]:focus-visible { outline:2px solid currentColor; }
+.nosweat-rating-explorer details { margin-top:.5em; }
+.mutechess-info { max-width:52em; margin-inline:auto; line-height:1.7; overflow-wrap:anywhere; }
+.mutechess-info nav { display:flex; flex-wrap:wrap; gap:1em; margin-bottom:1.5em; }
+.mutechess-info h2 { margin-top:1.5em; }

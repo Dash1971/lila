@@ -7,7 +7,7 @@ import lila.core.perf.UserWithPerfs
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
-final class RelationUi(helpers: Helpers):
+final class RelationUi(helpers: Helpers, focused: Boolean = false):
   import helpers.{ *, given }
 
   def mini(
@@ -51,7 +51,7 @@ final class RelationUi(helpers: Helpers):
   )(using ctx: Context) =
     val blocks = relation.contains(Relation.Block)
     List(
-      (ctx.isnt(user) && !blocked && !blocks).option(
+      (ctx.isnt(user) && !blocked && !blocks && !user.isBot).option(
         MenuItem(
           trans.challenge.challengeToPlay.txt(),
           Icon.Swords,
@@ -92,7 +92,7 @@ final class RelationUi(helpers: Helpers):
                 Some("relation-button")
               )
             ,
-            (messageable && !blocked && !blocks && !user.isBot).option(
+            (messageable && !blocked && !blocks && !user.isBot && !focused).option(
               MenuItem(
                 trans.site.composeMessage.txt(),
                 Icon.BubbleSpeech,
@@ -100,7 +100,7 @@ final class RelationUi(helpers: Helpers):
                 Some("relation")
               )
             ),
-            (!blocked && !blocks && !user.isPatron).option:
+            (!blocked && !blocks && !user.isPatron && !focused).option:
               val url = if me.isPatron then routes.Plan.list else routes.Plan.index()
               MenuItem(
                 trans.patron.giftPatronWingsShort.txt(),

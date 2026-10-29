@@ -177,7 +177,7 @@ export default class SetupController {
     friendUser?: string,
   ) => {
     this.root.leavePool();
-    this.gameType = this.root.opts.noSweat ? 'hook' : gameType;
+    this.gameType = this.root.opts.noSweat && !(gameType === 'friend' && friendUser) ? 'hook' : gameType;
     this.loading = false;
     this.fenError = false;
     this.lastValidFen = '';
@@ -293,7 +293,7 @@ export default class SetupController {
   minimumTimeIfReal = () => (this.gameType === 'ai' && this.variant() === 'fromPosition' ? 1 : 0);
 
   submit = async () => {
-    if (this.root.opts.noSweat) {
+    if (this.root.opts.noSweat && this.gameType !== 'friend') {
       this.loading = true;
       this.root.redraw();
       await this.root.matchMaia({

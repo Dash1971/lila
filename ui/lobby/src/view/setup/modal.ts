@@ -15,7 +15,7 @@ export default function setupModal(ctrl: LobbyController): VNode[] | null {
   const { setupCtrl } = ctrl;
   if (!setupCtrl.gameType) return null;
   const buttonText = {
-    hook: i18n.site.createLobbyGame,
+    hook: ctrl.opts.noSweat ? i18n.site.play : i18n.site.createLobbyGame,
     friend: setupCtrl.friendUser ? i18n.site.challengeX(setupCtrl.friendUser) : i18n.site.challengeAFriend,
     ai: i18n.site.playAgainstComputer,
   }[setupCtrl.gameType];
@@ -66,8 +66,8 @@ const views = {
     colorButtons(ctrl.setupCtrl),
   ],
   friend: (ctrl: LobbyController): LooseVNodes => [
-    variantPicker(ctrl.setupCtrl),
-    fenInput(ctrl.setupCtrl),
+    !ctrl.opts.noSweat && variantPicker(ctrl.setupCtrl),
+    !ctrl.opts.noSweat && fenInput(ctrl.setupCtrl),
     timePickerAndSliders(ctrl.setupCtrl.timeControl, 0),
     gameModeButtons(ctrl),
     colorButtons(ctrl.setupCtrl),

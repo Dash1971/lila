@@ -10,8 +10,9 @@ final class NoSweat(env: Env) extends LilaController(env):
   private val club = env.noSweat
   private def handle(f: => Fu[Result]): Fu[Result] =
     def error(e: Throwable): Result = e match
-      case NoSweatError(status, reason) =>
-        Status(status)(Json.obj("error" -> reason)).withHeaders("Cache-Control" -> "no-store")
+      case NoSweatError(status, reason, code) =>
+        Status(status)(Json.obj("error" -> reason) ++ code.fold(Json.obj())(c => Json.obj("code" -> c)))
+          .withHeaders("Cache-Control" -> "no-store")
       case _: JsResultException => BadRequest(Json.obj("error" -> "Invalid request"))
       case _ =>
         lila.log("nosweat").error("Club adapter request failed", e)
@@ -28,6 +29,9 @@ final class NoSweat(env: Env) extends LilaController(env):
   private def internal(using req: RequestHeader): Unit =
     if !club.internalAuthorized(req.headers.get("Authorization")) then
       throw NoSweatError(403, "Private adapter authentication required")
+
+  def info(key: String) = Open:
+    if club.enabled then Ok.page(views.noSweatInfo(key)) else fuccess(NotFound)
 
   def home = Open:
     fuccess(Redirect("/"))

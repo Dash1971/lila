@@ -23,7 +23,9 @@ final class HttpRequestHandler(
     then Some(controllerComponents.actionBuilder(_ => Results.NotFound))
     else if noSweatEnabled && request.method == "POST" &&
       (request.path == "/login" || request.path.startsWith("/signup") ||
-        request.path.startsWith("/setup/") || request.path.startsWith("/api/challenge") ||
+        (request.path.startsWith("/setup/") && request.path != "/setup/friend") || request.path.startsWith(
+          "/api/challenge"
+        ) ||
         request.path == "/api/bot/account/upgrade")
     then
       Some(

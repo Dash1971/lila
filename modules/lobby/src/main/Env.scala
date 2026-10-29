@@ -6,6 +6,7 @@ import lila.core.config.*
 
 @Module
 final class Env(
+    appConfig: play.api.Configuration,
     db: lila.db.Db,
     onStart: lila.core.game.OnStart,
     relationApi: lila.core.relation.RelationApi,
@@ -47,5 +48,7 @@ final class Env(
   wire[AbortListener]
 
   private lazy val biter = wire[Biter]
+
+  private val publicMatchmaking = !appConfig.getOptional[Boolean]("nosweat.enabled").getOrElse(false)
 
   val socket = wire[LobbySocket]

@@ -1,12 +1,92 @@
 @import '../../../lib/css/plugin';
-@import '../../../lib/css/form/form3';
 
 #nostr-patron {
-  width: 100%;
-  max-width: 40em;
+  width: min(100%, 34em);
   height: min-content;
   margin: 0 auto;
   border: $border;
+  line-height: 1.6;
+
+  .patron-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1em;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.8em;
+    line-height: 1.25;
+  }
+
+  p {
+    margin: 1em 0;
+  }
+
+  .patron-close {
+    flex: none;
+    font-size: 1.3em;
+    padding: 0.2em 0.4em;
+  }
+
+  .patron-intro {
+    color: $c-font-dim;
+  }
+
+  .patron-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 7em;
+    gap: 1em;
+    margin: 1.4em 0;
+  }
+
+  .patron-field {
+    display: grid;
+    gap: 0.4em;
+  }
+
+  input,
+  select {
+    width: 100%;
+    min-width: 0;
+    padding: 0.65em;
+    background: $c-bg-box;
+    color: $c-font;
+    border: $border;
+    border-radius: 3px;
+    font-size: 1em;
+  }
+
+  .patron-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7em;
+  }
+
+  .patron-note {
+    color: $c-font-dim;
+    font-size: 0.9em;
+  }
+
+  .patron-direct {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6em;
+    padding-top: 1em;
+    border-top: $border;
+    overflow-wrap: anywhere;
+  }
+
+  #patron-status:empty,
+  #patron-quote:empty {
+    display: none;
+  }
+
+  #patron-payment {
+    text-align: center;
+    margin: 1.5em 0;
+  }
 
   .qrcode {
     display: block;

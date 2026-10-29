@@ -10,7 +10,7 @@ import lila.web.ui.bits.splitNumber
 
 object header:
 
-  private val actionMenu = lila.user.ui.UserActionMenu(helpers)
+  private val actionMenu = lila.user.ui.UserActionMenu(helpers, env.noSweat.enabled)
 
   private val dataToints = attr("data-toints")
   private val dataTab = attr("data-tab")

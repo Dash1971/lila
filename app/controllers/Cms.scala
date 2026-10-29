@@ -56,7 +56,11 @@ final class Cms(env: Env) extends LilaController(env):
   // pages
 
   val help = menuPage(CmsPageKey("help"))
-  val tos = menuPage(CmsPageKey("tos"))
+  val tos =
+    if env.noSweat.enabled then
+      Open:
+        Ok.page(views.noSweatInfo("terms-of-service"))
+    else menuPage(CmsPageKey("tos"))
 
   def lonePage(key: CmsPageKey) = Open:
     orCreateOrNotFound(key): page =>

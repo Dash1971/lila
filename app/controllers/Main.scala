@@ -83,11 +83,11 @@ final class Main(env: Env, assetsC: ExternalAssets) extends LilaController(env):
 
   def contact = Open:
     pageHit
-    Ok.page(views.site.page.contact)
+    Ok.page(if env.noSweat.enabled then views.noSweatInfo("contact") else views.site.page.contact)
 
   def faq = Open:
     pageHit
-    Ok.page(views.site.page.faq)
+    Ok.page(if env.noSweat.enabled then views.noSweatInfo("faq") else views.site.page.faq)
 
   def survey = Open:
     pageHit

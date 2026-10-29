@@ -138,6 +138,8 @@ export default class LobbyController {
       history.replaceState(null, '', '/');
     }
 
+    if (opts.noSweat && this.tab !== 'now_playing') this.tab = 'pools';
+
     this.poolInStorage = storage.make('lobby.pool-in');
     this.poolInStorage.listen(_ => {
       // when another tab joins a pool
@@ -212,6 +214,7 @@ export default class LobbyController {
   private readonly flushHooksSchedule = () => setTimeout(this.flushHooks, 8000);
 
   setTab = (tab: Tab) => {
+    if (this.opts.noSweat && tab !== 'now_playing') tab = 'pools';
     if (tab !== this.tab) {
       if (tab === 'seeks') this.fetchSeeks();
       else if (tab === 'real_time') this.socket.realTimeIn();
@@ -382,7 +385,8 @@ export default class LobbyController {
       if (range) member.range = range;
       if (match) {
         this.setTab('pools');
-        if (this.me) this.enterPool(member);
+        if (this.opts.noSweat) this.clickPool(member.id);
+        else if (this.me) this.enterPool(member);
         else setTimeout(() => this.clickPool(member.id), 1500);
         history.replaceState(null, '', '/');
       }

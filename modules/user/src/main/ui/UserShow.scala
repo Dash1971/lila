@@ -6,7 +6,7 @@ import lila.core.user.Flag
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
-final class UserShow(helpers: Helpers, bits: UserBits):
+final class UserShow(helpers: Helpers, bits: UserBits, focused: Boolean = false):
   import helpers.{ *, given }
 
   def mini(
@@ -49,25 +49,31 @@ final class UserShow(helpers: Helpers, bits: UserBits):
         frag(
           (myId.isnt(u.id) && u.enabled.yes).option(
             div(cls := "upt__actions btn-rack")(
-              a(
-                dataIcon := Icon.AnalogTv,
-                cls := "btn-rack__btn",
-                title := trans.site.watchGames.txt(),
-                href := routes.User.tv(u.username)
+              (!focused).option(
+                a(
+                  dataIcon := Icon.AnalogTv,
+                  cls := "btn-rack__btn",
+                  title := trans.site.watchGames.txt(),
+                  href := routes.User.tv(u.username)
+                )
               ),
               (!blocked).option(
                 frag(
-                  a(
-                    dataIcon := Icon.BubbleSpeech,
-                    cls := "btn-rack__btn",
-                    title := trans.site.chat.txt(),
-                    href := routes.Msg.convo(u.username)
+                  (!focused).option(
+                    a(
+                      dataIcon := Icon.BubbleSpeech,
+                      cls := "btn-rack__btn",
+                      title := trans.site.chat.txt(),
+                      href := routes.Msg.convo(u.username)
+                    )
                   ),
-                  a(
-                    dataIcon := Icon.Swords,
-                    cls := "btn-rack__btn",
-                    title := trans.challenge.challengeToPlay.txt(),
-                    href := s"${routes.Lobby.home}?user=${u.username}#friend"
+                  (!u.user.isBot).option(
+                    a(
+                      dataIcon := Icon.Swords,
+                      cls := "btn-rack__btn",
+                      title := trans.challenge.challengeToPlay.txt(),
+                      href := s"${routes.Lobby.home}?user=${u.username}#friend"
+                    )
                   )
                 )
               ),

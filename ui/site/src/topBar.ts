@@ -56,7 +56,7 @@ export default function () {
     return false;
   });
 
-  {
+  if (document.getElementById('challenge-toggle')) {
     // challengeApp
     let instance: Promise<any> | undefined;
     const $toggle = $('#challenge-toggle');
@@ -91,7 +91,7 @@ export default function () {
     pubsub.on('challenge-app.open', () => $toggle.trigger('click'));
   }
 
-  {
+  if (document.getElementById('notify-toggle')) {
     // notifyApp
     let instance: Promise<any> | undefined;
     const $toggle = $('#notify-toggle');

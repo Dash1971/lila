@@ -38,7 +38,7 @@ final class CategUi(helpers: Helpers, bits: ForumBits):
       topics: Paginator[TopicView],
       canWrite: Boolean,
       stickyPosts: List[TopicView]
-  )(using Context) =
+  )(using ctx: Context) =
 
     def showTopic(sticky: Boolean)(topic: TopicView) =
       tr(cls := List("sticky" -> sticky))(
@@ -93,6 +93,12 @@ final class CategUi(helpers: Helpers, bits: ForumBits):
                   dataIcon := Icon.Pencil
                 )(trans.site.createANewTopic())
               )
+            )
+          ),
+          Option.unless(canWrite)(
+            p(cls := "box-pad forum-posting-help")(
+              if ctx.isAuth then frag("Posting opens after one completed game and two days on your account.")
+              else frag(a(href := "/login?referrer=/forum")("Sign in with Nostr"), " to post.")
             )
           ),
           table(cls := "topics slist slist-pad")(

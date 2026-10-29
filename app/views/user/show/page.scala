@@ -9,7 +9,7 @@ import lila.core.data.SafeJsonStr
 import lila.game.GameFilter
 import lila.rating.UserWithPerfs.titleUsernameWithBestRating
 
-lazy val ui = lila.user.ui.UserShow(helpers, bits)
+lazy val ui = lila.user.ui.UserShow(helpers, bits, env.noSweat.enabled)
 
 object page:
 

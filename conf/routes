@@ -1,5 +1,8 @@
 # Run `./lila.sh playRoutes` after modifying this file
 
+# Mute Chess information
+GET /$key<about|faq|contact|terms-of-service|privacy> controllers.NoSweat.info(key)
+
 # Lobby
 GET   /club                            controllers.NoSweat.home
 GET   /club/me                         controllers.NoSweat.me

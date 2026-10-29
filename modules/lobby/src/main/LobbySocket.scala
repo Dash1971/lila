@@ -24,7 +24,8 @@ final class LobbySocket(
     lobby: LobbySyncActor,
     relationApi: lila.core.relation.RelationApi,
     poolApi: lila.core.pool.PoolApi,
-    userTrustApi: UserTrustApi
+    userTrustApi: UserTrustApi,
+    publicMatchmaking: Boolean
 )(using ec: Executor, scheduler: Scheduler)(using lila.core.config.RateLimit):
 
   import LobbySocket.*
@@ -156,6 +157,7 @@ final class LobbySocket(
     poolLimitPerSri.zero[Unit](k = member.sri.value, cost = cost, msg = msg)
 
   private[lobby] def controller(member: Member): SocketController =
+    case ("poolIn" | "join" | "joinSeek" | "hookIn", _) if !publicMatchmaking => ()
     case ("join", o) if !member.bot =>
       HookPoolLimit(
         member,

@@ -12,7 +12,8 @@ import lila.core.perf.PerfKey
 import lila.db.dsl.{ *, given }
 import lila.user.BSONFields as UserFields
 
-final case class NoSweatError(status: Int, reason: String) extends RuntimeException(reason)
+final case class NoSweatError(status: Int, reason: String, code: Option[String] = None)
+    extends RuntimeException(reason)
 
 /** Identity and bot admission adapters. Round state remains authoritative in Lila. */
 final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor):
@@ -318,7 +319,8 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
     import lila.user.TotpSecret.totp
     user.totpSecret.fold(funit): secret =>
       val token = submitted.getOrElse("").trim
-      if token.isEmpty then fufail(NoSweatError(401, "Enter your authenticator or recovery code"))
+      if token.isEmpty then
+        fufail(NoSweatError(401, "Enter your authenticator or recovery code", Some("two_factor_required")))
       else
         factorRateLimit(user).flatMap: _ =>
           val period = System.currentTimeMillis() / 30000
@@ -568,6 +570,12 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
                   "botToMove" -> game.player.userId.contains(bot),
                   "botColor" -> game.player(bot).get.color.name,
                   "policy" -> Json.parse(doc.getAsOpt[String]("snapshot").get),
+                  "clock" -> game.clock.map(c =>
+                    Json.obj(
+                      "initial" -> c.config.limitSeconds.value,
+                      "increment" -> c.config.incrementSeconds.value
+                    )
+                  ),
                   "state" -> state
                 )
           .map(Json.toJson(_))

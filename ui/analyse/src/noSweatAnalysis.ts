@@ -24,6 +24,7 @@ import {
 import { reviewClick } from './noSweatEvents';
 import { ReviewFish, type Review } from './noSweatFish';
 import { readEnginePreferences, type EnginePreferences } from './noSweatPreferences';
+import { ratingSamples as samples, ratingChart } from './noSweatRatingChart';
 
 interface MaiaClient {
   predict(input: {
@@ -48,7 +49,6 @@ interface Scored {
   depth: number;
 }
 const ratings = Array.from({ length: 21 }, (_, i) => 600 + i * 100);
-const samples = [600, 1100, 1600, 2100, 2600];
 export class NoSweatAnalysis {
   enabled = false;
   model = '5m';
@@ -64,7 +64,18 @@ export class NoSweatAnalysis {
   maiaArrows = true;
   fishArrows = true;
   allMoves = false;
-  ratingTable = false;
+  ratingTable = true;
+  private ratingContext = '';
+  private ratingKey(): string {
+    return JSON.stringify([
+      this.model,
+      this.config?.models[this.model].sha256,
+      this.opponentElo,
+      this.history,
+      this.history ? this.historyFens().slice(-8) : this.historyFens().slice(-1),
+      this.ctrl.path,
+    ]);
+  }
   status = '';
   error = '';
   candidates: Candidate[] = [];
@@ -213,7 +224,9 @@ export class NoSweatAnalysis {
     this.secondaryCandidates = [];
     this.expectedScore = this.secondaryExpectedScore = undefined;
     this.scores.clear();
-    this.byRating.clear();
+    const ratingContext = this.ratingKey();
+    if (ratingContext !== this.ratingContext) this.byRating.clear();
+    this.ratingContext = ratingContext;
     this.fishBest = undefined;
     this.ctrl.setAutoShapes();
     this.error = '';
@@ -315,11 +328,12 @@ export class NoSweatAnalysis {
     this.secondaryCandidates = results[1]?.status === 'fulfilled' ? results[1].value.candidates : [];
     this.secondaryExpectedScore = results[1]?.status === 'fulfilled' ? results[1].value.score : undefined;
     this.error = results.some(r => r.status === 'rejected')
-      ? 'A Maia channel is unavailable. Try pausing and enabling analysis again.'
+      ? 'Maia is unavailable. Turn analysis off and on to retry.'
       : '';
     this.status = '';
     this.ctrl.setAutoShapes();
     this.ctrl.redraw();
+    if (this.ratingTable && this.candidates.length && this.sideRedraw) this.sampleRatings();
   }
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
@@ -437,7 +451,11 @@ export class NoSweatAnalysis {
     })().catch(e => this.failure(e, generation));
   };
   sampleRatings = (): void => {
-    if (this.compareBusy) return;
+    if (this.compareBusy || !this.enabled || !this.analysisAllowed()) return;
+    const context = this.ratingKey();
+    if (context !== this.ratingContext) this.byRating.clear();
+    this.ratingContext = context;
+    if (this.byRating.size === samples.length) return;
     this.compareBusy = true;
     const generation = this.generation;
     const fens = this.historyFens();
@@ -445,13 +463,16 @@ export class NoSweatAnalysis {
     this.error = '';
     (async () => {
       for (const rating of samples) {
-        this.status = 'Sampling Maia ' + rating + '…';
+        if (!this.valid(generation) || !this.ratingTable) break;
+        if (this.byRating.has(rating)) continue;
+        this.status = 'Loading rating chart…';
         this.ctrl.redraw();
         const result = await this.predict(fens, rating, generation);
         if (!this.valid(generation)) return;
         this.byRating.set(rating, result.candidates);
         this.ctrl.redraw();
       }
+      if (!this.valid(generation)) return;
       this.status = '';
       this.compareBusy = false;
       this.ctrl.redraw();
@@ -502,7 +523,7 @@ export class NoSweatAnalysis {
             : position(this.ctrl.node.fen).isEnd()
               ? 'No legal moves'
               : !this.enabled
-                ? 'Paused'
+                ? 'Off'
                 : this.status
                   ? 'Analyzing…'
                   : 'Unavailable',
@@ -570,12 +591,8 @@ export class NoSweatAnalysis {
       'section.nosweat-candidate-panel',
       { attrs: { 'aria-label': 'Candidate moves and rating explorer' } },
       [
-        hl('div.nosweat-panel-heading', [
-          hl('h2', 'Candidate moves'),
-          button(this.enabled ? 'Pause' : 'Enable analysis', () => this.ctrl.cevalEnabled(!this.enabled)),
-        ]),
+        hl('div.nosweat-panel-heading', [hl('h2', 'Candidate moves')]),
         hl('div.nosweat-rating-inputs', [rating(false), this.secondMaiaEnabled && rating(true)]),
-        hl('small.nosweat-panel-note', 'Maia: move likelihood · SF: White’s evaluation'),
         this.returnPath !== undefined && hl('small', 'Selected: ' + (this.ctrl.node.san ?? 'position')),
         this.returnPath !== undefined &&
           button('Return to original position', () => {
@@ -643,29 +660,20 @@ export class NoSweatAnalysis {
             hl(
               'details.nosweat-rating-explorer',
               {
+                attrs: { open: this.ratingTable },
                 hook: {
                   insert: vnode => {
                     (vnode.elm as HTMLDetailsElement).ontoggle = event => {
                       this.ratingTable = (event.target as HTMLDetailsElement).open;
+                      if (this.ratingTable && this.candidates.length) this.sampleRatings();
                     };
                   },
                 },
               },
               [
-                hl('summary', 'Moves by rating'),
-                hl(
-                  'small',
-                  'Mover input 600–2600; opponent stays ' +
-                    this.opponentElo +
-                    '. Model inputs are not calibrated Elo.',
-                ),
-                button(
-                  this.byRating.size ? 'Refresh rating samples' : 'Sample ratings',
-                  this.sampleRatings,
-                  this.compareBusy || !this.candidates.length,
-                ),
-                this.byRating.size > 0 && this.renderRatingChart(),
-                this.byRating.size > 0 && this.renderRatings(),
+                hl('summary', 'Moves by Rating'),
+                this.renderRatingChart(),
+                hl('details', [hl('summary', 'Move probabilities'), this.renderRatings()]),
               ],
             ),
             this.status && hl('p', { attrs: { role: 'status' } }, this.status),
@@ -685,109 +693,19 @@ export class NoSweatAnalysis {
     this.ctrl.redraw();
   }
   private renderRatingChart(): VNode {
-    const moves = this.ratingMoves().slice(0, 5);
-    const colors = ['#e89b3c', '#e85d68', '#3d9be9', '#8bc34a', '#b49be6'];
-    const max = Math.max(
-      0.1,
-      ...[...this.byRating.values()].flatMap(values =>
-        values.filter(c => moves.includes(c.uci)).map(c => c.probability),
-      ),
+    return ratingChart(
+      this.byRating,
+      uci => san(this.ctrl.node.fen, uci),
+      rating => this.chooseRating(rating, false, true),
+      uci => this.preview(uci),
     );
-    return hl('div.nosweat-rating-chart', [
-      hl(
-        'svg',
-        {
-          attrs: {
-            viewBox: '0 0 240 125',
-            role: 'img',
-            'aria-label': 'Maia move likelihood by rating; exact values in the table below',
-          },
-        },
-        [
-          hl('line', { attrs: { x1: 30, y1: 90, x2: 230, y2: 90, stroke: 'currentColor', opacity: 0.3 } }),
-          ...moves.map((uci, index) =>
-            hl('polyline', {
-              attrs: {
-                fill: 'none',
-                stroke: colors[index],
-                'stroke-width': 2,
-                points: samples
-                  .flatMap((n, i) => {
-                    const p = this.byRating.get(n)?.find(c => c.uci === uci)?.probability;
-                    return p === undefined ? [] : [`${30 + i * 50},${90 - (p / max) * 75}`];
-                  })
-                  .join(' '),
-              },
-            }),
-          ),
-          hl(
-            'text',
-            { attrs: { x: 0, y: 14, fill: 'currentColor', 'font-size': 9 } },
-            (max * 100).toFixed(0) + '%',
-          ),
-          hl('text', { attrs: { x: 0, y: 93, fill: 'currentColor', 'font-size': 9 } }, '0%'),
-          ...moves.flatMap((uci, index) =>
-            samples.flatMap((rating, i) => {
-              const probability = this.byRating.get(rating)?.find(c => c.uci === uci)?.probability;
-              return probability === undefined
-                ? []
-                : [
-                    hl(
-                      'a',
-                      {
-                        attrs: {
-                          href: '#',
-                          'aria-label': `${san(this.ctrl.node.fen, uci)} at Maia ${rating}: ${(probability * 100).toFixed(1)}%`,
-                        },
-                        hook: reviewClick(event => {
-                          event.preventDefault();
-                          this.chooseRating(rating, false, true);
-                        }),
-                      },
-                      [
-                        hl('circle', {
-                          attrs: {
-                            cx: 30 + i * 50,
-                            cy: 90 - (probability / max) * 75,
-                            r: 3,
-                            fill: colors[index],
-                          },
-                        }),
-                      ],
-                    ),
-                  ];
-            }),
-          ),
-          hl('text', { attrs: { x: 30, y: 106, fill: 'currentColor', 'font-size': 10 } }, '600'),
-          hl('text', { attrs: { x: 205, y: 106, fill: 'currentColor', 'font-size': 10 } }, '2600'),
-        ],
-      ),
-      hl(
-        'div.nosweat-chart-legend',
-        moves.map((uci, i) =>
-          hl(
-            'button.fbt',
-            {
-              attrs: { style: 'color:' + colors[i], type: 'button' },
-              hook: reviewClick(() => this.preview(uci)),
-            },
-            san(this.ctrl.node.fen, uci),
-          ),
-        ),
-      ),
-    ]);
-  }
-  private ratingMoves(): string[] {
-    const moves = new Set(this.rows().map(c => c.uci));
-    for (const values of this.byRating.values()) for (const c of values.slice(0, 3)) moves.add(c.uci);
-    return [...moves];
   }
   private renderRatings(): VNode {
     const moves = new Set(this.rows().map(c => c.uci));
     for (const values of this.byRating.values()) for (const c of values.slice(0, 3)) moves.add(c.uci);
     return hl('div.nosweat-rating-scroll', [
       hl('table.nosweat-ratings', [
-        hl('caption', 'Moves by rating — opponent input stays ' + this.opponentElo),
+        hl('caption', 'Move probabilities'),
         hl('thead', [
           hl('tr', [
             hl('th', 'Move'),

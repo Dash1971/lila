@@ -72,6 +72,21 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
   <div id="notify-app" class="dropdown"></div>
 </div>"""
 
+  private def challengeNotifications(challenges: Int)(using Translate) =
+    div(
+      button(id := "challenge-toggle", cls := "toggle link", tpe := "button")(
+        span(
+          title := trans.challenge.challengesX.txt(challenges),
+          role := "status",
+          aria.label := trans.challenge.challengesX.txt(challenges),
+          cls := "data-count",
+          dataCount := challenges,
+          dataIcon := Icon.Swords
+        )
+      ),
+      div(id := "challenge-app", cls := "dropdown")
+    )
+
   private def friendBox(using Translate) =
     val titleTxt = trans.site.friends.txt()
     div(id := "friend_box")(
@@ -127,7 +142,7 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
 
   val favicons = raw:
     if isMuteChess then
-      """<link rel="alternate icon" type="image/png" href="/assets/nosweat/favicon-32.png?v=quiet-signal1"><link id="favicon" rel="icon" type="image/svg+xml" href="/assets/nosweat/favicon.svg?v=quiet-signal1"><link rel="stylesheet" href="/assets/nosweat/brand.css?v=channels1"><link rel="stylesheet" href="/assets/nosweat/quiet-signal.css?v=quiet-signal1">"""
+      """<link rel="alternate icon" type="image/png" href="/assets/nosweat/favicon-32.png?v=quiet-signal1"><link id="favicon" rel="icon" type="image/svg+xml" href="/assets/nosweat/favicon.svg?v=quiet-signal1"><link rel="stylesheet" href="/assets/nosweat/brand.css?v=focused1"><link rel="stylesheet" href="/assets/nosweat/quiet-signal.css?v=quiet-signal1">"""
     else
       s"""<link rel="alternate icon" type="image/png" href="/assets/logo/lichess-favicon-64.png">""" +
         s"""<link id="favicon" rel="icon" type="image/svg+xml" href="/assets/logo/lichess-favicon.svg">"""
@@ -362,7 +377,7 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
           (!isAppealUser).option(
             frag(
               topnav,
-              (ctx.kid.no && !ctx.me.exists(_.isPatron) && !zenable).option(
+              (ctx.kid.no && (isMuteChess || !ctx.me.exists(_.isPatron)) && (isMuteChess || !zenable)).option(
                 a(cls := "site-title-nav__donate")(href := routes.Plan.index())(trans.patron.donate())
               )
             )
@@ -371,7 +386,7 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
         ),
         div(cls := "site-buttons")(
           warnNoAutoplay,
-          (!isAppealUser).option(clinput),
+          (!isAppealUser && !isMuteChess).option(clinput),
           privileges,
           teamRequests(ctx.teamNbRequests),
           if isAppealUser then
@@ -382,7 +397,8 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
               .map: me =>
                 frag(
                   me.enabled.yes.option(friendBox),
-                  allNotifications(challenges, notifications),
+                  if isMuteChess then challengeNotifications(challenges)
+                  else allNotifications(challenges, notifications),
                   dasher(me)
                 )
               .getOrElse:

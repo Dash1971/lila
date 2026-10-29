@@ -23,7 +23,7 @@ val irwin = lila.irwin.IrwinUi(helpers)(menu = views.mod.ui.menu)
 
 val dgt = lila.web.ui.DgtUi(helpers)
 
-val relation = lila.relation.ui.RelationUi(helpers)
+val relation = lila.relation.ui.RelationUi(helpers, env.noSweat.enabled)
 
 val auth = lila.web.ui.AuthUi(helpers)
 
