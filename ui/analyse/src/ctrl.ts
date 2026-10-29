@@ -513,7 +513,7 @@ export default class AnalyseCtrl implements CevalHandler {
     this.pgnError = '';
     try {
       const data: AnalyseData = {
-        ...pgnImport(pgn),
+        ...pgnImport(pgn, this.opts.standardOnly),
         orientation: this.bottomColor(),
         pref: this.data.pref,
         externalEngines: this.data.externalEngines,

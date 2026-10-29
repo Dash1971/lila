@@ -18,6 +18,9 @@ final class HttpRequestHandler(
   override def routeRequest(request: RequestHeader): Option[Handler] =
     if noSweatEnabled && request.method == "GET" && request.path == "/signup" then
       Some(controllerComponents.actionBuilder(_ => Results.Redirect("/login")))
+    else if noSweatEnabled && (request.path == "/swag" || request.path == "/variant" || request.path
+        .startsWith("/variant/"))
+    then Some(controllerComponents.actionBuilder(_ => Results.NotFound))
     else if noSweatEnabled && request.method == "POST" &&
       (request.path == "/login" || request.path.startsWith("/signup") ||
         request.path.startsWith("/setup/") || request.path.startsWith("/api/challenge") ||

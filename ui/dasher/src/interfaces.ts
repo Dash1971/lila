@@ -44,6 +44,7 @@ type BoardAsset = { name: string; file?: string; featured: boolean };
 type AssetData = Record<Dimension, { current: string; list: BoardAsset[] }>;
 
 export interface DasherData {
+  noSweat?: boolean;
   user?: LightUser;
   lang: LangsData;
   sound: {

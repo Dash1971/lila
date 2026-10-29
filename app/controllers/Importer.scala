@@ -27,48 +27,58 @@ final class Importer(env: Env) extends LilaController(env):
           jsonFormError(err)
         ),
       data =>
-        limit.gameImport(ctx.ip, () => rateLimited): () =>
-          env.game.importer
-            .importAsGame(data.pgn)
-            .flatMap: game =>
-              ctx.me.so(env.game.cached.clearNbImportedByCache(_)).inject(Right(game))
-            .recover { case _: Exception =>
-              Left("The PGN contains illegal and/or ambiguous moves.")
-            }
-            .flatMap {
-              case Right(game) =>
-                negotiate(
-                  html = ctx.me
-                    .filter(_ => data.analyse.isDefined && lila.game.GameExt.analysable(game))
-                    .soUse: me ?=>
-                      env.fishnet
-                        .analyser(
-                          game,
-                          lila.fishnet.Work.Sender(
-                            userId = me,
-                            ip = ctx.ip.some,
-                            mod = isGranted(_.UserEvaluate),
-                            system = false
+        val nonStandard = chess.format.pgn.Parser
+          .tags(data.pgn)
+          .toOption
+          .flatMap(tags => tags(_.Variant))
+          .exists(v =>
+            !Set("standard", "chess", "normal", "fromposition")
+              .contains(v.toLowerCase.replaceAll("[\\s_-]", ""))
+          )
+        if env.noSweat.enabled && nonStandard then fuccess(BadRequest("Only standard chess is supported."))
+        else
+          limit.gameImport(ctx.ip, () => rateLimited): () =>
+            env.game.importer
+              .importAsGame(data.pgn)
+              .flatMap: game =>
+                ctx.me.so(env.game.cached.clearNbImportedByCache(_)).inject(Right(game))
+              .recover { case _: Exception =>
+                Left("The PGN contains illegal and/or ambiguous moves.")
+              }
+              .flatMap {
+                case Right(game) =>
+                  negotiate(
+                    html = ctx.me
+                      .filter(_ => data.analyse.isDefined && lila.game.GameExt.analysable(game))
+                      .soUse: me ?=>
+                        env.fishnet
+                          .analyser(
+                            game,
+                            lila.fishnet.Work.Sender(
+                              userId = me,
+                              ip = ctx.ip.some,
+                              mod = isGranted(_.UserEvaluate),
+                              system = false
+                            )
                           )
-                        )
-                        .void
-                    .inject(Redirect(routes.Round.watcher(game.id, Color.white))),
-                  json =
-                    if HTTPRequest.isLichobile
-                    then Redirect(routes.Round.watcher(game.id, Color.white))
-                    else
-                      Ok:
-                        Json.obj(
-                          "id" -> game.id,
-                          "url" -> routeUrl(routes.Round.watcher(game.id, Color.white))
-                        )
-                )
-              case Left(error) =>
-                negotiate(
-                  Redirect(routes.Importer.importGame).flashFailure(error),
-                  BadRequest(jsonError(error))
-                )
-            }
+                          .void
+                      .inject(Redirect(routes.Round.watcher(game.id, Color.white))),
+                    json =
+                      if HTTPRequest.isLichobile
+                      then Redirect(routes.Round.watcher(game.id, Color.white))
+                      else
+                        Ok:
+                          Json.obj(
+                            "id" -> game.id,
+                            "url" -> routeUrl(routes.Round.watcher(game.id, Color.white))
+                          )
+                  )
+                case Left(error) =>
+                  negotiate(
+                    Redirect(routes.Importer.importGame).flashFailure(error),
+                    BadRequest(jsonError(error))
+                  )
+              }
     )
 
   def masterGame(id: GameId, orientation: Color) = Open:

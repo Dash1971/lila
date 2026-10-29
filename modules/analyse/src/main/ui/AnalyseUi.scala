@@ -8,7 +8,7 @@ import play.api.libs.json.*
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
-final class AnalyseUi(helpers: Helpers)(endpoints: AnalyseEndpoints):
+final class AnalyseUi(helpers: Helpers)(endpoints: AnalyseEndpoints, standardOnly: Boolean = false):
   import helpers.{ *, given }
 
   def miniSpan(fen: Fen.Board, color: Color = chess.White, lastMove: Option[Uci] = None) =
@@ -68,21 +68,23 @@ final class AnalyseUi(helpers: Helpers)(endpoints: AnalyseEndpoints):
         )(
           pov.game.synthetic.option(
             st.aside(cls := "analyse__side")(
-              lila.ui.bits.mselect(
-                "analyse-variant",
-                span(cls := "text", dataIcon := iconByVariant(pov.game.variant))(
-                  pov.game.variant.variantTrans()
-                ),
-                Variant.list.all
-                  .filter(FromPosition != _)
-                  .map: v =>
-                    a(
-                      dataIcon := iconByVariant(v),
-                      cls := (pov.game.variant == v).option("current"),
-                      href := routes.UserAnalysis.parseArg(v.key.value)
-                    )(v.variantTrans())
+              (!standardOnly).option(
+                lila.ui.bits.mselect(
+                  "analyse-variant",
+                  span(cls := "text", dataIcon := iconByVariant(pov.game.variant))(
+                    pov.game.variant.variantTrans()
+                  ),
+                  Variant.list.all
+                    .filter(FromPosition != _)
+                    .map: v =>
+                      a(
+                        dataIcon := iconByVariant(v),
+                        cls := (pov.game.variant == v).option("current"),
+                        href := routes.UserAnalysis.parseArg(v.key.value)
+                      )(v.variantTrans())
+                )
               ),
-              pov.game.variant.chess960.option(chess960selector(chess960PositionNum)),
+              (pov.game.variant.chess960 && !standardOnly).option(chess960selector(chess960PositionNum)),
               hasWiki.option:
                 fieldset(cls := "analyse__wiki empty toggle-box toggle-box--toggle", id := "wikibook-field")(
                   legend(tabindex := 0)("WikiBook"),
@@ -140,7 +142,10 @@ final class AnalyseUi(helpers: Helpers)(endpoints: AnalyseEndpoints):
       _.withWebAssembly.withExternalEngine(endpoints.externalEngine)
 
     def analyseModule(mode: "userAnalysis" | "replay", json: JsObject) =
-      PageModule("analyse.user", Json.obj("mode" -> mode, "cfg" -> json))
+      PageModule(
+        "analyse.user",
+        Json.obj("mode" -> mode, "cfg" -> (json + ("standardOnly" -> JsBoolean(standardOnly))))
+      )
 
     val embedUserAnalysisBody = div(id := "main-wrap", cls := "is2d")(
       main(cls := "analyse")(

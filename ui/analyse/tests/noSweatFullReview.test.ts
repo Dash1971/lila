@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
+import pgnImport from '../src/pgnImport';
 import { gameAccuracy, moveAccuracy, whiteWinPercent } from '../src/noSweatAccuracy';
 import { engineArrows, engineShapes, engineColors } from '../src/noSweatArrows';
 import { ClassifierClient } from '../src/noSweatClassifierClient';
@@ -123,6 +124,44 @@ describe('Mobile Maia whole-game review', () => {
     assert.equal(engineArrows([{ uci: '(none)' }], undefined, 'bad').length, 0);
     assert.match(engineShapes(both, 'white')[0].customSvg!.html, /rotate\(-90\)/);
     assert.match(engineShapes(both, 'black')[0].customSvg!.html, /rotate\(90\)/);
+  });
+  test('arrow origins and tips align with native square centers at every orientation and scale', () => {
+    // Independent Chessground renderer contract: outer viewBox -3.5 -3.5 8 8;
+    // nested custom SVG is 100x100 inside a single square, anchored at its corner.
+    const moves = ['e2e4', 'd2d4', 'g1f3', 'b1c3', 'a1h8', 'h8a1', 'a1a8', 'h1a1', 'e7e8q'];
+    for (const orientation of ['white', 'black'] as const) {
+      for (const size of [256, 480, 768, 1224]) {
+        for (const uci of moves) {
+          const shape = engineShapes(engineArrows([], uci, uci), orientation)[0];
+          const html = shape.customSvg!.html;
+          const translation = html.match(/translate\(([-.\d]+),([-.\d]+)\)/);
+          const tx = Number(translation?.[1] ?? 0);
+          const ty = Number(translation?.[2] ?? 0);
+          const angle = Number(html.match(/rotate\(([-.\d]+)\)/)![1]) * Math.PI / 180;
+          const distance = Number(html.match(/ L([-.\d]+) 0/)![1]);
+          const square = (key: string) => {
+            const file = key.charCodeAt(0) - 97;
+            const rank = Number(key[1]) - 1;
+            return orientation === 'white' ? [file, 7 - rank] : [7 - file, rank];
+          };
+          const from = square(uci.slice(0, 2));
+          const to = square(uci.slice(2, 4));
+          const pixel = (x: number, y: number) => [(from[0] + x / 100) * size / 8, (from[1] + y / 100) * size / 8];
+          const origin = pixel(tx, ty);
+          const tip = pixel(tx + Math.cos(angle) * distance, ty + Math.sin(angle) * distance);
+          const close = (actual: number[], square: number[]) => actual.forEach((n, axis) => assert.ok(Math.abs(n - (square[axis] + .5) * size / 8) < 1e-8, `${uci} ${orientation} ${size}: ${actual} vs ${square}`));
+          close(origin, from);
+          close(tip, to);
+        }
+      }
+    }
+  });
+  test('standard-only analysis rejects variant PGNs while retaining standard FEN positions', () => {
+    for (const variant of ['Atomic', 'Chess960', 'Crazyhouse', 'Antichess', 'Three-check', 'Horde', 'King of the Hill', 'Racing Kings'])
+      assert.throws(() => pgnImport(`[Variant "${variant}"]\n\n*`, true), /Only standard chess/);
+    assert.equal(pgnImport('1. e4 e5 *', true).game!.variant.key, 'standard');
+    assert.equal(pgnImport('[SetUp "1"]\n[FEN "8/8/8/8/8/2k5/5p2/7K b - - 0 1"]\n\n1... f1=Q# *', true).game!.variant.key, 'standard');
+    assert.equal(pgnImport('[Variant "Atomic"]\n\n*').game!.variant.key, 'atomic');
   });
   test('engine settings validate persisted input instead of trusting browser JSON', () => {
     assert.equal(readEnginePreferences('{').selfElo, 1500);

@@ -31,25 +31,28 @@ final class UserAnalysis(
       case _ => load(none, Standard)
 
   private def load(urlFen: Option[String], variant: Variant) = Open:
-    val inputFen: Option[Fen.Full] = urlFen.orElse(get("fen")).flatMap(readFen)
-    val chess960PositionNum: Option[Int] = variant.chess960.so:
-      getInt("position").orElse: // no input fen or num defaults to standard start position
-        Chess960.positionNumber(inputFen | variant.initialFen)
-    val decodedFen: Option[Fen.Full] = inputFen.orElse(chess960PositionNum.flatMap(Chess960.positionToFen))
-    val pov = makePov(decodedFen, variant)
-    val orientation = getColor() | pov.color
-    for
-      data <- env.api.roundApi.userAnalysisJson(
-        pov,
-        ctx.pref,
-        decodedFen,
-        orientation,
-        owner = false
-      )
-      page <- renderPage(views.analyse.ui.userAnalysis(data, pov, chess960PositionNum))
-    yield Ok(page)
-      .withCanonical(routes.UserAnalysis.index)
-      .enforceCrossSiteIsolation
+    if env.noSweat.enabled && variant != Standard && variant != FromPosition then
+      fuccess(BadRequest("Only standard chess is supported."))
+    else
+      val inputFen: Option[Fen.Full] = urlFen.orElse(get("fen")).flatMap(readFen)
+      val chess960PositionNum: Option[Int] = variant.chess960.so:
+        getInt("position").orElse: // no input fen or num defaults to standard start position
+          Chess960.positionNumber(inputFen | variant.initialFen)
+      val decodedFen: Option[Fen.Full] = inputFen.orElse(chess960PositionNum.flatMap(Chess960.positionToFen))
+      val pov = makePov(decodedFen, variant)
+      val orientation = getColor() | pov.color
+      for
+        data <- env.api.roundApi.userAnalysisJson(
+          pov,
+          ctx.pref,
+          decodedFen,
+          orientation,
+          owner = false
+        )
+        page <- renderPage(views.analyse.ui.userAnalysis(data, pov, chess960PositionNum))
+      yield Ok(page)
+        .withCanonical(routes.UserAnalysis.index)
+        .enforceCrossSiteIsolation
 
   def pgn(pgn: String) = Open:
     val pov = makePov(none, Standard)

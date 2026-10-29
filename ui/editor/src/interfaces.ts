@@ -21,6 +21,7 @@ export interface LichessEditor {
 }
 
 export interface Config {
+  standardOnly?: boolean;
   el: HTMLElement;
   baseUrl: string;
   fen?: FEN;

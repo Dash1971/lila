@@ -46,29 +46,7 @@ z-index: 99;
     "This is an empty Lichess preview website, go to lichess.org instead"
 
   val connectLinks: Frag = div(cls := "connect-links")(
-    a(
-      href := "https://mastodon.online/@lichess",
-      targetBlank,
-      noFollow,
-      relMe
-    )("Mastodon"),
-    a(
-      href := "https://github.com/lichess-org",
-      targetBlank,
-      noFollow
-    )("GitHub"),
-    a(href := "https://discord.gg/lichess", targetBlank, noFollow)("Discord"),
-    a(href := "https://bsky.app/profile/lichess.org", targetBlank, noFollow)("Bluesky"),
-    a(
-      href := "https://youtube.com/@LichessDotOrg",
-      targetBlank,
-      noFollow
-    )("YouTube"),
-    a(
-      href := "https://www.twitch.tv/lichessdotorg",
-      targetBlank,
-      noFollow
-    )("Twitch")
+    a(href := "https://github.com/Dash1971/no-sweat-chess", targetBlank, noFollow)("GitHub")
   )
 
   val logo = raw:

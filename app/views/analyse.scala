@@ -6,7 +6,7 @@ import play.api.libs.json.{ JsObject, Json }
 import lila.app.UiEnv.{ *, given }
 import lila.round.RoundGame.secondsSinceCreation
 
-val ui = lila.analyse.ui.AnalyseUi(helpers)(analyseEndpoints)
+val ui = lila.analyse.ui.AnalyseUi(helpers)(analyseEndpoints, env.noSweat.enabled)
 
 object replay:
 

@@ -45,7 +45,7 @@ export class LinksCtrl extends PaneCtrl {
             userLine(d.user),
             i18n.site.profile,
           ]),
-          hl('a.text', linkCfg('/inbox', licon.Envelope), i18n.site.inbox),
+          !d.noSweat && hl('a.text', linkCfg('/inbox', licon.Envelope), i18n.site.inbox),
           hl(
             'a.text',
             linkCfg(
@@ -53,8 +53,9 @@ export class LinksCtrl extends PaneCtrl {
               licon.Gear,
               this.root.opts.playing ? { target: '_blank' } : undefined,
             ),
-            i18n.preferences.preferences,
+            d.noSweat ? 'Edit profile' : i18n.preferences.preferences,
           ),
+          d.noSweat && hl('a.text', linkCfg('/pref/game-display', licon.Gear), i18n.preferences.preferences),
           d.coach && hl('a.text', linkCfg('/coach/edit', licon.GraduateCap), i18n.site.coachManager),
           d.streamer && hl('a.text', linkCfg('/streamer/edit', licon.Mic), i18n.site.streamerManager),
           hl('form.logout', { attrs: { method: 'post', action: '/logout' } }, [

@@ -7,7 +7,7 @@ val captcha = lila.web.ui.CaptchaUi(helpers)
 
 val chat = lila.chat.ChatUi
 
-val boardEditor = lila.web.ui.BoardEditorUi(helpers)
+val boardEditor = lila.web.ui.BoardEditorUi(helpers, env.noSweat.enabled)
 
 val setup = lila.setup.ui.SetupUi(helpers)
 

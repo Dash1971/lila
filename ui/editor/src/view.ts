@@ -272,6 +272,7 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
           ]),
         ]
       : [
+          ...(ctrl.cfg.standardOnly ? [] : [
           div([
             select(
               {
@@ -286,6 +287,7 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
               },
               variants.map(variant => variantOption(variant, ctrl.variant)),
             ),
+          ])
           ]),
           chess960PositionIdSelector,
           div('.actions', [

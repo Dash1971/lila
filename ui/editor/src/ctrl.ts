@@ -98,7 +98,7 @@ export default class EditorCtrl implements CevalHandler {
 
     this.castlingToggles = { K: false, Q: false, k: false, q: false };
     const params = new URLSearchParams(location.search);
-    this.variant = this.cfg.embed ? 'standard' : ((params.get('variant') || 'standard') as VariantKey);
+    this.variant = this.cfg.embed || this.cfg.standardOnly ? 'standard' : ((params.get('variant') || 'standard') as VariantKey);
     const fenPassedIn: FEN | null = cfg.fen || params.get('fen');
     this.initialFen = (fenPassedIn || INITIAL_FEN).replace(/_/g, ' ');
     this.guessCastlingToggles = false;
@@ -483,6 +483,7 @@ export default class EditorCtrl implements CevalHandler {
     );
 
   setVariant(variant: VariantKey): void {
+    if (this.cfg.standardOnly && variant !== 'standard') return;
     this.variant = variant;
     if (variant === 'crazyhouse') this.pockets ||= Material.empty();
     else this.pockets = undefined;

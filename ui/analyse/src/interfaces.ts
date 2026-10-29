@@ -159,6 +159,7 @@ export interface AnalysisMetaSide {
 }
 
 export interface AnalyseOpts {
+  standardOnly?: boolean;
   element: HTMLElement;
   data: AnalyseData;
   userId?: string;

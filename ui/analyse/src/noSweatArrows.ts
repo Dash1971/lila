@@ -45,6 +45,8 @@ export function engineArrows(
 }
 // One owned Chessground custom SVG per unique move. Agreement is painted once:
 // SF shaft + Maia head; two Maias share a split head (and split shaft without SF).
+// Chessground anchors a custom 100x100 SVG at the square corner (its outer
+// viewBox starts at -3.5). Translate to (50,50) before rotating around the center.
 export function engineShapes(arrows: EngineArrow[], orientation: Color): DrawShape[] {
   return arrows.map(arrow => {
     const { uci, tail, head, width } = arrow;
@@ -73,7 +75,7 @@ export function engineShapes(arrows: EngineArrow[], orientation: Color): DrawSha
       orig: uci.slice(0, 2) as Key,
       dest: uci.slice(2, 4) as Key,
       customSvg: {
-        html: `<g class="nosweat-engine-arrow" data-move="${uci}" data-tail="${tail.join(',')}" data-head="${head.join(',')}" transform="rotate(${angle})" fill="none">${shaft}${tip}</g>`,
+        html: `<g class="nosweat-engine-arrow" data-move="${uci}" data-tail="${tail.join(',')}" data-head="${head.join(',')}" transform="translate(50,50) rotate(${angle})" fill="none">${shaft}${tip}</g>`,
       },
     };
   });

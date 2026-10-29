@@ -8,7 +8,7 @@ import lila.common.Json.given
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.*
 
-final class BoardEditorUi(helpers: Helpers):
+final class BoardEditorUi(helpers: Helpers, standardOnly: Boolean = false):
   import helpers.{ *, given }
 
   def apply(
@@ -45,6 +45,7 @@ final class BoardEditorUi(helpers: Helpers):
       .obj(
         "baseUrl" -> routeUrl(routes.Editor.index),
         "animation" -> Json.obj("duration" -> ctx.pref.animationMillis),
-        "is3d" -> ctx.pref.is3d
+        "is3d" -> ctx.pref.is3d,
+        "standardOnly" -> standardOnly
       )
       .add("fen" -> fen)

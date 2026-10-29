@@ -29,13 +29,18 @@ final class Editor(env: Env) extends LilaController(env):
   def index = load("")
 
   def load(urlFen: String) = Open:
-    val fen: Option[Fen.Full] = lila.common.String
-      .decodeUriPath(urlFen)
-      .filter(_.nonEmpty)
-      .map(Fen.Full.clean)
-    Ok.page:
-      views.boardEditor(fen, positionsJson, endgamePositionsJson)
-    .map(_.enforceCrossSiteIsolation)
+    if env.noSweat.enabled && get("variant").exists(v =>
+        !Set("standard", "fromposition").contains(v.toLowerCase)
+      )
+    then fuccess(BadRequest("Only standard chess is supported."))
+    else
+      val fen: Option[Fen.Full] = lila.common.String
+        .decodeUriPath(urlFen)
+        .filter(_.nonEmpty)
+        .map(Fen.Full.clean)
+      Ok.page:
+        views.boardEditor(fen, positionsJson, endgamePositionsJson)
+      .map(_.enforceCrossSiteIsolation)
 
   def data = Auth: _ ?=>
     Ok(views.boardEditor.jsData())

@@ -28,8 +28,13 @@ const readNode = (
   });
 };
 
-export default function (pgn: string): Partial<AnalyseData> {
+export default function (pgn: string, standardOnly = false): Partial<AnalyseData> {
   const game = parsePgn(pgn)[0];
+  if (standardOnly) {
+    const variant = (game.headers.get('Variant') ?? 'standard').toLowerCase().replace(/[\s_-]/g, '');
+    if (!['standard', 'chess', 'normal', 'fromposition'].includes(variant))
+      throw new Error('Only standard chess is supported.');
+  }
   const start = startingPosition(game.headers).unwrap();
   const fen = makeFen(start.toSetup());
   const variant: VariantKey = rulesToVariantKey[start.rules] || start.rules;
