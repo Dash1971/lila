@@ -10,6 +10,7 @@ export class Protocol {
 
   private work?: Work;
   private currentEval?: LocalEval;
+  private completedEval?: LocalEval;
   private gameId?: string;
   private expectedPvs = 1;
   private nextWork?: Work;
@@ -70,14 +71,15 @@ export class Protocol {
       const work = this.work;
       this.work = undefined;
       if (work) {
-        const ceval = this.currentEval ?? {
-          millis: 0,
-          fen: work.currentFen,
-          depth: 0,
-          nodes: 0,
-          pvs: [],
-          engineId: this.info.id,
-        };
+        const ceval = this.completedEval ??
+          this.currentEval ?? {
+            millis: 0,
+            fen: work.currentFen,
+            depth: 0,
+            nodes: 0,
+            pvs: [],
+            engineId: this.info.id,
+          };
         ceval.bestmove = parts[1];
         if (parts[2] === 'ponder') ceval.ponder = parts[3];
         if (!work.stopRequested) work.emit(ceval, work);
@@ -166,8 +168,10 @@ export class Protocol {
         this.currentEval?.pvs.length === this.expectedPvs &&
         this.currentEval.depth === depth &&
         new Set(this.currentEval.pvs.map(pv => pv.moves[0])).size === this.expectedPvs
-      )
+      ) {
+        this.completedEval = structuredClone(this.currentEval);
         this.emit();
+      }
     } else if (
       command &&
       !['Stockfish', 'id', 'option', 'info'].includes(parts[0]) &&
@@ -201,6 +205,7 @@ export class Protocol {
 
     if (this.work) {
       this.currentEval = undefined;
+      this.completedEval = undefined;
       this.expectedPvs = 1;
 
       this.setOption('UCI_Variant', this.uciVariant(this.work.variant));
@@ -212,8 +217,8 @@ export class Protocol {
       this.gameId = this.work.gameId;
 
       this.send(['position fen', this.work.initialFen, 'moves', ...this.work.moves].join(' '));
-      const [by, value] = Object.entries(this.work.search)[0];
-      const cmd = Number.isFinite(value) ? `go ${by} ${value}` : 'go';
+      const limits = Object.entries(this.work.search).filter(([, value]) => Number.isFinite(value));
+      const cmd = ['go', ...limits.flatMap(([by, value]) => [by, String(value)])].join(' ');
       this.send(cmd);
     }
   }

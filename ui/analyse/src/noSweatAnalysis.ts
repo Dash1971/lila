@@ -6,23 +6,14 @@ import { frag } from 'lib';
 import { winningChances } from 'lib/ceval';
 import { maiaExpectedScore } from 'lib/nosweat/expectedScore';
 import { storage } from 'lib/storage';
-import { hl, type VNode } from 'lib/view';
+import { domDialog, hl, type VNode } from 'lib/view';
 
 import type AnalyseCtrl from './ctrl';
 import { engineArrows, engineShapes, engineColors } from './noSweatArrows';
-import {
-  encodeHistory,
-  policy,
-  san,
-  scoreText,
-  position,
-  standardUci,
-  legalUcis,
-  leadingPolicy,
-  type Candidate,
-} from './noSweatCore';
+import { encodeHistory, policy, san, position, standardUci, legalUcis, type Candidate } from './noSweatCore';
 import { reviewClick } from './noSweatEvents';
 import { ReviewFish, type Review } from './noSweatFish';
+import { gameReviewQualities, gameReviewQuality } from './noSweatFullReview';
 import { readEnginePreferences, type EnginePreferences } from './noSweatPreferences';
 import { ratingSamples as samples, ratingChart } from './noSweatRatingChart';
 
@@ -142,7 +133,7 @@ export class NoSweatAnalysis {
     const toggle = (key: 'history' | 'maiaArrows' | 'fishArrows' | 'secondMaiaEnabled', name: string) =>
       `<label class="setting"><span>${name}</span><input type="checkbox" data-engine-pref="${key}" ${this[key] ? 'checked' : ''}></label>`;
     const options: [string, string][] = ratings.map(n => [String(n), String(n)]);
-    const view = frag<HTMLElement>(`<fieldset class="nosweat-engine-settings"><legend>Engines</legend>
+    const view = frag<HTMLElement>(`<div><fieldset class="nosweat-engine-settings"><legend>Engines</legend>
       ${select('model', 'Maia model', [
         ['5m', 'Maia3 5M · light'],
         ['79m', 'Maia3 79M'],
@@ -151,7 +142,9 @@ export class NoSweatAnalysis {
       ${toggle('secondMaiaEnabled', 'Second Maia')}${select('secondMaiaElo', 'Second Maia rating', options)}
       ${toggle('history', 'Use move history')}${toggle('maiaArrows', 'Show Maia arrows')}${toggle('fishArrows', 'Show Stockfish arrows')}
       <small>Maia downloads 36 MB for 5M or 331 MB for 79M on first use. Ratings are model inputs, not calibrated Elo.</small>
-      </fieldset>`);
+      </fieldset><fieldset class="nosweat-review-settings"><legend>Whole-game analysis</legend>
+      <div class="nosweat-review-quality">${gameReviewQualities.map(q => `<label><input type="radio" name="nosweat-review-quality" value="${q.name}" ${q.name === gameReviewQuality(storage.get('nosweat.gameReview.quality')).name ? 'checked' : ''}><span>${q.name}</span></label>`).join('')}</div>
+      <button type="button" class="button button-empty nosweat-review-engine">Engine settings</button></fieldset></div>`);
     view.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-engine-pref]').forEach(input => {
       input.addEventListener('change', () => {
         const key = input.dataset.enginePref as keyof EnginePreferences;
@@ -170,6 +163,11 @@ export class NoSweatAnalysis {
         this.refreshReview();
       });
     });
+    view.querySelectorAll<HTMLInputElement>('input[name="nosweat-review-quality"]').forEach(input => {
+      input.onchange = () => storage.set('nosweat.gameReview.quality', input.value);
+    });
+    view.querySelector<HTMLButtonElement>('.nosweat-review-engine')!.onclick = () =>
+      site.asset.loadEsm('analyse.local', { init: this.ctrl });
     return view;
   }
   private readonly analysisAllowed = (): boolean =>
@@ -359,10 +357,7 @@ export class NoSweatAnalysis {
       ? (this.ctrl.node.ceval?.pvs ?? []).slice(0, 2)
       : [];
   }
-  private scoreFor(uci: string): Scored | undefined {
-    const line = this.nativeLines().find(pv => this.normalUci(pv.moves[0]) === uci);
-    return line ? { score: line, depth: this.ctrl.node.ceval!.depth } : this.scores.get(uci);
-  }
+
   private currentFishBest(): string | undefined {
     return this.normalUci(this.nativeLines()[0]?.moves[0]) ?? this.fishBest;
   }
@@ -506,181 +501,154 @@ export class NoSweatAnalysis {
       this.ctrl.bottomColor(),
     );
   }
-  view(): VNode | undefined {
-    if (!this.analysisAllowed()) return undefined;
+  private readonly expanded = [false, false];
+
+  private openRating(secondary: boolean): void {
+    const value = secondary ? this.secondMaiaElo : this.selfElo;
+    domDialog({
+      class: 'nosweat-rating-dialog',
+      modal: true,
+      show: true,
+      easyClose: 'clickOutside',
+      focus: '[aria-pressed="true"]',
+      htmlText: `<h2>Maia rating</h2><div class="nosweat-rating-grid">${ratings
+        .map(
+          n =>
+            `<button type="button" class="fbt" data-rating="${n}" aria-pressed="${n === value}">${n}</button>`,
+        )
+        .join('')}</div>`,
+      actions: [
+        {
+          selector: '[data-rating]',
+          listener: (event, dialog) => {
+            this.chooseRating(Number((event.currentTarget as HTMLElement).dataset.rating), secondary);
+            dialog.close();
+          },
+        },
+      ],
+    });
+  }
+
+  private maiaCard(secondary: boolean): VNode {
+    const rating = secondary ? this.secondMaiaElo : this.selfElo;
+    const candidates = secondary ? this.secondaryCandidates : this.candidates;
+    const score = secondary ? this.secondaryExpectedScore : this.expectedScore;
+    const color = secondary ? engineColors.maiaSecond : engineColors.maia;
     const side = position(this.ctrl.node.fen).turn === 'white' ? 'White' : 'Black';
-    const row = (rating: number, candidates: Candidate[], secondary: boolean) =>
-      hl('div.nosweat-maia-line', [
+    const expanded = this.expanded[Number(secondary)];
+    const rest = candidates.slice(4).reduce((sum, c) => sum + c.probability, 0);
+    return hl('section.nosweat-maia-card', { attrs: { 'aria-label': `Maia ${rating}` } }, [
+      hl('header', [
         hl(
-          'strong',
-          { attrs: { style: 'color:' + (secondary ? engineColors.maiaSecond : engineColors.maia) } },
-          'M' + rating,
-        ),
-        hl(
-          'span',
-          candidates.length
-            ? leadingPolicy(this.ctrl.node.fen, candidates)
-            : position(this.ctrl.node.fen).isEnd()
-              ? 'No legal moves'
-              : !this.enabled
-                ? 'Off'
-                : this.status
-                  ? 'Analyzing…'
-                  : 'Unavailable',
-        ),
-        hl(
-          'span.nosweat-maia-score',
+          'button.nosweat-maia-label',
           {
             attrs: {
-              title: `Maia expected score for ${side}, the side to move: win probability plus half the draw probability.`,
+              type: 'button',
+              style: 'color:' + color,
+              'aria-label': `Change ${secondary ? 'second' : 'primary'} Maia rating, ${rating}`,
+              'aria-haspopup': 'dialog',
             },
+            hook: reviewClick(() => this.openRating(secondary)),
           },
-          `${side} score ${(() => {
-            const score = secondary ? this.secondaryExpectedScore : this.expectedScore;
-            return score === undefined ? '—' : (score * 100).toFixed(1) + '%';
-          })()}`,
-        ),
-      ]);
-    return hl('section.nosweat-engine-lines', { attrs: { 'aria-label': 'Maia analysis channels' } }, [
-      row(this.selfElo, this.candidates, false),
-      this.secondMaiaEnabled && row(this.secondMaiaElo, this.secondaryCandidates, true),
-    ]);
-  }
-  private candidateView(): VNode {
-    const fen = this.ctrl.node.fen;
-    const button = (text: string, action: () => void, disabled = false) =>
-      hl(
-        'button.fbt',
-        {
-          attrs: { type: 'button', disabled },
-          hook: reviewClick(action),
-        },
-        text,
-      );
-    const likelihood = (values: Candidate[], uci: string) =>
-      values.length ? ((values.find(c => c.uci === uci)?.probability ?? 0) * 100).toFixed(1) + '%' : '—';
-    const rating = (secondary: boolean) => {
-      const value = secondary ? this.secondMaiaElo : this.selfElo;
-      return hl('label.nosweat-rating-picker', [
-        hl(
-          'span',
-          { attrs: { style: 'color:' + (secondary ? engineColors.maiaSecond : engineColors.maia) } },
-          secondary ? 'Maia 2' : 'Maia 1',
+          'Maia ' + rating,
         ),
         hl(
-          'select',
+          'span.nosweat-score',
           {
-            attrs: { 'aria-label': secondary ? 'Second Maia rating' : 'Primary Maia rating' },
-            hook: {
-              insert: vnode => {
-                const input = vnode.elm as HTMLSelectElement;
-                input.value = String(value);
-                input.onchange = () => this.chooseRating(Number(input.value), secondary);
-              },
-              update: (_, vnode) => {
-                (vnode.elm as HTMLSelectElement).value = String(value);
-              },
+            attrs: {
+              title: `${side} expected score: win probability plus half draw probability`,
+              'aria-label': `${side} expected score ${score === undefined ? 'unavailable' : (score * 100).toFixed(1) + '%'}`,
             },
           },
-          ratings.map(n => hl('option', { attrs: { value: n } }, String(n))),
+          [
+            hl('i', {
+              attrs: {
+                style: `background:${score === undefined ? 'var(--c-font-dim)' : score >= 0.55 ? '#12b886' : score <= 0.45 ? '#fa5252' : '#fab005'}`,
+              },
+            }),
+            score === undefined ? '—' : (score * 100).toFixed(1) + '%',
+          ],
         ),
-      ]);
-    };
-    const played = this.played();
-    return hl(
-      'section.nosweat-candidate-panel',
-      { attrs: { 'aria-label': 'Candidate moves and rating explorer' } },
-      [
-        hl('div.nosweat-panel-heading', [hl('h2', 'Candidate moves')]),
-        hl('div.nosweat-rating-inputs', [rating(false), this.secondMaiaEnabled && rating(true)]),
-        this.returnPath !== undefined && hl('small', 'Selected: ' + (this.ctrl.node.san ?? 'position')),
-        this.returnPath !== undefined &&
-          button('Return to original position', () => {
-            const path = this.returnPath!;
-            this.returnPath = undefined;
-            this.ctrl.userJump(path);
-            this.ctrl.redraw();
-          }),
-        this.enabled &&
-          hl('div', [
-            this.rows().length > 0 &&
-              hl('table.nosweat-candidates', [
-                hl(
-                  'thead',
-                  hl('tr', [
-                    hl('th', 'Move'),
-                    hl('th', { attrs: { style: 'color:' + engineColors.maia } }, 'M' + this.selfElo),
-                    this.secondMaiaEnabled &&
-                      hl(
-                        'th',
-                        { attrs: { style: 'color:' + engineColors.maiaSecond } },
-                        'M' + this.secondMaiaElo,
-                      ),
-                    hl('th', 'SF'),
-                  ]),
-                ),
-                hl(
-                  'tbody',
-                  this.rows().map(c => {
-                    const scored = this.scoreFor(c.uci);
-                    return hl('tr', { key: fen + c.uci, attrs: { 'data-move': c.uci } }, [
-                      hl('td', [
-                        button(san(fen, c.uci), () => this.preview(c.uci)),
-                        c.uci === played && hl('small', 'Played'),
-                        c.uci === this.currentFishBest() && hl('small', 'SF choice'),
-                      ]),
-                      hl('td', likelihood(this.candidates, c.uci)),
-                      this.secondMaiaEnabled && hl('td', likelihood(this.secondaryCandidates, c.uci)),
+      ]),
+      candidates.length
+        ? hl('div.nosweat-policy-scroll', [
+            hl('table.nosweat-policy', [
+              hl('thead', hl('tr', [hl('th', 'Move'), hl('th', 'Probability')])),
+              hl(
+                'tbody',
+                candidates
+                  .slice(0, expanded ? undefined : 4)
+                  .map(c =>
+                    hl('tr', { key: this.ctrl.node.fen + c.uci }, [
                       hl(
                         'td',
-                        { attrs: { title: scored ? 'Stockfish depth ' + scored.depth : 'Not evaluated' } },
-                        scored
-                          ? scoreText(scored.score)
-                          : this.scores.has(c.uci)
-                            ? this.compareBusy
-                              ? 'Pending…'
-                              : 'Unavailable'
-                            : '—',
+                        hl(
+                          'button.fbt',
+                          { attrs: { type: 'button' }, hook: reviewClick(() => this.preview(c.uci)) },
+                          san(this.ctrl.node.fen, c.uci),
+                        ),
                       ),
-                    ]);
-                  }),
-                ),
-              ]),
-            hl('div.nosweat-panel-actions', [
-              button(
-                'Compare candidates',
-                this.compare,
-                this.compareBusy || (!this.candidates.length && !this.secondaryCandidates.length),
+                      hl('td', (c.probability * 100).toFixed(1) + '%'),
+                    ]),
+                  ),
               ),
-              button(this.allMoves ? 'Top candidates' : 'All legal moves', () => {
-                this.allMoves = !this.allMoves;
-                this.ctrl.redraw();
-              }),
             ]),
-            hl(
-              'details.nosweat-rating-explorer',
-              {
-                attrs: { open: this.ratingTable },
-                hook: {
-                  insert: vnode => {
-                    (vnode.elm as HTMLDetailsElement).ontoggle = event => {
-                      this.ratingTable = (event.target as HTMLDetailsElement).open;
-                      if (this.ratingTable && this.candidates.length) this.sampleRatings();
-                    };
-                  },
-                },
-              },
-              [
-                hl('summary', 'Moves by Rating'),
-                this.renderRatingChart(),
-                hl('details', [hl('summary', 'Move probabilities'), this.renderRatings()]),
-              ],
-            ),
-            this.status && hl('p', { attrs: { role: 'status' } }, this.status),
-            this.error && hl('p.error', { attrs: { role: 'alert' } }, this.error),
-          ]),
-      ],
-    );
+          ])
+        : hl(
+            'p.nosweat-maia-empty',
+            !this.enabled
+              ? 'Analysis off'
+              : position(this.ctrl.node.fen).isEnd()
+                ? 'No legal moves'
+                : this.error
+                  ? 'Unavailable'
+                  : 'Analyzing…',
+          ),
+      candidates.length > 4 &&
+        hl(
+          'button.nosweat-others',
+          {
+            attrs: { type: 'button', 'aria-expanded': expanded },
+            hook: reviewClick(() => {
+              this.expanded[Number(secondary)] = !expanded;
+              this.ctrl.redraw();
+            }),
+          },
+          [
+            hl('span', expanded ? 'Leading moves' : 'Others'),
+            hl('span', expanded ? '−' : (rest * 100).toFixed(1) + '% +'),
+          ],
+        ),
+    ]);
+  }
+
+  private candidateView(): VNode {
+    return hl('section.nosweat-candidate-panel', { attrs: { 'aria-label': 'Maia analysis' } }, [
+      hl('h2', 'Maia'),
+      hl('div.nosweat-maia-cards', [this.maiaCard(false), this.secondMaiaEnabled && this.maiaCard(true)]),
+      this.returnPath !== undefined &&
+        hl(
+          'button.fbt.nosweat-return',
+          {
+            attrs: { type: 'button' },
+            hook: reviewClick(() => {
+              const path = this.returnPath!;
+              this.returnPath = undefined;
+              this.ctrl.userJump(path);
+              this.ctrl.redraw();
+            }),
+          },
+          'Return to game position',
+        ),
+      this.enabled &&
+        hl('section.nosweat-rating-explorer', [
+          hl('h3', 'Moves by Rating'),
+          this.renderRatingChart(),
+          hl('details', [hl('summary', 'Move probabilities'), this.renderRatings()]),
+        ]),
+      this.error && hl('p.error', { attrs: { role: 'alert' } }, this.error),
+      !this.error && this.status && hl('p', { attrs: { role: 'status' } }, this.status),
+    ]);
   }
   private chooseRating(rating: number, secondary = false, keepOpponent = false): void {
     if (secondary) this.secondMaiaElo = rating;

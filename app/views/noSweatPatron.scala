@@ -16,7 +16,7 @@ object noSweatPatron:
           )
         )
       )
-      .headAppend(script(src := assetPath("nosweat/nostr.js?lightning=2"), defer)):
+      .headAppend(script(src := assetPath("nosweat/nostr.js?lightning=3"), defer)):
         main(cls := "box box-pad", id := "nostr-patron", attr("data-pubkey") := pubkey.getOrElse(""))(
           div(cls := "patron-heading")(
             h1("Support Mute Chess"),
@@ -87,7 +87,7 @@ object noSweatPatron:
           ),
           p(id := "patron-status", role := "status", aria.live := "polite"),
           div(cls := "patron-direct")(
-            a(href := "lightning:eerieatlas700@walletofsatoshi.com")("eerieatlas700@walletofsatoshi.com"),
+            a(href := "lightning:dash@walletofsatoshi.com")("dash@walletofsatoshi.com"),
             a(href := "https://primal.net/p/npub1w6l8e4mqa4ruqs2vdvwhdxhp9ke9ax8kpncy2wy26tja3d7rzpgq06c9jl")(
               "Zap Mute Chess on Nostr"
             )

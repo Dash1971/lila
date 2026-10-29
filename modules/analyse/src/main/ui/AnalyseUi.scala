@@ -17,11 +17,12 @@ final class AnalyseUi(helpers: Helpers)(endpoints: AnalyseEndpoints, standardOnl
   def explorerAndCevalConfig(using ctx: Context) =
     Json.obj(
       "explorer" -> Json.obj(
-        "endpoint" -> endpoints.explorer,
-        "tablebaseEndpoint" -> endpoints.tablebase,
+        "endpoint" -> (if standardOnly then "/opening-explorer-disabled" else endpoints.explorer),
+        "tablebaseEndpoint" -> (if standardOnly then "/tablebase-disabled" else endpoints.tablebase),
         "showRatings" -> ctx.pref.showRatings
       ),
-      "externalEngineEndpoint" -> endpoints.externalEngine
+      "externalEngineEndpoint" -> (if standardOnly then "/external-engine-disabled"
+                                   else endpoints.externalEngine)
     )
 
   def userAnalysis(
@@ -138,8 +139,9 @@ final class AnalyseUi(helpers: Helpers)(endpoints: AnalyseEndpoints, standardOnl
         .csp:
           cspExternalEngine.compose(_.withInlineIconFont.withChessDbCn)
 
-    def cspExternalEngine: Update[ContentSecurityPolicy] =
-      _.withWebAssembly.withExternalEngine(endpoints.externalEngine)
+    def cspExternalEngine: Update[ContentSecurityPolicy] = csp =>
+      if standardOnly then csp.withWebAssembly
+      else csp.withWebAssembly.withExternalEngine(endpoints.externalEngine)
 
     def analyseModule(mode: "userAnalysis" | "replay", json: JsObject) =
       PageModule(

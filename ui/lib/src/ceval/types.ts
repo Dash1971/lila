@@ -8,7 +8,7 @@ import type { Prop } from '../index';
 import type { CevalCtrl } from './ctrl';
 
 export type WinningChances = number;
-export type SearchBy = { movetime: number } | { depth: number } | { nodes: number };
+export type SearchBy = { movetime: number; depth?: number } | { depth: number } | { nodes: number };
 export type Search = { by: SearchBy; multiPv: number; indeterminate?: boolean };
 export type NodeEfficiencyVsFishnet = Partial<Record<'chess' | 'variant', number>>;
 

@@ -16,7 +16,15 @@ export const stockfishName = 'Stockfish 19';
 export default function (element: HTMLElement, ctrl: AnalyseCtrl) {
   $(element).replaceWith(ctrl.opts.$underboard);
   // No public fishnet worker is configured. Keep the native on-device review.
-  if (ctrl.noSweat) document.querySelector('form.future-game-analysis')?.remove();
+  if (ctrl.noSweat) {
+    document.querySelector('form.future-game-analysis')?.remove();
+    const button = document.querySelector<HTMLButtonElement>('button.analysis-editor');
+    if (button) {
+      button.textContent = 'Analyze game';
+      button.classList.remove('analysis-editor');
+      button.onclick = () => site.asset.loadEsm('analyse.local', { init: { ctrl, start: true } });
+    }
+  }
   const data = ctrl.data;
   const $panels = $('.analyse__underboard__panels > div');
   const $menu = $('.analyse__underboard__menu');

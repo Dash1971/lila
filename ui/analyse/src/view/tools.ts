@@ -24,7 +24,6 @@ export function renderTools({ ctrl, deps, concealOf, allowVideo }: ViewContext, 
       !ctrl.practice &&
       !ctrl.study?.hideMoves() &&
       cevalView.renderPvs(ctrl),
-    ctrl.noSweat?.view(),
     renderMoveList(ctrl, deps, concealOf),
     deps?.gbEdit.running(ctrl) ? deps?.gbEdit.render(ctrl) : undefined,
     renderBackToLiveButton(ctrl),

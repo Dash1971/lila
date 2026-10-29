@@ -1,6 +1,7 @@
 /// <reference types="../types/ab" />
 
 import type { DrawShape } from '@lichess-org/chessground/draw';
+import { read as readBoard } from '@lichess-org/chessground/fen';
 import { opposite, uciToMove } from '@lichess-org/chessground/util';
 import * as ab from 'ab/round';
 import { roleToChar } from 'chessops/util';
@@ -120,8 +121,6 @@ export default class RoundController implements MoveRootCtrl {
       check: false,
       lastMove: undefined,
       movable: { dests: new Map() },
-    });
-    this.chessground.set({
       highlight: {
         custom: new Map(
           [...this.premoveSequence.destinations].map(([key, dest]) => [
@@ -167,9 +166,34 @@ export default class RoundController implements MoveRootCtrl {
       this.clearQueuedPremoves();
       return false;
     }
-    this.chessground.move(move.orig, move.dest);
-    if (move.promotion) promote(this.chessground, move.dest, move.promotion);
-    this.chessground.set({ turnColor: this.data.opponent.color, movable: { dests: new Map() } });
+    // Consume against authoritative destinations, then publish only the final
+    // projected plan (Mobile Maia #111). Never move a projected piece backwards.
+    const before = readBoard(this.stepAt(this.ply).fen);
+    const capture =
+      before.get(move.dest)?.color === this.data.opponent.color ||
+      (before.get(move.orig)?.role === 'pawn' && !move.dest.startsWith(move.orig[0]));
+    site.sound.move({ name: capture ? 'capture' : 'move', filter: 'game' });
+    const accepted = new PremoveSequence();
+    accepted.moves.push(move);
+    this.optimisticFen = accepted.project(this.stepAt(this.ply).fen, this.data.player.color);
+    this.projected = this.premoveSequence.moves.length > 0;
+    this.chessground.set({
+      fen: this.projected
+        ? this.premoveSequence.project(this.optimisticFen, this.data.player.color)
+        : this.optimisticFen,
+      turnColor: this.data.opponent.color,
+      movable: { dests: new Map() },
+      check: false,
+      lastMove: this.projected ? undefined : [move.orig, move.dest],
+      highlight: {
+        custom: new Map(
+          [...this.premoveSequence.destinations].map(([key, dest]) => [
+            key,
+            dest ? 'nosweat-premove-dest' : 'nosweat-premove-origin',
+          ]),
+        ),
+      },
+    });
     this.sendMove(move.orig, move.dest, move.promotion, { premove: true, preConfirmed: true });
     return true;
   };
@@ -533,7 +557,7 @@ export default class RoundController implements MoveRootCtrl {
       this.redraw();
       return;
     }
-    if (this.stackedPremoves()) this.optimisticFen = this.chessground.getFen();
+    if (this.stackedPremoves() && !meta.premove) this.optimisticFen = this.chessground.getFen();
     this.actualSendMove('move', move, { justCaptured: meta.captured, premove: meta.premove });
   };
 
@@ -577,10 +601,7 @@ export default class RoundController implements MoveRootCtrl {
   apiMove = (o: ApiMove): true => {
     const d = this.data;
     const playing = this.isPlaying();
-    if (this.projected) {
-      this.projected = false;
-      ground.sync(this, this.stepAt(this.ply), playing);
-    }
+    const projected = this.projected;
     this.optimisticFen = undefined;
     d.game.turns = o.ply;
     d.game.player = plyColor(o.ply);
@@ -596,34 +617,38 @@ export default class RoundController implements MoveRootCtrl {
     this.setTitle();
     if (!this.replaying()) {
       this.ply++;
-      if (o.role)
-        this.chessground.newPiece(
-          {
-            role: o.role,
-            color: playedColor,
-          },
-          o.uci.slice(2, 4) as Key,
-        );
-      else {
-        // This block needs to be idempotent, even for castling moves in
-        // Chess960.
-        const keys = uciToMove(o.uci)!;
-        const pieces = this.chessground.state.pieces;
-        if (
-          !o.castle ||
-          (pieces.get(o.castle.king[0])?.role === 'king' && pieces.get(o.castle.rook[0])?.role === 'rook')
-        ) {
-          this.chessground.move(keys[0], keys[1]);
+      if (!projected) {
+        if (o.role)
+          this.chessground.newPiece(
+            {
+              role: o.role,
+              color: playedColor,
+            },
+            o.uci.slice(2, 4) as Key,
+          );
+        else {
+          // This block needs to be idempotent, even for castling moves in
+          // Chess960.
+          const keys = uciToMove(o.uci)!;
+          const pieces = this.chessground.state.pieces;
+          if (
+            !o.castle ||
+            (pieces.get(o.castle.king[0])?.role === 'king' && pieces.get(o.castle.rook[0])?.role === 'rook')
+          ) {
+            this.chessground.move(keys[0], keys[1]);
+          }
         }
+        if (o.promotion) promote(this.chessground, o.promotion.key, o.promotion.pieceClass);
+        this.chessground.set({
+          turnColor: d.game.player,
+          movable: {
+            dests: playing ? util.parsePossibleMoves(d.possibleMoves) : new Map(),
+          },
+          check: !!o.check,
+        });
       }
-      if (o.promotion) promote(this.chessground, o.promotion.key, o.promotion.pieceClass);
-      this.chessground.set({
-        turnColor: d.game.player,
-        movable: {
-          dests: playing ? util.parsePossibleMoves(d.possibleMoves) : new Map(),
-        },
-        check: !!o.check,
-      });
+      if (projected && playedColor !== d.player.color)
+        site.sound.move({ name: o.san.includes('x') ? 'capture' : 'move', filter: 'game' });
       if (this.googlyEyes) this.chessground.setAutoShapes(this.googlyEyes());
       if (o.status?.name === 'mate') {
         site.sound.play('checkmate', o.volume);
@@ -644,7 +669,6 @@ export default class RoundController implements MoveRootCtrl {
       crazy: o.crazyhouse,
     };
     d.steps.push(step);
-    if (this.ply === step.ply && this.chessground.getFen() !== step.fen) ground.sync(this, step, playing);
     this.justDropped = undefined;
     this.justCaptured = undefined;
     game.setOnGame(d, playedColor, true);
@@ -666,8 +690,27 @@ export default class RoundController implements MoveRootCtrl {
       if (this.data.steps.length > 2) this.data.expiration = undefined;
       else this.data.expiration.movedAt = Date.now();
     }
+    // Resolve a stacked premove before any authoritative position is rendered.
+    // Native single-premoves retain their existing delayed execution below.
+    const stackedTurn = !this.replaying() && playedColor !== d.player.color && this.stackedPremoves();
+    const premovePlayed = stackedTurn && this.playQueuedPremove();
+    if (this.ply === step.ply && !premovePlayed) {
+      if (
+        projected &&
+        this.isPlaying() &&
+        this.premoveSequence.moves.length &&
+        playedColor === d.player.color
+      ) {
+        // The server ack advances committed history, not the visible queued plan.
+        this.chessground.state.turnColor = d.opponent.color;
+        this.projectPremoves();
+      } else {
+        this.projected = false;
+        if (projected || this.chessground.getFen() !== step.fen) ground.sync(this, step, playing);
+      }
+    }
     if (!this.isPlaying()) this.clearQueuedPremoves();
-    else if (playedColor === d.player.color) this.projectPremoves();
+    else if (playedColor === d.player.color && !projected) this.projectPremoves();
     this.redraw();
     if (playing && playedColor === d.player.color) {
       this.transientMove?.clear();
@@ -675,6 +718,7 @@ export default class RoundController implements MoveRootCtrl {
       cevalSub.publish(d, o);
     }
     if (!this.replaying() && playedColor !== d.player.color) {
+      if (stackedTurn && !premovePlayed) this.showYourMoveNotification();
       if (this.vibration() && 'vibrate' in navigator) navigator.vibrate(100);
       // prevent race conditions with explosions and premoves
       // https://github.com/lichess-org/lila/issues/343
@@ -682,19 +726,20 @@ export default class RoundController implements MoveRootCtrl {
       const premovePly = this.ply;
       const queueGeneration = this.premoveSequence.generation;
       const premoveFen = step.fen;
-      setTimeout(() => {
-        if (this.ply !== premovePly || this.stepAt(this.ply).fen !== premoveFen) return;
-        if (this.stackedPremoves()) {
-          if (queueGeneration !== this.premoveSequence.generation || !this.playQueuedPremove()) {
-            this.clearQueuedPremoves();
+      if (!stackedTurn)
+        setTimeout(() => {
+          if (this.ply !== premovePly || this.stepAt(this.ply).fen !== premoveFen) return;
+          if (this.stackedPremoves()) {
+            if (queueGeneration !== this.premoveSequence.generation || !this.playQueuedPremove()) {
+              this.clearQueuedPremoves();
+              this.showYourMoveNotification();
+            }
+          } else if (this.nvui) this.nvui.playPremove();
+          else if (!this.chessground.playPremove() && !this.playPredrop()) {
+            this.promotion.cancel();
             this.showYourMoveNotification();
           }
-        } else if (this.nvui) this.nvui.playPremove();
-        else if (!this.chessground.playPremove() && !this.playPredrop()) {
-          this.promotion.cancel();
-          this.showYourMoveNotification();
-        }
-      }, premoveDelay);
+        }, premoveDelay);
     }
     this.autoScroll();
     this.onChange();

@@ -5,14 +5,16 @@ import { setupPosition } from 'chessops/variant';
 import { myUserId } from 'lib';
 import { randomId } from 'lib/algo';
 import type { CustomCeval } from 'lib/ceval/types';
+import { storage } from 'lib/storage';
 import { mainlineNodeList, structuredCloneLite } from 'lib/tree/ops';
 import type { ClientEval, Glyph, TreeNodeLite, TreePath } from 'lib/tree/types';
 
 import AnalyseCtrl from '../ctrl';
 import type { AnalysisUpdate, AnalysisEngineInfo, AnalysisMeta, Division } from '../interfaces';
-import { BrilliantVerifier, brilliantGlyph, mainlineKey, hasQualityGlyph } from '../noSweatBrilliants';
+import { mainlineKey } from '../noSweatBrilliants';
 import { ClassifierClient } from '../noSweatClassifierClient';
 import { ReviewFish } from '../noSweatFish';
+import { FullGameClassifier, qualityGlyph, gameReviewQuality } from '../noSweatFullReview';
 
 // modules/tree/.../Analysis.scala
 export interface ServerAnalysisDocument {
@@ -112,19 +114,26 @@ export class LocalAnalysisEngine {
     window.addEventListener('pagehide', shutdown);
     this.busy = true;
     try {
-      const verifier = new BrilliantVerifier({
-        sacrifice: (before, after, signal) => classifier.sacrifice(before, after, signal),
+      const verifier = new FullGameClassifier({
         search: (fen, signal, depth, time) => fish.search(fen, [], signal, depth, time),
         classify: (input, signal) => classifier.classify(input, signal),
       });
       const candidates = nodes.map(n =>
         this.importedQuality.has(n.ply) ? { ...n, glyphs: this.importedQuality.get(n.ply) } : n,
       );
-      const verified = await verifier.run(candidates, abort.signal, current, progress);
+      const verified = await verifier.run(
+        candidates,
+        abort.signal,
+        current,
+        progress,
+        gameReviewQuality(storage.get('nosweat.gameReview.quality')),
+      );
       if (abort.signal.aborted || !current()) return false;
-      for (const move of verified) {
-        const node = nodes.find(n => n.ply === move.ply && n.fen === move.fen && n.uci === move.uci);
-        if (node && !hasQualityGlyph(node)) node.glyphs = [...(node.glyphs ?? []), brilliantGlyph()];
+      for (const node of nodes) {
+        if (!verified.has(node.ply) || this.importedQuality.has(node.ply)) continue;
+        node.glyphs = (node.glyphs ?? []).filter(g => g.id < 1 || g.id > 6 || !g.comp);
+        const glyph = qualityGlyph(verified.get(node.ply)!);
+        if (glyph) node.glyphs.push(glyph);
       }
       return true;
     } finally {
@@ -244,6 +253,12 @@ export class LocalAnalysisEngine {
         )[0],
       );
     });
+
+    // Imported quality annotations remain authoritative through persistence too.
+    for (const node of this.nodes) {
+      const imported = this.importedQuality.get(node.ply);
+      if (imported) node.glyphs = [...(node.glyphs ?? []).filter(g => g.id < 1 || g.id > 6), ...imported];
+    }
 
     return {
       localUpdate: {

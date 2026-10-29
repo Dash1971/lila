@@ -152,13 +152,13 @@ export function view(ctrl: AnalyseCtrl): VNode {
           'button',
           {
             hook: bind('click', () => {
-              site.asset.loadEsm('analyse.local', { init: ctrl });
+              site.asset.loadEsm('analyse.local', { init: ctrl.noSweat ? { ctrl, start: true } : ctrl });
               ctrl.actionMenu(false);
               ctrl.redraw();
             }),
             attrs: dataIcon(licon.Cogs),
           },
-          i18n.study.analysisEditor,
+          ctrl.noSweat ? 'Analyze game' : i18n.study.analysisEditor,
         ),
       (ctrl.idbTree.movesDirty || ctrl.idbTree.hasLocalAnalysis || ctrl.idbTree.hasLocalCeval) &&
         hl(

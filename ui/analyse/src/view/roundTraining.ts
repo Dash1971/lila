@@ -9,6 +9,7 @@ import type AnalyseCtrl from '@/ctrl';
 import { findTag } from '@/study/studyChapters';
 
 import type { AnalysisMetaSide, GamePhase } from '../interfaces';
+import { classificationCounts, moveClasses } from '../noSweatFullReview';
 
 type AdviceKind = 'inaccuracy' | 'mistake' | 'blunder';
 
@@ -79,6 +80,62 @@ const error = (nb: number, color: Color, advice: Advice) =>
   );
 
 const doRender = (ctrl: AnalyseCtrl): VNode => {
+  if (ctrl.noSweat) {
+    const counts = {
+      white: classificationCounts(ctrl.mainline, 'white'),
+      black: classificationCounts(ctrl.mainline, 'black'),
+    };
+    return h('div.advice-summary.nosweat-summary', [
+      h('table', [
+        h(
+          'thead',
+          h('tr', [h('th'), ...(['white', 'black'] as Color[]).map(c => h('th', renderPlayer(ctrl, c)))]),
+        ),
+        h('tbody', [
+          ...moveClasses.map((category, i) =>
+            h('tr', [
+              h('td', { attrs: { style: 'color:' + category.color } }, category.symbol + ' ' + category.name),
+              ...(['white', 'black'] as Color[]).map(c =>
+                h(
+                  'td',
+                  h(
+                    'button.fbt',
+                    {
+                      attrs: {
+                        type: 'button',
+                        disabled: !counts[c][i],
+                        'aria-label': `${category.name}: ${counts[c][i]} for ${c}`,
+                      },
+                      hook: bind('click', () => ctrl.jumpToGlyphSymbol(c, category.symbol), ctrl.redraw),
+                    },
+                    String(counts[c][i]),
+                  ),
+                ),
+              ),
+            ]),
+          ),
+          h('tr.accuracy', [
+            h('td', i18n.site.accuracy),
+            ...(['white', 'black'] as Color[]).map(c => h('td', `${ctrl.mainlineAnalysis![c].accuracy}%`)),
+          ]),
+          h('tr', [
+            h('td', 'Avg. centipawn loss'),
+            ...(['white', 'black'] as Color[]).map(c => h('td', String(ctrl.mainlineAnalysis![c].acpl))),
+          ]),
+        ]),
+      ]),
+      !ctrl.study &&
+        h(
+          'a.button.text',
+          {
+            class: { active: !!ctrl.retro },
+            attrs: dataIcon(licon.PlayTriangle),
+            hook: bind('click', ctrl.toggleRetro, ctrl.redraw),
+          },
+          i18n.site.learnFromYourMistakes,
+        ),
+    ]);
+  }
   return h(
     'div.advice-summary',
     {
@@ -139,6 +196,7 @@ export function render(ctrl: AnalyseCtrl): VNode | undefined {
   // don't cache until the analysis is complete!
   const buster = ctrl.mainlineAnalysis.partial ? Math.random() : '';
   let cacheKey = String(buster) + !!ctrl.retro + Boolean(ctrl.idbTree.hasLocalAnalysis);
+  if (ctrl.noSweat) cacheKey += JSON.stringify(ctrl.mainline.map(n => n.glyphs));
   if (ctrl.study) cacheKey += ctrl.study.data.chapter.id;
 
   return h('div.analyse__round-training', [

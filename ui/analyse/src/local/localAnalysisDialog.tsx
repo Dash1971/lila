@@ -9,7 +9,7 @@ import { numberFormat } from 'lib/i18n';
 import { licon } from 'lib/licon';
 import { log } from 'lib/permalog';
 import { pubsub } from 'lib/pubsub';
-import { storedIntProp, storedStringProp, type StoredProp } from 'lib/storage';
+import { storage, storedIntProp, storedStringProp, type StoredProp } from 'lib/storage';
 import { structuredCloneLite } from 'lib/tree/ops';
 import {
   type Dialog,
@@ -24,25 +24,31 @@ import {
 } from 'lib/view';
 import { text as xhrText } from 'lib/xhr';
 
-import { isFinished } from '@/study/studyChapters';
-
 import type AnalyseCtrl from '../ctrl';
 import type { AnalysisEngineInfo } from '../interfaces';
+import { gameReviewQuality } from '../noSweatFullReview';
+import { isFinished } from '../study/studyChapters';
 import { LocalAnalysisEngine } from './localAnalysisEngine';
 
-export async function localAnalysisDialog(ctrl: AnalyseCtrl): Promise<void> {
+export async function localAnalysisDialog(ctrl: AnalyseCtrl, start = false): Promise<void> {
   const state = new LocalAnalysisDialog(ctrl, await site.asset.loadEsm<ChartGame>('chart.game'));
-  jsxDialog({
+  let redraw: Redraw = () => {};
+  redraw = jsxDialog({
     class: 'local-analysis-dialog',
     css: [{ hashed: 'analyse.local-dialog' }],
     modal: true,
     onClose: state.close,
+    onShow: dialog => {
+      if (start && ctrl.noSweat) void state.analyse(dialog, redraw);
+    },
     render: state.render,
   });
 }
 
-class LocalAnalysisDialog {
+export class LocalAnalysisDialog {
   private engine?: LocalAnalysisEngine;
+  private running = false;
+  private closed = false;
   private chartData: Parameters<ChartGame['acpl']>[1];
   private chart?: AcplChart;
   private status?: LooseVNodes;
@@ -57,9 +63,18 @@ class LocalAnalysisDialog {
     private readonly chartGame: ChartGame,
   ) {
     const info = this.bestEngineDefaults;
-    this.engineId = storedStringProp('local-analysis.engine', info.id);
-    this.threads = storedIntProp('local-analysis.threads', info.threads);
-    this.hashSize = storedIntProp('local-analysis.hash', info.hashSize);
+    this.engineId = storedStringProp(
+      ctrl.noSweat ? 'nosweat.review.engine.v1' : 'local-analysis.engine',
+      info.id,
+    );
+    this.threads = storedIntProp(
+      ctrl.noSweat ? 'nosweat.review.threads.v1' : 'local-analysis.threads',
+      info.threads,
+    );
+    this.hashSize = storedIntProp(
+      ctrl.noSweat ? 'nosweat.review.hash.v1' : 'local-analysis.hash',
+      info.hashSize,
+    );
     this.engineId(this.customSearch.engine!.id);
     const quality = storedIntProp('local-analysis.quality', 0);
     this.quality = (value?: number) => quality(Math.max(this.minQuality, value ?? quality()));
@@ -125,7 +140,7 @@ class LocalAnalysisDialog {
         <button
           class={['button analyse-btn', !this.canAnalyse && 'none']}
           on={{ click: async () => this.analyse(dialog, redraw) }}>
-          {i18n.localAnalysis.analyse}
+          {this.ctrl.noSweat ? 'Analyze' : i18n.localAnalysis.analyse}
         </button>
         <button class={['button ok-btn', this.engine && 'none']} on={{ click: () => dialog.close('ok') }}>
           {i18n.site.ok}
@@ -135,15 +150,21 @@ class LocalAnalysisDialog {
   };
 
   readonly close = () => {
+    this.closed = true;
     pubsub.off('ceval.engine.download', this.updateDownloadStatus);
     this.engine?.stop();
   };
 
-  private async analyse(dlg: Dialog, redraw: Redraw): Promise<void> {
+  async analyse(dlg: Dialog, redraw: Redraw): Promise<void> {
+    if (this.closed || this.running || !this.engine) return;
     const then = performance.now();
-    const engine = this.engine!;
+    const engine = this.engine;
+    this.running = true;
+    this.status = 'Preparing analysis…';
+    redraw();
     try {
       const division = await engine.getDivision();
+      if (this.closed) return;
       this.chartData = {
         ...this.ctrl.data,
         game: { ...this.ctrl.data.game, division },
@@ -159,6 +180,7 @@ class LocalAnalysisDialog {
         },
       );
       await this.ctrl.idbTree.saveAnalysis(result);
+      if (this.closed) return;
       const mergeResult = () =>
         this.ctrl.mergeMainlineAnalysisData({
           ...result.localUpdate,
@@ -170,7 +192,7 @@ class LocalAnalysisDialog {
       if (this.ctrl.noSweat) {
         try {
           const verified = await engine.verifyBrilliants(result, (done, total) => {
-            this.status = `Checking brilliant moves: ${done} / ${total}`;
+            this.status = `Classifying moves: ${done} / ${total}`;
             this.chart?.updateData(this.ctrl.data, engine.nodes);
             redraw();
           });
@@ -190,14 +212,14 @@ class LocalAnalysisDialog {
             redraw();
             return;
           }
-          log('Brilliant verification unavailable', error);
+          log('Move classification unavailable', error);
           brillianceUnavailable = true;
         }
       }
       this.status = [
         `${i18n.site.done} ${i18n.site.nbSeconds(Math.round((performance.now() - then) / 100) / 10)}`,
         <br />,
-        brillianceUnavailable && 'Brilliant checks unavailable; native analysis is complete.',
+        brillianceUnavailable && 'Move classifications unavailable; game analysis is complete.',
         this.canPublish.showButton && i18n.localAnalysis.youCanPublish,
       ];
       this.engine = undefined;
@@ -208,6 +230,9 @@ class LocalAnalysisDialog {
         await alert(String(e));
       }
       dlg.close('cancel');
+    } finally {
+      this.running = false;
+      if (dlg.dialog.open) redraw();
     }
   }
 
@@ -302,7 +327,7 @@ class LocalAnalysisDialog {
       this.ctrl.idbTree.hasLocalAnalysis && this.ctrl.publishedEvalEngine,
     ].filter(Boolean);
 
-    if (!current) {
+    if (!current && !this.ctrl.noSweat) {
       preludes.push(<p>{i18n.localAnalysis.chooseYourEngineSettings}</p>);
       if (
         !ceval.engines
@@ -363,7 +388,14 @@ class LocalAnalysisDialog {
             'local-analysis-engine',
           )}
         </div>
-        {this.searchQualitySetting(redraw)}
+        {this.ctrl.noSweat ? (
+          <div class="setting">
+            <label>Quality</label>
+            <strong>{gameReviewQuality(storage.get('nosweat.gameReview.quality')).name}</strong>
+          </div>
+        ) : (
+          this.searchQualitySetting(redraw)
+        )}
         <div class="setting">
           <label for="local-analysis-threads">{i18n.site.threads}</label>
           <input
@@ -466,11 +498,11 @@ class LocalAnalysisDialog {
   }
 
   private get isIdle() {
-    return !this.engine?.busy;
+    return !this.running && !this.engine?.busy;
   }
 
   private get canAnalyse() {
-    return this.engine?.busy === false;
+    return !this.running && this.engine?.busy === false;
   }
 
   private get canPublish() {
@@ -515,11 +547,15 @@ class LocalAnalysisDialog {
     return {
       engine: { id: engine.id, threads: this.threads(), hashSize: this.hashSize() },
       search: () => ({
-        by:
-          this.quality() === 0
+        by: this.ctrl.noSweat
+          ? (() => {
+              const q = gameReviewQuality(storage.get('nosweat.gameReview.quality'));
+              return { depth: q.depth, movetime: q.movetime };
+            })()
+          : this.quality() === 0
             ? { nodes: this.standardQualityNodesAt() }
             : { movetime: Math.min(this.quality(), engine.maxMovetime ?? 300_000) },
-        multiPv: 1,
+        multiPv: this.ctrl.noSweat ? 2 : 1,
       }),
       canBackground: true,
     };
@@ -527,8 +563,10 @@ class LocalAnalysisDialog {
 
   private get bestEngineDefaults(): { id: string; threads: number; hashSize: number } {
     const engine = this.bestBrowserEngine; // TODO - allow external engines once supported
-    const threads = /*engine.tech === 'EXTERNAL' ? engine.maxThreads :*/ navigator.hardwareConcurrency;
-    const hashSize = /*engine.tech === 'EXTERNAL' ? (engine.maxHash ?? 512) :*/ maxBrowserHash;
+    const threads = this.ctrl.noSweat
+      ? Math.min(2, engine.maxThreads, navigator.hardwareConcurrency || 1)
+      : navigator.hardwareConcurrency;
+    const hashSize = this.ctrl.noSweat ? Math.min(64, maxBrowserHash) : maxBrowserHash;
     return { id: engine.id, threads, hashSize };
   }
 
@@ -538,6 +576,9 @@ class LocalAnalysisDialog {
   }
 
   private get bestBrowserEngine(): BaseEngineInfo {
-    return this.browserEngines[0];
+    return (
+      (this.ctrl.noSweat && this.browserEngines.find(e => e.id === '__sf_19_smallnet')) ||
+      this.browserEngines[0]
+    );
   }
 }

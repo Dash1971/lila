@@ -17,6 +17,7 @@ final class TopNav(helpers: Helpers):
   ) =
     if compact then
       st.nav(id := "topnav", cls := "hover")(
+        st.section(a(href := "/")(trans.site.play())),
         st.section(
           linkTitle(routes.Puzzle.home.url, trans.site.puzzles()),
           div(role := "group")(

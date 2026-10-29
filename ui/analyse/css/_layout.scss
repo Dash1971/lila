@@ -177,6 +177,8 @@ $analyse-gauge-gap: 4px;
     // The optional explorer scrolls in the side column, without changing the
     // board row or pushing native move controls below an expanded table.
     &:has(.nosweat-candidate-panel) {
+      ---col3-uniboard-side-min: 320px;
+
       .analyse__side {
         grid-row: 1 / 3;
         height: var(---cg-height);
