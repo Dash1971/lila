@@ -109,7 +109,7 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
   val noRobots = raw("""<meta content="noindex,nofollow" name="robots">""")
 
   val favicons = raw:
-    if siteName.startsWith("No Sweat Chess") then
+    if siteName.startsWith("Mute Chess") then
       """<link id="favicon" rel="icon" type="image/svg+xml" href="/assets/nosweat/icon.svg"><link rel="stylesheet" href="/assets/nosweat/brand.css?v=channels1">"""
     else
       s"""<link rel="alternate icon" type="image/png" href="/assets/logo/lichess-favicon-64.png">""" +
@@ -312,18 +312,18 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
           a(cls := "site-title", href := langHref("/"), testId("site-title"))(
             if ctx.kid.yes then span(title := trans.site.kidMode.txt(), cls := "kiddo")(":)")
             else ctx.isBot.option(botImage),
-            if siteName.startsWith("No Sweat Chess") then
+            if siteName.startsWith("Mute Chess") then
               frag(
                 img(cls := "nosweat-header-icon", src := assetPath("nosweat/icon.svg"), alt := ""),
                 img(
                   cls := "nosweat-wordmark nosweat-dark",
                   src := assetPath("nosweat/textmark.svg"),
-                  alt := "nosweatchess"
+                  alt := "Mute Chess"
                 ),
                 img(
                   cls := "nosweat-wordmark nosweat-light",
                   src := assetPath("nosweat/textmark-light.svg"),
-                  alt := "nosweatchess"
+                  alt := "Mute Chess"
                 )
               )
             else frag(div(cls := "site-icon", dataIcon := Icon.Logo), div(cls := "site-name")(siteNameFrag))

@@ -18,7 +18,7 @@ import { SearchSnapshots } from '../src/noSweatSnapshots';
 const fixture = (name: string) =>
   JSON.parse(readFileSync(new URL('./fixtures/noSweat/' + name, import.meta.url), 'utf8'));
 const start = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-describe('No Sweat native analysis extensions', () => {
+describe('Mute Chess native analysis extensions', () => {
   test('all 3075 independent EC scoring boundary cases are unchanged', () => {
     const data = fixture('annotation-boundaries.json');
     data.contexts.forEach((context: any, i: number) =>

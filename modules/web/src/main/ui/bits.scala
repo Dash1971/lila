@@ -46,7 +46,7 @@ z-index: 99;
     "This is an empty Lichess preview website, go to lichess.org instead"
 
   val connectLinks: Frag = div(cls := "connect-links")(
-    a(href := "https://github.com/Dash1971/no-sweat-chess", targetBlank, noFollow)("GitHub")
+    a(href := "https://github.com/Dash1971/mute-chess", targetBlank, noFollow)("GitHub")
   )
 
   val logo = raw:

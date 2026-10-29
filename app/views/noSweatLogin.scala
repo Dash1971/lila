@@ -13,12 +13,12 @@ object noSweatLogin:
             img(
               cls := "nosweat-login-wordmark nosweat-dark",
               src := assetPath("nosweat/wordmark.svg"),
-              alt := "nosweatchess"
+              alt := "Mute Chess"
             ),
             img(
               cls := "nosweat-login-wordmark nosweat-light",
               src := assetPath("nosweat/wordmark-light.svg"),
-              alt := "nosweatchess"
+              alt := "Mute Chess"
             )
           ),
           h1("Sign in with Nostr"),

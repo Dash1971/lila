@@ -170,7 +170,8 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
               "anonymous",
               "admin",
               "system",
-              "nosweatchess"
+              "nosweatchess",
+              "mutechess"
             )
             requireThat(!reserved.contains(name.toLowerCase), 409, "That is a reserved system name")
             requireThat(
