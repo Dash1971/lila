@@ -71,3 +71,7 @@ cg-board square.nosweat-premove-dest { background:rgb(20 30 85 / .28); }
 .nosweat-rating-scroll { max-width:100%; overflow:auto; }
 .nosweat-rating-explorer .nosweat-ratings { min-width:320px; }
 .nosweat-candidate-panel [role=status],.nosweat-candidate-panel .error { font-size:.85em; line-height:1.4; }
+
+.nosweat-maia-line { flex-wrap:wrap; column-gap:.5em; row-gap:0; }
+.nosweat-maia-line > span:first-of-type { flex:1; min-width:0; }
+.nosweat-maia-line .nosweat-maia-score { flex-basis:100%; margin-left:4em; font-size:.9em; color:var(--c-font-dim); }

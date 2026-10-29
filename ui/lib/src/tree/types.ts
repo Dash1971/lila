@@ -124,6 +124,7 @@ export interface Gamebook {
 export type GlyphId = number;
 
 export interface Glyph {
+  source?: string;
   id: GlyphId;
   comp?: boolean;
   name: string;

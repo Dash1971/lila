@@ -94,6 +94,9 @@ export function naiveMaterial(fen: string): number {
   }
   return best || 0;
 }
+export const isSacrifice = (before: string, after: string, evaluateMaterial = naiveMaterial): boolean =>
+  !position(after).isEnd() && evaluateMaterial(before) > -evaluateMaterial(after) + 100;
+
 export interface ClassificationInput {
   positions: string[];
   reviews: Review[];
@@ -116,9 +119,7 @@ export function classify(input: ClassificationInput, evaluateMaterial = naiveMat
   const after = reviews[n - 1];
   const previous = n > 2 ? reviews[n - 3] : undefined;
   const color = position(positions[n - 2]).turn;
-  const sacrifice =
-    !position(positions[n - 1]).isEnd() &&
-    evaluateMaterial(positions[n - 2]) > -evaluateMaterial(positions[n - 1]) + 100;
+  const sacrifice = isSacrifice(positions[n - 2], positions[n - 1], evaluateMaterial);
   const predicate = (b: Snapshot, a: Snapshot, p?: Snapshot): Annotation =>
     annotation(p?.lines[0], b, a.lines[0], color, move, sacrifice);
   let symbol = predicate(before.current, after.current, previous?.current);

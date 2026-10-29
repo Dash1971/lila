@@ -1,4 +1,4 @@
-import { classify, naiveMaterial, type ClassificationInput } from './noSweatClassify';
+import { classify, naiveMaterial, isSacrifice, type ClassificationInput } from './noSweatClassify';
 const material = new Map<string, number>();
 const evaluate = (fen: string): number => {
   if (material.has(fen)) return material.get(fen)!;
@@ -7,9 +7,14 @@ const evaluate = (fen: string): number => {
   if (material.size > 4000) material.delete(material.keys().next().value!);
   return value;
 };
-self.onmessage = (event: MessageEvent<ClassificationInput>) => {
+self.onmessage = (event: MessageEvent<ClassificationInput | { material: [string, string] }>) => {
   try {
-    self.postMessage({ result: classify(event.data, evaluate) });
+    self.postMessage({
+      result:
+        'material' in event.data
+          ? isSacrifice(...event.data.material, evaluate)
+          : classify(event.data, evaluate),
+    });
   } catch (error) {
     self.postMessage({ error: String(error) });
   }

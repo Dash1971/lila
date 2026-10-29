@@ -51,7 +51,16 @@ export function mergeReviewData(into: TreeNodeLite, from: TreeNodeLite): void {
   into.comments = Array.from(comments.values());
 
   const glyphs = new Map(into.glyphs?.filter(g => !g.comp).map(g => [`${g.id}:false`, g]));
-  from.glyphs?.forEach(g => glyphs.set(`${g.id}:${!!g.comp}`, g));
+  from.glyphs?.forEach(g => {
+    if (
+      g.source === 'mobile-maia-brilliant-v1' &&
+      [...glyphs.values(), ...(from.glyphs ?? []).filter(other => other !== g)].some(
+        other => other.id >= 1 && other.id <= 6,
+      )
+    )
+      return;
+    glyphs.set(`${g.id}:${!!g.comp}`, g);
+  });
   into.glyphs = Array.from(glyphs.values());
 
   for (const fromChild of from.children) {

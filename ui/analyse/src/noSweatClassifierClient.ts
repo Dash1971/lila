@@ -4,11 +4,17 @@ export class ClassifierClient {
   private cancel?: () => void;
   constructor(private readonly create: () => Worker) {}
   classify(input: ClassificationInput, signal: AbortSignal): Promise<ClassificationResult> {
+    return this.request(input, signal);
+  }
+  sacrifice(before: string, after: string, signal: AbortSignal): Promise<boolean> {
+    return this.request({ material: [before, after] }, signal);
+  }
+  private request<T>(input: unknown, signal: AbortSignal): Promise<T> {
     if (signal.aborted) return Promise.reject(new Error('Cancelled'));
     if (this.cancel) return Promise.reject(new Error('Classifier is busy'));
     const worker = (this.worker ??= this.create());
     return new Promise((resolve, reject) => {
-      const finish = (error?: Error, result?: ClassificationResult) => {
+      const finish = (error?: Error, result?: T) => {
         clearTimeout(timer);
         signal.removeEventListener('abort', aborted);
         this.cancel = undefined;

@@ -4,6 +4,7 @@ import { attributesModule, classModule, init } from 'snabbdom';
 
 import { frag } from 'lib';
 import { winningChances } from 'lib/ceval';
+import { maiaExpectedScore } from 'lib/nosweat/expectedScore';
 import { storage } from 'lib/storage';
 import { hl, type VNode } from 'lib/view';
 
@@ -30,13 +31,17 @@ interface MaiaClient {
     selfElo: number;
     opponentElo: number;
     includeValue: boolean;
-  }): Promise<Float32Array>;
+  }): Promise<{ move_logits: Float32Array; value_logits: Float32Array }>;
   release(): void;
   snapshot(): { phase: string };
 }
 interface Config {
   models: Record<string, { sha256: string }>;
   browserModel: string;
+}
+interface Prediction {
+  candidates: Candidate[];
+  score: number;
 }
 interface Scored {
   score: EvalScore;
@@ -52,6 +57,8 @@ export class NoSweatAnalysis {
   secondMaiaEnabled = true;
   secondMaiaElo = 2400;
   secondaryCandidates: Candidate[] = [];
+  expectedScore?: number;
+  secondaryExpectedScore?: number;
   private sideRedraw?: () => void;
   history = true;
   maiaArrows = true;
@@ -72,7 +79,7 @@ export class NoSweatAnalysis {
   private client?: MaiaClient;
   private config?: Config;
   private maiaTail: Promise<unknown> = Promise.resolve();
-  private readonly cache = new Map<string, Candidate[]>();
+  private readonly cache = new Map<string, Prediction>();
   private readonly fish: ReviewFish;
   private readonly reviewCache = new Map<string, Review>();
   private fishBest?: string;
@@ -198,6 +205,7 @@ export class NoSweatAnalysis {
     this.cancel();
     this.candidates = [];
     this.secondaryCandidates = [];
+    this.expectedScore = this.secondaryExpectedScore = undefined;
     this.scores.clear();
     this.byRating.clear();
     this.fishBest = undefined;
@@ -246,7 +254,7 @@ export class NoSweatAnalysis {
     rating: number,
     generation: number,
     opponent = this.opponentElo,
-  ): Promise<Candidate[]> {
+  ): Promise<Prediction> {
     const task = this.maiaTail
       .catch(() => {})
       .then(async () => {
@@ -267,10 +275,13 @@ export class NoSweatAnalysis {
             tokens: encodeHistory(fens, this.history),
             selfElo: rating,
             opponentElo: opponent,
-            includeValue: false,
+            includeValue: true,
           });
           if (!this.valid(generation)) throw new Error('Cancelled');
-          const result = policy(fens[fens.length - 1], logits);
+          const result = {
+            candidates: policy(fens[fens.length - 1], logits.move_logits),
+            score: maiaExpectedScore(logits.value_logits),
+          };
           this.cache.set(key, result);
           if (this.cache.size > 128) this.cache.delete(this.cache.keys().next().value!);
           return result;
@@ -293,8 +304,10 @@ export class NoSweatAnalysis {
         : []),
     ]);
     if (!this.valid(generation)) return;
-    this.candidates = results[0].status === 'fulfilled' ? results[0].value : [];
-    this.secondaryCandidates = results[1]?.status === 'fulfilled' ? results[1].value : [];
+    this.candidates = results[0].status === 'fulfilled' ? results[0].value.candidates : [];
+    this.expectedScore = results[0].status === 'fulfilled' ? results[0].value.score : undefined;
+    this.secondaryCandidates = results[1]?.status === 'fulfilled' ? results[1].value.candidates : [];
+    this.secondaryExpectedScore = results[1]?.status === 'fulfilled' ? results[1].value.score : undefined;
     this.error = results.some(r => r.status === 'rejected')
       ? 'A Maia channel is unavailable. Try pausing and enabling analysis again.'
       : '';
@@ -430,7 +443,7 @@ export class NoSweatAnalysis {
         this.ctrl.redraw();
         const result = await this.predict(fens, rating, generation);
         if (!this.valid(generation)) return;
-        this.byRating.set(rating, result);
+        this.byRating.set(rating, result.candidates);
         this.ctrl.redraw();
       }
       this.status = '';
@@ -468,6 +481,7 @@ export class NoSweatAnalysis {
   }
   view(): VNode | undefined {
     if (!this.ctrl.isCevalAllowed()) return undefined;
+    const side = position(this.ctrl.node.fen).turn === 'white' ? 'White' : 'Black';
     const row = (rating: number, candidates: Candidate[], secondary: boolean) =>
       hl('div.nosweat-maia-line', [
         hl(
@@ -486,6 +500,18 @@ export class NoSweatAnalysis {
                 : this.status
                   ? 'Analyzing…'
                   : 'Unavailable',
+        ),
+        hl(
+          'span.nosweat-maia-score',
+          {
+            attrs: {
+              title: `Maia expected score for ${side}, the side to move: win probability plus half the draw probability.`,
+            },
+          },
+          `${side} score ${(() => {
+            const score = secondary ? this.secondaryExpectedScore : this.expectedScore;
+            return score === undefined ? '—' : (score * 100).toFixed(1) + '%';
+          })()}`,
         ),
       ]);
     return hl('section.nosweat-engine-lines', { attrs: { 'aria-label': 'Maia analysis channels' } }, [

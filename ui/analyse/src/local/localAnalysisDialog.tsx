@@ -10,6 +10,7 @@ import { licon } from 'lib/licon';
 import { log } from 'lib/permalog';
 import { pubsub } from 'lib/pubsub';
 import { storedIntProp, storedStringProp, type StoredProp } from 'lib/storage';
+import { structuredCloneLite } from 'lib/tree/ops';
 import {
   type Dialog,
   type LooseVNodes,
@@ -158,12 +159,47 @@ class LocalAnalysisDialog {
         },
       );
       await this.ctrl.idbTree.saveAnalysis(result);
+      const mergeResult = () =>
+        this.ctrl.mergeMainlineAnalysisData({
+          ...result.localUpdate,
+          tree: structuredCloneLite(result.localUpdate.tree),
+        });
+      mergeResult();
+      // Keep the completed native review even if optional brilliant verification is cancelled.
+      let brillianceUnavailable = false;
+      if (this.ctrl.noSweat) {
+        try {
+          const verified = await engine.verifyBrilliants(result, (done, total) => {
+            this.status = `Checking brilliant moves: ${done} / ${total}`;
+            this.chart?.updateData(this.ctrl.data, engine.nodes);
+            redraw();
+          });
+          if (!verified) {
+            this.engine = undefined;
+            this.status = i18n.site.done;
+            redraw();
+            return;
+          }
+          await this.ctrl.idbTree.saveAnalysis(result);
+          mergeResult();
+          this.chart?.updateData(this.ctrl.data, engine.nodes);
+        } catch (error) {
+          if (String(error).includes('Cancelled')) {
+            this.engine = undefined;
+            this.status = i18n.site.done;
+            redraw();
+            return;
+          }
+          log('Brilliant verification unavailable', error);
+          brillianceUnavailable = true;
+        }
+      }
       this.status = [
         `${i18n.site.done} ${i18n.site.nbSeconds(Math.round((performance.now() - then) / 100) / 10)}`,
         <br />,
+        brillianceUnavailable && 'Brilliant checks unavailable; native analysis is complete.',
         this.canPublish.showButton && i18n.localAnalysis.youCanPublish,
       ];
-      this.ctrl.mergeMainlineAnalysisData(result.localUpdate);
       this.engine = undefined;
       redraw();
     } catch (e) {

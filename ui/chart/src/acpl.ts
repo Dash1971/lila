@@ -32,6 +32,7 @@ import {
   axisOpts,
 } from './index';
 import type { AcplChart, AnalyseData, Player } from './interface';
+import { classificationPoint } from './moveClassifications';
 
 Chart.register(LineController, LinearScale, PointElement, LineElement, Tooltip, Filler, ChartDataLabels);
 export default async function (
@@ -46,18 +47,14 @@ export default async function (
   const ply = plyLine(0);
   const divisionLines = division(data.game.division);
   const firstPly = mainline[0].ply;
-  const isPartial = (d: AnalyseData) => !d.analysis || !!d.analysis.partial;
 
   const makeDataset = (
     d: AnalyseData,
     mainline: TreeNodeBase[],
-  ): { acpl: ChartDataset<'line'>; moveLabels: string[]; adviceHoverColors: string[] } => {
-    const pointBackgroundColors: (
-      | typeof orangeAccent
-      | typeof blurBackgroundColorWhite
-      | typeof blurBackgroundColorBlack
-    )[] = [];
-    const adviceHoverColors: string[] = [];
+  ): { acpl: ChartDataset<'line'>; moveLabels: string[] } => {
+    const pointBackgroundColors: string[] = [];
+    const pointBorderColors: string[] = [];
+    const pointBorderWidths: number[] = [];
     const moveLabels: string[] = [];
     const pointStyles: PointStyle[] = [];
     const pointSizes: number[] = [];
@@ -76,20 +73,27 @@ export default async function (
       const winchance = winningChances.povChances('white', { cp });
       // Plot winchance because logarithmic but display the corresponding cp.eval from AnalyseData in the tooltip
       winChances.push({ x: node.ply, y: winchance });
-      const { advice, color: glyphColor } = glyphProperties(node);
       const label = turn + dots + ' ' + node.san;
       let annotation = '';
-      if (advice) annotation = ` [${i18n.site[advice]}]`;
       const isBlur =
         blurs[isWhite ? 1 : 0][Math.floor((node.ply - (d.game.startedAtTurn || 0) - 1) / 2)] === '1';
-      if (isBlur) annotation = ' [blur]';
-      moveLabels.push(label + annotation);
-      pointStyles.push(isBlur ? 'rect' : 'circle');
-      pointSizes.push(isBlur ? 5 : 0);
-      pointBackgroundColors.push(
-        isBlur ? (isWhite ? blurBackgroundColorWhite : blurBackgroundColorBlack) : orangeAccent,
+      const point = classificationPoint(
+        node,
+        orangeAccent,
+        isBlur ? (isWhite ? blurBackgroundColorWhite : blurBackgroundColorBlack) : undefined,
       );
-      adviceHoverColors.push(glyphColor ?? orangeAccent);
+      const classified = point.classification;
+      if (classified) {
+        const name = 'advice' in classified ? i18n.site[classified.advice] : classified.name;
+        annotation = ` [${classified.symbol} ${name}]`;
+      }
+      if (isBlur) annotation += ' [blur]';
+      moveLabels.push(label + annotation);
+      pointStyles.push(point.style);
+      pointSizes.push(point.radius);
+      pointBackgroundColors.push(point.color);
+      pointBorderColors.push(point.border);
+      pointBorderWidths.push(point.borderWidth);
     });
     return {
       acpl: {
@@ -101,25 +105,28 @@ export default async function (
           below: blackFill,
           above: whiteFill,
         },
-        pointRadius: d.player.blurs || d.opponent.blurs ? pointSizes : 0,
+        pointRadius: pointSizes,
         pointHoverRadius: 5,
         pointHitRadius: 100,
         borderColor: orangeAccent,
         pointBackgroundColor: pointBackgroundColors,
+        pointBorderColor: pointBorderColors,
+        pointBorderWidth: pointBorderWidths,
+        pointHoverBackgroundColor: pointBackgroundColors,
+        pointHoverBorderColor: pointBorderColors,
+        pointHoverBorderWidth: pointBorderWidths,
         pointStyle: pointStyles,
         hoverBackgroundColor: orangeAccent,
         order: 5,
         datalabels: { display: false },
       },
       moveLabels,
-      adviceHoverColors,
     };
   };
 
   const dataset = makeDataset(data, mainline);
   const acpl = dataset.acpl;
   const moveLabels = dataset.moveLabels;
-  let adviceHoverColors = dataset.adviceHoverColors;
   const config: ChartConfiguration<'line'> = {
     type: 'line',
     data: {
@@ -167,54 +174,43 @@ export default async function (
   };
   const acplChart = new Chart(el, config) as AcplChart;
   acplChart.selectPly = selectPly.bind(acplChart);
-  acplChart.updateData = (d: AnalyseData, mainline: TreeNodeBase[]) => {
-    const dataset = makeDataset(d, mainline);
-    adviceHoverColors = dataset.adviceHoverColors;
-    const acpl = dataset.acpl;
-    acplChart.data.datasets[0].data = acpl.data;
-    if (!isPartial(data)) christmasTree(acplChart, mainline, adviceHoverColors);
+  acplChart.updateData = (d: AnalyseData, nodes: TreeNodeBase[]) => {
+    mainline = nodes;
+    const dataset = makeDataset(d, nodes);
+    moveLabels.splice(0, moveLabels.length, ...dataset.moveLabels);
+    acplChart.data.labels = moveLabels.map((_, index) => index);
+    // Analysis arrives after the initial chart: replace glyph styles and labels too.
+    Object.assign(acplChart.data.datasets[0], dataset.acpl);
     acplChart.update('none');
   };
   pubsub.on('ply', acplChart.selectPly);
   pubsub.emit('ply.trigger');
-  if (!isPartial(data)) christmasTree(acplChart, mainline, adviceHoverColors);
+  christmasTree(acplChart, () => mainline);
   return acplChart;
 }
 
-type Advice = 'blunder' | 'mistake' | 'inaccuracy';
-const glyphProperties = (node: TreeNodeBase): { advice?: Advice; color?: string } => {
-  if (node.glyphs?.some(g => g.id === 4)) return { advice: 'blunder', color: '#db3031' };
-  else if (node.glyphs?.some(g => g.id === 2)) return { advice: 'mistake', color: '#e69d00' };
-  else if (node.glyphs?.some(g => g.id === 6)) return { advice: 'inaccuracy', color: '#4da3d5' };
-  else return { advice: undefined, color: undefined };
-};
-
 const toBlurArray = (player: Player) => player.blurs?.bits?.split('') ?? [];
 
-function christmasTree(chart: AcplChart, mainline: TreeNodeBase[], hoverColors: string[]) {
-  $('div.advice-summary')
-    .on('mouseenter', 'div.symbol', function (this: HTMLElement) {
+function christmasTree(chart: AcplChart, mainline: () => TreeNodeBase[]) {
+  $(chart.canvas.closest('.analyse') ?? document.body)
+    .on('mouseenter', '.advice-summary div.symbol', function (this: HTMLElement) {
       if (!chart.canvas.isConnected) return;
       const symbol = this.getAttribute('data-symbol');
       const playerColorBit = this.getAttribute('data-color') === 'white' ? 1 : 0;
-      const acplDataset = chart.data.datasets[0];
-      if (symbol === '??' || symbol === '?!' || symbol === '?') {
-        acplDataset.pointHoverBackgroundColor = hoverColors;
-        acplDataset.pointBorderColor = hoverColors;
-        const points = mainline
+      if (symbol && ['??', '?', '?!', '!!', '!', '!?'].includes(symbol)) {
+        const nodes = mainline();
+        const points = nodes
           .filter(
             node => node.glyphs?.some(glyph => glyph.symbol === symbol) && (node.ply & 1) === playerColorBit,
           )
-          .map(node => ({ datasetIndex: 0, index: node.ply - mainline[0].ply - 1 }));
+          .map(node => ({ datasetIndex: 0, index: node.ply - nodes[0].ply - 1 }));
         chart.setActiveElements(points);
         chart.update('none');
       }
     })
-    .on('mouseleave', 'div.symbol', function (this: HTMLElement) {
+    .on('mouseleave', '.advice-summary div.symbol', function (this: HTMLElement) {
       if (!chart.canvas.isConnected) return;
       chart.setActiveElements([]);
-      chart.data.datasets[0].pointHoverBackgroundColor = orangeAccent;
-      chart.data.datasets[0].pointBorderColor = orangeAccent;
       chart.update('none');
     });
 }

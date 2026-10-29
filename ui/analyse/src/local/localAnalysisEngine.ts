@@ -10,6 +10,9 @@ import type { ClientEval, Glyph, TreeNodeLite, TreePath } from 'lib/tree/types';
 
 import AnalyseCtrl from '../ctrl';
 import type { AnalysisUpdate, AnalysisEngineInfo, AnalysisMeta, Division } from '../interfaces';
+import { BrilliantVerifier, brilliantGlyph, mainlineKey, hasQualityGlyph } from '../noSweatBrilliants';
+import { ClassifierClient } from '../noSweatClassifierClient';
+import { ReviewFish } from '../noSweatFish';
 
 // modules/tree/.../Analysis.scala
 export interface ServerAnalysisDocument {
@@ -33,6 +36,8 @@ export class LocalAnalysisEngine {
   readonly nodes: TreeNodeLite[];
   busy = false;
 
+  private readonly importedQuality = new Map<number, Glyph[]>();
+  private brilliantAbort?: AbortController;
   private readonly path: TreePath;
   private nodeIndex: number;
   private nodesSearched = 0;
@@ -42,6 +47,11 @@ export class LocalAnalysisEngine {
     this.nodes = mainlineNodeList(structuredCloneLite(this.ctrl.tree.root));
     this.nodeIndex = this.nodes.length - 1;
     for (const [i, node] of this.nodes.entries()) {
+      if (node.glyphs?.some(g => !g.comp && g.id >= 1 && g.id <= 6))
+        this.importedQuality.set(
+          node.ply,
+          node.glyphs.filter(g => !g.comp && g.id >= 1 && g.id <= 6),
+        );
       node.eval = node.ceval = undefined;
       node.comments = undefined;
       node.glyphs = undefined;
@@ -81,7 +91,53 @@ export class LocalAnalysisEngine {
     }
   }
 
+  async verifyBrilliants(
+    result: LocalAnalysisResult,
+    progress: (done: number, total: number) => void,
+  ): Promise<boolean> {
+    const nodes = mainlineNodeList(result.localUpdate.tree);
+    const key = mainlineKey(nodes);
+    const current = () =>
+      this.ctrl.isCevalAllowed() && !document.hidden && key === mainlineKey(this.ctrl.mainline);
+    const abort = (this.brilliantAbort = new AbortController());
+    const fish = new ReviewFish(() => {});
+    const classifier = new ClassifierClient(
+      () => new Worker(site.asset.url(site.asset.jsModule('analyse.nosweatWorker')), { type: 'module' }),
+    );
+    const cancel = () => {
+      if (document.hidden) abort.abort();
+    };
+    document.addEventListener('visibilitychange', cancel);
+    const shutdown = () => abort.abort();
+    window.addEventListener('pagehide', shutdown);
+    this.busy = true;
+    try {
+      const verifier = new BrilliantVerifier({
+        sacrifice: (before, after, signal) => classifier.sacrifice(before, after, signal),
+        search: (fen, signal, depth, time) => fish.search(fen, [], signal, depth, time),
+        classify: (input, signal) => classifier.classify(input, signal),
+      });
+      const candidates = nodes.map(n =>
+        this.importedQuality.has(n.ply) ? { ...n, glyphs: this.importedQuality.get(n.ply) } : n,
+      );
+      const verified = await verifier.run(candidates, abort.signal, current, progress);
+      if (abort.signal.aborted || !current()) return false;
+      for (const move of verified) {
+        const node = nodes.find(n => n.ply === move.ply && n.fen === move.fen && n.uci === move.uci);
+        if (node && !hasQualityGlyph(node)) node.glyphs = [...(node.glyphs ?? []), brilliantGlyph()];
+      }
+      return true;
+    } finally {
+      this.busy = false;
+      classifier.release();
+      fish.destroy();
+      document.removeEventListener('visibilitychange', cancel);
+      window.removeEventListener('pagehide', shutdown);
+    }
+  }
+
   readonly stop = () => {
+    this.brilliantAbort?.abort();
     this.ctrl.ceval.reset();
     this.finishNode(this.isRunning() ? 'cancelled' : undefined);
   };
