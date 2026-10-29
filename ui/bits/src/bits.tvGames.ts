@@ -8,6 +8,7 @@ interface ReplacementResponse {
 }
 
 const getId = (el: EleLoose) => el.getAttribute('href')?.substring(1, 9);
+const ids = (node: Element) => Array.from(node.querySelectorAll('.mini-game')).map(getId).sort().join(',');
 
 let isRequestPending = false;
 const finishedIdQueue: string[] = [];
@@ -48,6 +49,23 @@ api.overrides.tvGamesOnFinish = (id: string) =>
   }, 7000); // 7000 matches the rematch wait duration in /modules/tv/main/Tv.scala
 
 site.load.then(() => {
+  if (document.querySelector('[data-current-only="true"]')) {
+    setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      xhr
+        .text('/games')
+        .then(html => {
+          const listing = new DOMParser().parseFromString(html, 'text/html').querySelector('.now-playing');
+          const current = document.querySelector('main.tv-games .now-playing');
+          if (!listing || !current) return;
+          if (ids(listing) !== ids(current)) {
+            current.replaceChildren(...Array.from(listing.childNodes));
+            pubsub.emit('content-loaded');
+          }
+        })
+        .catch(() => {});
+    }, 15000);
+  }
   pubsub.on('socket.in.finish', ({ id }) => api.overrides.tvGamesOnFinish(id));
   $('main.tv-games')
     .find('.mini-game')

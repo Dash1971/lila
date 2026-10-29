@@ -212,19 +212,13 @@ final class StudyListUi(helpers: Helpers, bits: StudyBits):
         val group = StudyGroup.topic(topic.some)
         a(activeCls(group), href := routes.Study.byTopic(topic.value, newOrder(group)))(topic.value)
       ,
-      a(activeCls(StudyGroup.staffPicks), href := routes.Study.staffPicks)("Staff picks"),
       a(
         dataIcon := Icon.InfoCircle,
-        href := "/@/lichess/blog/study-chess-the-lichess-way/V0KrLSkA"
+        href := "https://lichess.org/study"
       )(trs.whatAreStudies())
     )
 
-  def searchForm(placeholder: String, value: String, order: StudyOrder) =
-    form(cls := "search", action := routes.Study.search(), method := "get")(
-      form3.hidden("order", order.key),
-      input(name := "q", st.placeholder := placeholder, st.value := value, enterkeyhint := "search"),
-      submitButton(cls := "button", dataIcon := Icon.Search)
-    )
+  def searchForm(_placeholder: String, _value: String, _order: StudyOrder) = emptyFrag
 
   private def formatToggle(using format: StudyFormat) =
     postForm(

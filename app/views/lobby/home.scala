@@ -132,7 +132,6 @@ object home:
           div(cls := "lobby__puzzle")(
             puzzle.map(p => views.puzzle.bits.dailyLink(p)())
           ),
-          views.ublog.ui.homeCarousel(ublogPosts),
           div(cls := "lobby__feed"):
             views.feed.lobbyUpdates(lastUpdates)
           ,

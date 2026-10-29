@@ -51,8 +51,11 @@ object PracticeStructure:
   private[practice] def studyIds: List[StudyId] = PracticeSections.list.flatMap(_.studies.map(_.id))
 
   def withChapters(chapters: Map[StudyId, Vector[Chapter.IdName]]) = PracticeStructure:
-    PracticeSections.list.map: sec =>
-      sec.copy(
-        studies = sec.studies.map: stu =>
-          stu.copy(chapters = chapters.get(stu.id).so(_.toList))
+    PracticeSections.list.flatMap: sec =>
+      val studies = sec.studies.flatMap: stu =>
+        chapters.get(stu.id).filter(_.nonEmpty).map(cs => stu.copy(chapters = cs.toList))
+      Option.when(studies.nonEmpty)(
+        sec.copy(
+          studies = studies
+        )
       )

@@ -80,20 +80,13 @@ function whatNext(ctrl: LearnCtrl) {
             profileUrl(userId),
             'beams-aura',
             i18n.learn.register,
-            i18n.learn.getAFreeLichessAccount,
+            'Save your progress with Nostr',
             true,
           )
-        : makeStage('/signup', 'beams-aura', i18n.learn.register, i18n.learn.getAFreeLichessAccount),
+        : makeStage('/signup', 'beams-aura', i18n.learn.register, 'Save your progress with Nostr'),
       makeStage('/practice', 'robot-golem', i18n.learn.practice, i18n.learn.learnCommonChessPositions),
       makeStage('/training', 'bullseye', i18n.learn.puzzles, i18n.learn.exerciseYourTacticalSkills),
-      makeStage(
-        '/video?tags=beginner',
-        'tied-scroll',
-        i18n.learn.videos,
-        i18n.learn.watchInstructiveChessVideos,
-      ),
-      makeStage('/#hook', 'sword-clash', i18n.learn.playPeople, i18n.learn.opponentsFromAroundTheWorld),
-      makeStage('/#ai', 'vintage-robot', i18n.learn.playMachine, i18n.learn.testYourSkillsWithTheComputer),
+      makeStage('/', 'vintage-robot', 'Play Maia', 'Put your skills into practice'),
     ]),
   ]);
 }

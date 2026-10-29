@@ -16,7 +16,17 @@ final class AccountPref(helpers: Helpers, helper: PrefHelper, bits: AccountUi):
     div(cls := List("none" -> (categ != active)))
 
   private def setting(name: Frag, body: Frag, settingId: String) =
-    st.section(a(href := "#" + settingId)(h2(id := settingId)(name)), body)
+    if Set(
+        "giveMoreTime",
+        "takebacksWithOpponentApproval",
+        "sayGG",
+        "letOtherPlayersFollowYou",
+        "letOtherPlayersChallengeYou",
+        "letOtherPlayersMessageYou",
+        "shareYourInsightsData"
+      ).contains(settingId)
+    then div(hidden)(body)
+    else st.section(a(href := "#" + settingId)(h2(id := settingId)(name)), body)
 
   def apply(u: User, form: play.api.data.Form[?], categ: lila.pref.PrefCateg)(using Context) =
     AccountPage(
@@ -239,7 +249,7 @@ final class AccountPref(helpers: Helpers, helper: PrefHelper, bits: AccountUi):
                   tr(
                     th,
                     th(trp.notifyBell(), iconTag(Icon.BellOutline)),
-                    th(trp.notifyPush(), iconTag(Icon.PhoneMobile))
+                    th(hidden)(trp.notifyPush())
                   )
                 ),
                 tbody(
@@ -253,10 +263,21 @@ final class AccountPref(helpers: Helpers, helper: PrefHelper, bits: AccountUi):
                     trp.notifyBroadcasts() -> "broadcastRound",
                     trp.notifyGameEvent() -> "gameEvent",
                     trans.team.teamUpdates() -> "teamUpdate"
-                  ).map(makeRow(form))
+                  ).map: (label, name) =>
+                    if Set("mention", "invitedStudy", "gameEvent").contains(name) then
+                      makeRow(form)(label, name)
+                    else
+                      tr(hidden)(
+                        td(
+                          Seq("bell", "push").map(allow =>
+                            form3.hidden(s"$name.$allow", form.data.getOrElse(s"$name.$allow", "false"))
+                          )
+                        )
+                      )
                 )
               ),
               div(
+                hidden,
                 id := "correspondence-email-notif"
               )( // id is set to allow direct unsubcribe link in correspondence emails
                 bits.setting(
@@ -279,8 +300,9 @@ final class AccountPref(helpers: Helpers, helper: PrefHelper, bits: AccountUi):
         Seq("bell", "push").map: allow =>
           val name = s"$filterName.$allow"
           val checked = form.data(name).contains("true")
-          td(
-            if !hiddenFields(s"$filterName.$allow") then
+          td((allow == "push").option(hidden))(
+            if allow == "push" then form3.hidden(name, form.data.getOrElse(name, "false"))
+            else if !hiddenFields(s"$filterName.$allow") then
               div(cls := "toggle", form3.nativeCheckbox(name, name, checked))
             else if !checked then div(iconTag(Icon.X))
             else

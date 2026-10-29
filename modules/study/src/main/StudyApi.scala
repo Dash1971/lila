@@ -335,6 +335,8 @@ final class StudyApi(
   )(who: Who) =
     sequenceStudyWithChapter(studyId, chapterId):
       case Study.WithChapter(study, prevChapter) =>
+        if newVariant != chess.variant.Standard then
+          throw StudyValidationException("Only standard chess is supported")
         val chapter = prevChapter
           .copy(root = newRoot)
           .focus(_.setup.variant)

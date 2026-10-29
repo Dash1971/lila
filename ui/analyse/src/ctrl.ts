@@ -188,9 +188,6 @@ export default class AnalyseCtrl implements CevalHandler {
     this.pendingDeletionPath = propWithEffect(null, this.redraw);
     this.initialPath = this.makeInitialPath();
     this.setPath(this.initialPath);
-    if (this.isCevalAllowed() && this.data.game.variant.key === 'standard')
-      this.noSweat = new NoSweatAnalysis(this);
-
     this.showGround();
     this.resetAutoShapes();
     this.explorer.setNode();
@@ -198,6 +195,9 @@ export default class AnalyseCtrl implements CevalHandler {
       opts.study && makeStudy
         ? new makeStudy(opts.study, this, (opts.tagTypes || '').split(','), opts.practice, opts.relay)
         : undefined;
+
+    if (!opts.practice && this.isCevalAllowed() && this.data.game.variant.key === 'standard')
+      this.noSweat = new NoSweatAnalysis(this);
 
     if (location.hash === '#practice' || this.study?.data.chapter.practice) this.togglePractice();
     else if (location.hash === '#menu') requestIdleCallbackSafe(this.actionMenu.toggle, 500);

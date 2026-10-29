@@ -14,7 +14,8 @@ export const reload = (
   return xhrJson(url);
 };
 
-export const variants = () => xhrJson('/variant', { cache: 'default' });
+export const variants = (): Promise<Variant[]> =>
+  Promise.resolve([{ key: 'standard', name: 'Standard', short: 'Standard' }]);
 
 export const glyphs = () =>
   xhrJson(`/study/glyphs/${document.documentElement.lang}.json`, { cache: 'default' });

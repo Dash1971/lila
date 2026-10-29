@@ -7,17 +7,7 @@ import lila.ui.ScalatagsTemplate.{ *, given }
 final class ForumBits(helpers: Helpers):
   import helpers.{ *, given }
 
-  def searchForm(search: String = "")(using Context) =
-    div(cls := "box__top__actions")(
-      form(cls := "search", action := routes.ForumPost.search())(
-        input(
-          name := "text",
-          value := search,
-          placeholder := trans.search.search.txt(),
-          enterkeyhint := "search"
-        )
-      )
-    )
+  def searchForm(_search: String = "") = emptyFrag
 
   def authorLink(post: ForumPost, cssClass: Option[String] = None, withOnline: Boolean = true)(using
       Context

@@ -61,19 +61,24 @@ final class TvUi(helpers: lila.ui.Helpers)(
           )
         )
 
-  def games(channel: Tv.Channel, povs: List[Pov], champions: Tv.Champions)(using Context) =
-    Page(s"${channel.translate} • ${trans.site.currentGames.txt()}")
+  def games(channel: Tv.Channel, povs: List[Pov], champions: Tv.Champions, currentOnly: Boolean = false)(using
+      Context
+  ) =
+    Page(if currentOnly then trans.site.currentGames.txt()
+    else s"${channel.translate} • ${trans.site.currentGames.txt()}")
       .css("bits.tv.games")
       .js(Esm("bits.tvGames")):
         main(
           cls := "page-menu tv-games",
+          attr("data-current-only") := currentOnly,
           dataRel := routeUrl(routes.Tv.gameChannelReplacement(channel.key, GameId("gameId"), Nil))
         )(
           st.aside(cls := "page-menu__menu"):
-            side.channels(channel, champions, "/games")
+            if currentOnly then h1(trans.site.currentGames()) else side.channels(channel, champions, "/games")
           ,
           div(cls := "page-menu__content now-playing"):
-            povs.map(gameUi.mini(_))
+            if currentOnly && povs.isEmpty then p("No games are being played right now.")
+            else frag(povs.map(gameUi.mini(_)))
         )
 
   object side:

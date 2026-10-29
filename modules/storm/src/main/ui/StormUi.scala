@@ -4,7 +4,6 @@ package ui
 import play.api.libs.json.*
 import scalalib.paginator.Paginator
 
-import lila.core.id.CmsPageKey
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
@@ -36,7 +35,9 @@ final class StormUi(helpers: Helpers):
             )
           },
           div(cls := "storm__about__link")(
-            a(href := routes.Cms.lonePage(CmsPageKey("storm")))(trans.site.aboutX("Puzzle Storm"))
+            a(href := "https://lichess.org/page/storm", targetBlank, noFollow)(
+              trans.site.aboutX("Puzzle Storm")
+            )
           )
         )
 

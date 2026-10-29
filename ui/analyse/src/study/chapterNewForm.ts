@@ -374,7 +374,7 @@ export function view(ctrl: StudyChapterNewForm): VNode {
                 }),
             ]),
           div('.form-split', [
-            div('.form-group.form-half', [
+            div('.form-group.form-half.none', [
               label('.form-label', { for: 'chapter-variant' }, i18n.site.variant),
               select(
                 '#chapter-variant.form-control',

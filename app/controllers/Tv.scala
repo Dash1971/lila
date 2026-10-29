@@ -56,7 +56,19 @@ final class Tv(env: Env, apiC: => Api, gameC: => Game) extends LilaController(en
               _ => env.api.roundApi.watcher(pov, users, none, tv = onTv.some, details = true).dmap { Ok(_) }
           )
 
-  def games = gamesChannel(Channel.Best.key)
+  def games = Open:
+    if env.noSweat.enabled then
+      env.noSweat.currentGames
+        .zip(env.tv.tv.getChampions)
+        .flatMap: (games, champs) =>
+          Ok.page(
+            views.tv.ui.games(Channel.Best, games.map(Pov.naturalOrientation), champs, currentOnly = true)
+          ).map(_.noCache)
+    else
+      env.tv.tv.getChampions
+        .zip(env.tv.tv.getGames(Channel.Best, 15))
+        .flatMap: (champs, games) =>
+          Ok.page(views.tv.ui.games(Channel.Best, games.map(Pov.naturalOrientation), champs)).map(_.noCache)
 
   def gamesChannel(chanKey: String) = Open:
     Channel.byKey.get(chanKey).so { channel =>
@@ -66,9 +78,12 @@ final class Tv(env: Env, apiC: => Api, gameC: => Game) extends LilaController(en
     }
 
   def gameChannelReplacement(chanKey: String, gameId: GameId, exclude: List[GameId]) = Open:
-    val gameFu = Channel.byKey.get(chanKey).so { channel =>
-      env.tv.tv.getReplacementGame(channel, gameId, exclude)
-    }
+    val gameFu = if env.noSweat.enabled then
+      env.noSweat.currentGames.map(_.find(g => g.id != gameId && !exclude.contains(g.id)))
+    else
+      Channel.byKey.get(chanKey).so { channel =>
+        env.tv.tv.getReplacementGame(channel, gameId, exclude)
+      }
     Found(gameFu): game =>
       JsonOk:
         Json.obj(

@@ -392,6 +392,8 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
         )
       ).map(ok => requireThat(ok, 409, "Security settings changed. Reload this page."))
 
+  def currentGames: Fu[List[GameModel]] = current().map(_.map(_._2).take(15))
+
   private def current(): Fu[List[(Bdoc, GameModel)]] =
     records
       .find(bdoc("state" -> "active"))

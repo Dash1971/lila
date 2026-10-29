@@ -333,7 +333,7 @@ export default class StudyCtrl {
     // official broadcasts cannot have local mods
     pubsub.emit('chat.permissions', { local: canContribute && !this.relay?.isOfficial() });
     if (!this.data.chapter.features.explorer) this.ctrl.explorer.disable();
-    this.ctrl.explorer.allowed(this.data.chapter.features.explorer);
+    this.ctrl.explorer.allowed(false);
   };
 
   isCevalAllowed = () =>

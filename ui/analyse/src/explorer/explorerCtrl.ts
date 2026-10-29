@@ -4,7 +4,6 @@ import { type Prop, prop, defined, myUserId } from 'lib';
 import { debounce, defer, sync, type Sync } from 'lib/async';
 import { replayable } from 'lib/game';
 import { pieceCount, fenColor } from 'lib/game/chess';
-import { storedBooleanProp } from 'lib/storage';
 
 import type AnalyseCtrl from '@/ctrl';
 
@@ -52,8 +51,8 @@ export default class ExplorerCtrl {
     readonly opts: ExplorerOpts,
     previous?: ExplorerCtrl,
   ) {
-    this.allowed = prop(previous ? previous.allowed() : !root.isEmbed);
-    this.enabled = storedBooleanProp('analyse.explorer.enabled', false);
+    this.allowed = prop(false);
+    this.enabled = prop(false);
     this.withGames = root.synthetic || replayable(root.data) || !!root.data.opponent.ai;
     this.effectiveVariant =
       root.data.game.variant.key === 'fromPosition' ? 'standard' : root.data.game.variant.key;
@@ -68,6 +67,7 @@ export default class ExplorerCtrl {
   };
 
   private readonly checkHash = (e?: HashChangeEvent) => {
+    if (!this.allowed()) return;
     const parts = location.hash.split('/');
     if (parts[0] === '#explorer' || parts[0] === '#opening') {
       this.enabled(true);
@@ -156,7 +156,7 @@ export default class ExplorerCtrl {
     pieceCount(fen) - 1 <= tablebasePieces(variant) && this.root.isCevalAllowed();
 
   setNode = () => {
-    if (!this.enabled()) return;
+    if (!this.allowed() || !this.enabled()) return;
     this.gameMenu(null);
     const node = this.root.node;
     if (

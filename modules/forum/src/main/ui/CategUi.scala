@@ -21,7 +21,7 @@ final class CategUi(helpers: Helpers, bits: ForumBits):
         val (teamCategs, globalCategs) = categs.partition(_.categ.isTeam)
         main(cls := "forum index box")(
           boxTop(
-            h1(dataIcon := Icon.BubbleConvo, cls := "text")("Lichess Forum"),
+            h1(dataIcon := Icon.BubbleConvo, cls := "text")("Mute Chess Forum"),
             bits.searchForm()
           ),
           showCategs(globalCategs),

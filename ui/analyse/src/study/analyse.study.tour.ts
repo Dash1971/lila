@@ -147,12 +147,6 @@ export function initModule(): StudyTour {
         when: onTab('pgn'),
       },
       {
-        title: i18n.study.variantsAreSupportedTitle,
-        text: i18n.study.variantsAreSupportedText,
-        attachTo: { element: `${viewSel} label[for=chapter-variant]`, on: 'left' },
-        when: onTab('init'),
-      },
-      {
         title: i18n.study.conclusionTitle,
         text: i18n.study.chapterConclusionText,
         buttons: [

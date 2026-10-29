@@ -161,11 +161,14 @@ export class NoSweatAnalysis {
     });
     return view;
   }
+  private readonly analysisAllowed = (): boolean =>
+    this.ctrl.isCevalAllowed() && !this.ctrl.opts.practice && !this.ctrl.study?.data.chapter.practice;
+
   private readonly valid = (generation: number): boolean =>
     generation === this.generation &&
     !this.abort.signal.aborted &&
     this.enabled &&
-    this.ctrl.isCevalAllowed() &&
+    this.analysisAllowed() &&
     !document.hidden;
   private readonly historyFens = (): string[] => this.ctrl.nodeList.map(n => n.fen);
   private readonly key = (
@@ -199,7 +202,10 @@ export class NoSweatAnalysis {
   };
   positionChanged(force = false): void {
     const context =
-      this.key() + JSON.stringify([this.secondMaiaEnabled, this.secondMaiaElo]) + this.ctrl.path;
+      this.key() +
+      JSON.stringify([this.secondMaiaEnabled, this.secondMaiaElo]) +
+      this.ctrl.path +
+      JSON.stringify([this.ctrl.study?.data.chapter.id, !!this.ctrl.study?.data.chapter.practice]);
     if (!force && context === this.context) return;
     this.context = context;
     this.cancel();
@@ -212,7 +218,7 @@ export class NoSweatAnalysis {
     this.ctrl.setAutoShapes();
     this.error = '';
     this.status = '';
-    if (!this.enabled || !this.ctrl.isCevalAllowed() || document.hidden) return;
+    if (!this.enabled || !this.analysisAllowed() || document.hidden) return;
     if (position(this.ctrl.node.fen).isEnd()) {
       this.status = 'Terminal position — no moves to predict';
       return;
@@ -452,7 +458,7 @@ export class NoSweatAnalysis {
     })().catch(e => this.failure(e, generation));
   };
   shapes(): DrawShape[] {
-    if (!this.enabled || !this.ctrl.isCevalAllowed() || document.hidden || this.ctrl.threatMode()) return [];
+    if (!this.enabled || !this.analysisAllowed() || document.hidden || this.ctrl.threatMode()) return [];
     const lines = this.nativeLines();
     const stockfish =
       this.fishArrows && this.ctrl.showBestMoveArrows()
@@ -480,7 +486,7 @@ export class NoSweatAnalysis {
     );
   }
   view(): VNode | undefined {
-    if (!this.ctrl.isCevalAllowed()) return undefined;
+    if (!this.analysisAllowed()) return undefined;
     const side = position(this.ctrl.node.fen).turn === 'white' ? 'White' : 'Black';
     const row = (rating: number, candidates: Candidate[], secondary: boolean) =>
       hl('div.nosweat-maia-line', [

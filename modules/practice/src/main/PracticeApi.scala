@@ -89,6 +89,10 @@ final class PracticeApi(
       coll.delete.one(bid(user.id)).void
 
     def completionPercent(userIds: List[UserId]): Fu[Map[UserId, Int]] =
+      structure.get.flatMap: struct =>
+        completionPercent(userIds, struct.nbChapters)
+
+    private def completionPercent(userIds: List[UserId], total: Int): Fu[Map[UserId, Int]] =
       coll
         .aggregateList(Int.MaxValue, _.sec): framework =>
           import framework.*
@@ -107,5 +111,5 @@ final class PracticeApi(
           _.view
             .flatMap: obj =>
               (obj.getAsOpt[UserId]("_id"), obj.int("nb")).mapN: (k, v) =>
-                k -> (v * 100f / PracticeStructure.totalChapters).toInt
+                k -> (v * 100f / total.max(1)).toInt.min(100)
             .toMap

@@ -34,6 +34,8 @@ final private class ChapterMaker(
         case None => fromFenOrPgnOrBlank(study, data, order, userId)
         case Some(game) => fromGame(study, game, data, order, userId, withRatings)
       .map: c =>
+        if c.setup.variant != chess.variant.Standard then
+          throw StudyValidationException("Only standard chess is supported")
         if c.name.value.isEmpty then c.copy(name = Chapter.defaultName(nameOrder | order)) else c
 
   def fromFenOrPgnOrBlank(study: Study, data: Data, order: Int, userId: UserId): Fu[Chapter] =
@@ -55,7 +57,10 @@ final private class ChapterMaker(
       .recoverWith { case e: Exception =>
         fufail(StudyValidationException(e.getMessage))
       }
-  yield parsed
+  yield
+    if parsed.variant != chess.variant.Standard then
+      throw StudyValidationException("Only standard chess is supported")
+    parsed
 
   private def fromPgn(study: Study, pgn: PgnStr, data: Data, order: Int, userId: UserId): Fu[Chapter] =
     for parsed <- toStudyPgn(study, pgn, userId, strict = false)
@@ -108,6 +113,8 @@ final private class ChapterMaker(
 
   def fromFenOrBlank(study: Study, data: Data, order: Int, userId: UserId): Chapter =
     val variant = data.variant | Variant.default
+    if variant != chess.variant.Standard then
+      throw StudyValidationException("Only standard chess is supported")
     val (root, isFromFen) =
       data.fen.filterNot(_.isInitial).flatMap { Fen.readWithMoveNumber(variant, _) } match
         case Some(game) =>
