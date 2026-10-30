@@ -109,6 +109,7 @@ final class Env(
   val cms: lila.cms.Env = wire[lila.cms.Env]
   val web: lila.web.Env = wire[lila.web.Env]
   val noSweat: NoSweatService = new NoSweatService(this, summon[StandaloneWSClient])
+  val noSweatStudy: NoSweatStudy = new NoSweatStudy(this)
   val api: lila.api.Env = wire[lila.api.Env]
 
   val preloader = wire[mashup.Preload]

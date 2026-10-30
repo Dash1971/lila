@@ -36,6 +36,16 @@ final class Env(
 
   private val noSweatGames = db(CollName("nosweat_game"))
   private val noSweatOnly = appConfig.getOptional[Boolean]("nosweat.enabled").getOrElse(false)
+  private val studyRun = appConfig.getOptional[String]("nosweat.study.runId").getOrElse("")
+  private val studyEnabled = appConfig.getOptional[Boolean]("nosweat.study.enabled").getOrElse(false) &&
+    NoSweatStudyScope.valid(
+      studyRun,
+      appConfig.get[String]("mongodb.uri"),
+      appConfig.get[String]("mongodb.yolo.uri"),
+      appConfig.get[String]("net.domain"),
+      appConfig.getOptional[Boolean]("nosweat.study.publicRatings").getOrElse(false)
+    )
+  private val studyGames = db(CollName("nosweat_study_game"))
   private def admitNoSweat(game: lila.core.game.Game): Funit =
     import lila.db.dsl.{ *, given }
     if !noSweatOnly || !game.playable then funit
@@ -47,20 +57,42 @@ final class Env(
         .flatMap: users =>
           if users.size == 2 && users.forall(u => u.enabled.yes && !u.isBot) then funit
           else fufail("Friend games require two enabled human accounts")
-    else
-      noSweatGames
+    else if studyEnabled && game.variant.standard && game.sourceIs(_.Pool) && game.rated.yes &&
+      game.userIds.distinct.size == 2
+    then
+      studyGames
         .byId[lila.db.dsl.Bdoc](game.id)
-        .flatMap: reservation =>
-          val allowed = reservation.exists: doc =>
-            val bot = doc.getAsOpt[UserId]("bot")
-            val human = doc.getAsOpt[UserId]("human")
-            val seats = bot.exists(game.userIds.contains) && human.fold(
-              game.userIds.size == 1 && game.rated.no && doc.getAsOpt[String]("guest").isDefined
-            )(id => game.userIds.distinct.size == 2 && game.userIds.contains(id) && !bot.contains(id))
-            seats && game.variant.standard && game.sourceIs(_.Pool) &&
-            doc.getAsOpt[String]("state").contains("reserved") &&
-            doc.getAsOpt[Boolean]("rated").contains(game.rated.yes)
-          if allowed then funit else fufail("Game has no human-versus-Maia pool reservation")
+        .flatMap:
+          case None => admitHumanPool(game)
+          case Some(doc) =>
+            val allowed = doc.getAsOpt[String]("runId").contains(studyRun) &&
+              doc.getAsOpt[String]("state").contains("reserved") &&
+              doc.getAsOpt[UserId]("white").contains(game.whitePlayer.userId.get) &&
+              doc.getAsOpt[UserId]("black").contains(game.blackPlayer.userId.get)
+            if !allowed then fufail("No study reservation")
+            else
+              userApi
+                .byIds(game.userIds)
+                .flatMap: users =>
+                  if users.size == 2 && users.forall(u => u.enabled.yes && u.isBot) then funit
+                  else fufail("Study games require two enabled BOT accounts")
+    else admitHumanPool(game)
+
+  private def admitHumanPool(game: lila.core.game.Game): Funit =
+    import lila.db.dsl.{ *, given }
+    noSweatGames
+      .byId[lila.db.dsl.Bdoc](game.id)
+      .flatMap: reservation =>
+        val allowed = reservation.exists: doc =>
+          val bot = doc.getAsOpt[UserId]("bot")
+          val human = doc.getAsOpt[UserId]("human")
+          val seats = bot.exists(game.userIds.contains) && human.fold(
+            game.userIds.size == 1 && game.rated.no && doc.getAsOpt[String]("guest").isDefined
+          )(id => game.userIds.distinct.size == 2 && game.userIds.contains(id) && !bot.contains(id))
+          seats && game.variant.standard && game.sourceIs(_.Pool) &&
+          doc.getAsOpt[String]("state").contains("reserved") &&
+          doc.getAsOpt[Boolean]("rated").contains(game.rated.yes)
+        if allowed then funit else fufail("Game has no human-versus-Maia pool reservation")
 
   val gameRepo = GameRepo(db(config.gameColl), admitNoSweat)
 

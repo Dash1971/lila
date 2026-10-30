@@ -185,6 +185,34 @@ final class NoSweat(env: Env) extends LilaController(env):
                 )
               else result
 
+  def experimentStatus = Anon:
+    handle:
+      internal
+      env.noSweatStudy.status(false).map(Ok(_))
+
+  def experimentRatings = Anon:
+    handle:
+      internal
+      env.noSweatStudy.status(true).map(Ok(_))
+
+  def experimentCreate = AnonBodyOf(parse.tolerantText(16384)): body =>
+    handle:
+      internal
+      env.noSweatStudy.create(Json.parse(body)).map(Ok(_))
+
+  def experimentStop = AnonBodyOf(parse.tolerantText(4096)): body =>
+    handle:
+      internal
+      env.noSweatStudy.stop((Json.parse(body) \ "runId").as[String]).map(_ => Ok(Json.obj("ok" -> true)))
+
+  def experimentMove(id: GameId) = AnonBodyOf(parse.tolerantText(4096)): body =>
+    handle:
+      internal
+      val json = Json.parse(body)
+      env.noSweatStudy
+        .move(id, (json \ "ply").as[Int], (json \ "move").as[String])
+        .map(_ => Ok(Json.obj("ok" -> true)))
+
   def games = Anon:
     handle:
       internal

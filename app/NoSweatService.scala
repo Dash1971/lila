@@ -25,7 +25,7 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
   private val lastPoll = AtomicLong(System.currentTimeMillis())
   private val adapterInstance = AtomicReference("")
   private val connectedBots = java.util.concurrent.ConcurrentHashMap.newKeySet[GameId]()
-  private val queue = scalalib.actor.AsyncActorSequencer(
+  private[app] val queue = scalalib.actor.AsyncActorSequencer(
     maxSize = Max(32),
     timeout = 20.seconds,
     "noSweatAdmission",
@@ -461,7 +461,7 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
 
   def currentGames: Fu[List[GameModel]] = current().map(_.map(_._2).take(15))
 
-  private def current(): Fu[List[(Bdoc, GameModel)]] =
+  private[app] def current(): Fu[List[(Bdoc, GameModel)]] =
     records
       .find(bdoc("state" -> "active"))
       .cursor[Bdoc]()
@@ -492,6 +492,8 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
       _ = requireThat(identity && !user.exists(_.isBot), 403, "Sign in with Nostr first")
       _ = requireThat((data \ "bot").toOption.isEmpty, 400, "Opponents are assigned by the pool")
       games <- current()
+      studyBusy <- env.noSweatStudy.busy
+      capacity <- env.noSweatStudy.capacity
       existing = games.find: (doc, _) =>
         user.fold(doc.getAsOpt[String]("guest").contains(guestHash))(u =>
           doc.getAsOpt[UserId]("human").contains(u.id)
@@ -500,7 +502,11 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
         case Some((doc, game)) =>
           fuccess(playerLink(game, Color.fromWhite(doc.getAsOpt[String]("humanColor").contains("white"))))
         case None =>
-          requireThat(games.size < 2, 503, "The playing pool is full. Please try again shortly.")
+          requireThat(
+            games.size + studyBusy._1 < capacity,
+            503,
+            "The playing pool is full. Please try again shortly."
+          )
           val mode = (data \ "timeMode").asOpt[String].getOrElse("realTime")
           requireThat(
             Set("realTime", "correspondence", "unlimited").contains(mode),
@@ -523,7 +529,7 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
           )
           val perfKey = lila.rating.PerfType(chess.variant.Standard, chess.Speed(clock)).key
           val rated = user.isDefined && mode != "unlimited" && (data \ "rated").asOpt[Boolean].getOrElse(true)
-          val busy = games.flatMap(_._1.getAsOpt[UserId]("bot")).toSet
+          val busy = games.flatMap(_._1.getAsOpt[UserId]("bot")).toSet ++ studyBusy._2
           for
             human <- user.traverse(u => env.user.api.byIdWithPerf(u.id, perfKey)).map(_.flatten)
             rating = human.fold(1500)(_.perf.intRating.value)
