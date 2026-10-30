@@ -39,7 +39,7 @@ final class NoSweatStudy(env: Env)(using ec: Executor):
   private def check(ok: Boolean, status: Int, reason: String): Unit =
     if !ok then throw NoSweatError(status, reason)
   private def guard(): Unit = check(enabled, 404, "Study is disabled")
-  private def documents = records.find(bdoc("runId" -> run)).cursor[Bdoc]().list(101)
+  private def documents = records.find(bdoc("runId" -> run)).cursor[Bdoc]().list(plan.maximumAdmitted + 1)
   private def active(doc: Bdoc) = doc.getAsOpt[String]("state").exists(Set("reserved", "active").contains)
   private def id(doc: Bdoc) = doc.getAsOpt[GameId]("_id").get
 
@@ -145,6 +145,7 @@ final class NoSweatStudy(env: Env)(using ec: Executor):
       "profile" -> plan.key,
       "workers" -> plan.workers,
       "maximumConcurrency" -> plan.maximumConcurrency,
+      "maximumAdmitted" -> plan.maximumAdmitted,
       "stages" -> plan.stages.map((completed, concurrency) =>
         Json.obj("completed" -> completed, "concurrency" -> concurrency)
       ),
@@ -205,7 +206,7 @@ final class NoSweatStudy(env: Env)(using ec: Executor):
         .flatMap(d => List(d.getAsOpt[UserId]("white"), d.getAsOpt[UserId]("black")).flatten)
         .toSet ++ publicGames.flatMap(_._1.getAsOpt[UserId]("bot"))
       _ = check(
-        docs.size < 100 && docs.count(active) + publicGames.size < stage(docs),
+        docs.size < plan.maximumAdmitted && docs.count(active) + publicGames.size < stage(docs),
         409,
         "Study limit reached"
       )
