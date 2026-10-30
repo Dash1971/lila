@@ -88,9 +88,11 @@ final class AccountUi(helpers: Helpers):
             trans.site.notifications()
           ),
           div(cls := "sep"),
-          ctx.me.exists(_.nostrKey.isDefined).option(
-            a(activeCls("nostr"), href := "/club/nostr")("Nostr")
-          ),
+          ctx.me
+            .exists(_.nostrKey.isDefined)
+            .option(
+              a(activeCls("nostr"), href := "/club/nostr")("Nostr")
+            ),
           a(activeCls("twofactor"), href := "/club/security")(
             trans.tfa.twoFactorAuth()
           ),
