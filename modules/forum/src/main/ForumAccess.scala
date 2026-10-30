@@ -6,7 +6,8 @@ import lila.core.team.Access
 
 final class ForumAccess(
     teamApi: lila.core.team.TeamApi,
-    relationApi: lila.core.relation.RelationApi
+    relationApi: lila.core.relation.RelationApi,
+    immediatePosting: Boolean
 )(using Executor):
 
   enum Operation:
@@ -40,7 +41,9 @@ final class ForumAccess(
 
   private def canWriteInAnyForum(using me: Option[Me]) = me.exists: me =>
     !me.isBot && {
-      (me.count.game > 0 && me.createdSinceDays(2)) || me.hasTitle || me.isVerified || me.isPatron
+      immediatePosting || (me.count.game > 0 && me.createdSinceDays(
+        2
+      )) || me.hasTitle || me.isVerified || me.isPatron
     }
 
   def isGrantedMod(categId: ForumCategId)(using meOpt: Option[Me]): Fu[Boolean] = meOpt.soUse:

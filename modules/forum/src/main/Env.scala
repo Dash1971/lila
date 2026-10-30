@@ -62,6 +62,8 @@ final class Env(
   lazy val recentTeamPosts = RecentTeamPosts: id =>
     postRepo.recentIdsInCateg(ForumCateg.fromTeamId(id), 6).flatMap(postApi.miniViews)
 
+  private val immediatePosting = appConfig.getOptional[Boolean]("nosweat.enabled").getOrElse(false)
+
   lazy val access = wire[ForumAccess]
 
   lila.common.Bus.sub[lila.core.team.TeamCreate]:

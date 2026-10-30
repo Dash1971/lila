@@ -120,7 +120,7 @@ object noSweatInfo:
         ),
         h2("How do I post in the forum?"),
         p(
-          "Open a forum category and choose New Topic. Normal accounts need a completed game and must be at least two days old. Replies are at the bottom of a topic. The forum and other secondary features are currently kept out of the main navigation."
+          "Sign in, open a forum category and choose New Topic. You can post immediately, without playing a game or waiting. Replies are at the bottom of a topic. Forum rules, moderation and posting limits still apply."
         ),
         h2("How do patron wings work?"),
         p(

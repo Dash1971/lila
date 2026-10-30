@@ -97,7 +97,7 @@ final class CategUi(helpers: Helpers, bits: ForumBits):
           ),
           Option.unless(canWrite)(
             p(cls := "box-pad forum-posting-help")(
-              if ctx.isAuth then frag("Posting opens after one completed game and two days on your account.")
+              if ctx.isAuth then frag("Posting is unavailable for this account or category.")
               else frag(a(href := "/login?referrer=/forum")("Sign in with Nostr"), " to post.")
             )
           ),
