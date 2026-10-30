@@ -165,13 +165,69 @@
   }
 }
 
+.nosweat-engine-lines {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  line-height: 1.5;
+}
+
+.nosweat-maia-line {
+  display: grid;
+  grid-template-columns: minmax(6ch, max-content) minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 8px;
+}
+
+.nosweat-maia-label {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.nosweat-maia-moves {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 0.85em;
+}
+
+.nosweat-maia-move {
+  display: inline-flex;
+  gap: 0.25em;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.nosweat-maia-probability,
+.nosweat-maia-status {
+  color: $c-font-dim;
+}
+
+button.nosweat-maia-other {
+  min-height: 24px;
+  min-width: 48px;
+  padding: 0 2px;
+  color: $c-font-dim;
+  font: inherit;
+  text-transform: none;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  white-space: nowrap;
+  border-radius: 3px;
+
+  &:hover,
+  &:focus-visible {
+    color: $c-font;
+    background: $c-bg-low;
+  }
+}
+
 .nosweat-puzzle-policy {
   font-size: 0.85em;
+  margin: 0.25rem 0 0.5rem;
 
-  summary {
-    cursor: pointer;
-    color: $c-font-dim;
-    padding: 0.3em 0;
+  &[hidden] {
+    display: none;
   }
 
   &__scroll {

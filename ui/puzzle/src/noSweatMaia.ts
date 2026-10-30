@@ -3,7 +3,7 @@ import { parseUci } from 'chessops/util';
 import { winningChances } from 'lib/ceval';
 import { fenColor } from 'lib/game';
 import { engineArrows, engineShapes, engineColors } from 'lib/nosweat/arrows';
-import { san, leadingPolicy, type Candidate } from 'lib/nosweat/core';
+import { san, type Candidate } from 'lib/nosweat/core';
 import { readEnginePreferences } from 'lib/nosweat/preferences';
 import { loadBrowserMaia, ReviewMaia, reviewAllowed } from 'lib/nosweat/reviewMaia';
 import { storage } from 'lib/storage';
@@ -11,8 +11,103 @@ import { hl, bind } from 'lib/view';
 
 import type PuzzleCtrl from './ctrl';
 
+interface PolicyChannel {
+  id: string;
+  fen: string;
+  rating: number;
+  candidates: Candidate[];
+  color: string;
+  status: string;
+  expanded: boolean;
+  toggle: () => void;
+  play: (uci: string) => void;
+}
+
+const probability = (value: number) =>
+  value > 0 && value < 0.001 ? '<0.1%' : `${(100 * value).toFixed(1)}%`;
+
+export function puzzleMaiaChannel(channel: PolicyChannel) {
+  const { id, fen, rating, candidates, color, status, expanded, toggle, play } = channel;
+  const others = candidates.slice(3).reduce((sum, candidate) => sum + candidate.probability, 0);
+  const panel = id + '-moves';
+  return hl('div.nosweat-maia-channel', { key: id + fen + rating }, [
+    hl('div.nosweat-maia-line', [
+      hl('strong.nosweat-maia-label', { attrs: { style: 'color:' + color } }, 'M' + rating),
+      candidates.length
+        ? hl('div.nosweat-maia-moves', [
+            candidates
+              .slice(0, 3)
+              .map(candidate =>
+                hl('span.nosweat-maia-move', { key: candidate.uci }, [
+                  hl('span.nosweat-maia-san', san(fen, candidate.uci)),
+                  ' ',
+                  hl(
+                    'span.nosweat-maia-probability',
+                    { attrs: { title: `${(100 * candidate.probability).toPrecision(6)}%` } },
+                    probability(candidate.probability),
+                  ),
+                ]),
+              ),
+            hl(
+              'button.fbt.nosweat-maia-other',
+              {
+                attrs: {
+                  type: 'button',
+                  'aria-expanded': String(expanded),
+                  'aria-controls': panel,
+                  'aria-label': `${expanded ? 'Hide' : 'Show'} all legal moves for Maia ${rating}, other ${probability(others)}`,
+                  title: expanded ? 'Hide all legal moves' : 'Show all legal moves',
+                },
+                hook: bind('click', toggle),
+              },
+              'Other ' + probability(others),
+            ),
+          ])
+        : hl('span.nosweat-maia-status', status),
+    ]),
+    hl('div.nosweat-puzzle-policy', { attrs: { id: panel, hidden: !expanded || !candidates.length } }, [
+      hl('div.nosweat-puzzle-policy__scroll', [
+        hl('table', { attrs: { 'aria-label': `All legal moves for Maia ${rating}` } }, [
+          hl(
+            'thead',
+            hl('tr', [
+              hl('th', { attrs: { scope: 'col' } }, 'Move'),
+              hl('th', { attrs: { scope: 'col', style: 'color:' + color } }, 'M' + rating),
+            ]),
+          ),
+          hl(
+            'tbody',
+            candidates.map(candidate =>
+              hl('tr', { key: candidate.uci }, [
+                hl(
+                  'td',
+                  hl(
+                    'button.fbt',
+                    {
+                      attrs: { type: 'button', title: 'Explore ' + san(fen, candidate.uci) },
+                      hook: bind('click', () => play(candidate.uci)),
+                    },
+                    san(fen, candidate.uci),
+                  ),
+                ),
+                hl(
+                  'td',
+                  { attrs: { title: `${(100 * candidate.probability).toPrecision(6)}%` } },
+                  probability(candidate.probability),
+                ),
+              ]),
+            ),
+          ),
+        ]),
+      ]),
+    ]),
+  ]);
+}
+
 export class PuzzleMaia {
   private readonly engine: ReviewMaia;
+  private expanded: [boolean, boolean] = [false, false];
+  private displayKey = '';
   private readonly preferences = () =>
     readEnginePreferences(storage.make('nosweat.enginePreferences.v2').get());
   constructor(private readonly ctrl: PuzzleCtrl) {
@@ -64,67 +159,29 @@ export class PuzzleMaia {
     if (!prefs.maiaArrows) return undefined;
     const fen = this.ctrl.node.fen;
     const status = this.ctrl.node.outcome() ? 'No legal moves' : this.engine.status || 'Analyzing…';
-    const row = (rating: number, candidates: Candidate[], color: string) =>
-      hl('div.nosweat-maia-line', [
-        hl('strong', { attrs: { style: 'color:' + color } }, 'M' + rating),
-        hl('span', candidates.length ? leadingPolicy(fen, candidates) : status),
-      ]);
-    const probability = (value?: number) =>
-      hl(
-        'td',
-        {
-          attrs: value === undefined ? {} : { title: `${(100 * value).toPrecision(6)}%` },
+    const key = `${this.ctrl.data.puzzle.id}:${fen}:${prefs.selfElo}:${prefs.secondMaiaElo}:${prefs.secondMaiaEnabled}`;
+    if (key !== this.displayKey) {
+      this.displayKey = key;
+      this.expanded = [false, false];
+    }
+    const row = (rating: number, candidates: Candidate[], color: string, index: 0 | 1) =>
+      puzzleMaiaChannel({
+        id: `puzzle-maia-${index}`,
+        fen,
+        rating,
+        candidates,
+        color,
+        status,
+        expanded: this.expanded[index],
+        toggle: () => {
+          this.expanded[index] = !this.expanded[index];
+          this.ctrl.redraw();
         },
-        value === undefined ? '—' : value > 0 && value < 0.001 ? '<0.1%' : `${(100 * value).toFixed(1)}%`,
-      );
-    const secondary = new Map(this.engine.secondary.map(c => [c.uci, c.probability]));
+        play: uci => this.ctrl.sendMove(parseUci(uci)!),
+      });
     return hl('section.nosweat-engine-lines', { attrs: { 'aria-label': 'Maia analysis channels' } }, [
-      row(prefs.selfElo, this.engine.primary, engineColors.maia),
-      prefs.secondMaiaEnabled && row(prefs.secondMaiaElo, this.engine.secondary, engineColors.maiaSecond),
-      hl('details.nosweat-puzzle-policy', [
-        hl('summary', 'All legal moves'),
-        hl('div.nosweat-puzzle-policy__scroll', [
-          hl('table', { attrs: { 'aria-label': 'Maia move probabilities' } }, [
-            hl(
-              'thead',
-              hl('tr', [
-                hl('th', { attrs: { scope: 'col' } }, 'Move'),
-                hl(
-                  'th',
-                  { attrs: { scope: 'col', style: 'color:' + engineColors.maia } },
-                  'M' + prefs.selfElo,
-                ),
-                prefs.secondMaiaEnabled &&
-                  hl(
-                    'th',
-                    { attrs: { scope: 'col', style: 'color:' + engineColors.maiaSecond } },
-                    'M' + prefs.secondMaiaElo,
-                  ),
-              ]),
-            ),
-            hl(
-              'tbody',
-              this.engine.primary.map(candidate =>
-                hl('tr', { key: candidate.uci }, [
-                  hl(
-                    'td',
-                    hl(
-                      'button.fbt',
-                      {
-                        attrs: { type: 'button', title: 'Explore ' + san(fen, candidate.uci) },
-                        hook: bind('click', () => this.ctrl.sendMove(parseUci(candidate.uci)!)),
-                      },
-                      san(fen, candidate.uci),
-                    ),
-                  ),
-                  probability(candidate.probability),
-                  prefs.secondMaiaEnabled && probability(secondary.get(candidate.uci)),
-                ]),
-              ),
-            ),
-          ]),
-        ]),
-      ]),
+      row(prefs.selfElo, this.engine.primary, engineColors.maia, 0),
+      prefs.secondMaiaEnabled && row(prefs.secondMaiaElo, this.engine.secondary, engineColors.maiaSecond, 1),
     ]);
   }
 }
