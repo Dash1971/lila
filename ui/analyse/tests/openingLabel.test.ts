@@ -16,13 +16,16 @@ const { OpeningLabel, openingEpd } = await import('../src/noSweatOpening');
 test('font completion rechecks long ECO names and exposes escaped full details without changing the row', async () => {
   let measure = () => {};
   let disconnected = false;
+  const observed: Element[] = [];
   Object.defineProperty(globalThis, 'ResizeObserver', {
     configurable: true,
     value: class {
       constructor(callback: () => void) {
         measure = callback;
       }
-      observe() {}
+      observe(element: Element) {
+        observed.push(element);
+      }
       disconnect() {
         disconnected = true;
       }
@@ -55,11 +58,26 @@ test('font completion rechecks long ECO names and exposes escaped full details w
     data: { game: {} },
   } as unknown as AnalyseCtrl;
   const underboard = document.createElement('div');
-  document.body.append(underboard);
+  const analyse = document.createElement('main');
+  analyse.className = 'analyse';
+  const strip = document.createElement('div');
+  strip.className = 'analyse__player_strip bottom';
+  let stripWidth = 36.7;
+  strip.getBoundingClientRect = () => ({ width: stripWidth }) as DOMRect;
+  analyse.append(strip, underboard);
+  document.body.append(analyse);
   const opening = new OpeningLabel(ctrl, underboard);
   await new Promise(resolve => setTimeout(resolve, 0));
   const row = underboard.firstElementChild!;
   const label = underboard.querySelector('button')!;
+  assert.ok(observed.includes(strip));
+  assert.equal((row as HTMLElement).style.getPropertyValue('--nosweat-opening-clearance'), '45px');
+  stripWidth = 120;
+  measure();
+  assert.equal((row as HTMLElement).style.getPropertyValue('--nosweat-opening-clearance'), '128px');
+  stripWidth = 1;
+  measure();
+  assert.equal((row as HTMLElement).style.getPropertyValue('--nosweat-opening-clearance'), '0px');
   let textWidth = 200;
   Object.defineProperty(label, 'clientWidth', { get: () => 400 });
   Object.defineProperty(label, 'scrollWidth', { get: () => textWidth });
@@ -79,4 +97,5 @@ test('font completion rechecks long ECO names and exposes escaped full details w
   opening.destroy();
   assert.equal(disconnected, true);
   assert.equal(underboard.children.length, 0);
+  analyse.remove();
 });

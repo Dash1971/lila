@@ -74,6 +74,8 @@ export class OpeningLabel {
     };
     this.observer = new ResizeObserver(() => this.measure());
     this.observer.observe(this.label);
+    const playerStrip = underboard.closest('.analyse')?.querySelector('.analyse__player_strip.bottom');
+    if (playerStrip) this.observer.observe(playerStrip);
     void document.fonts?.ready.then(() => this.measure());
     window.addEventListener('pagehide', () => this.observer.disconnect(), { once: true });
     void loadOpenings()
@@ -114,6 +116,11 @@ export class OpeningLabel {
   }
 
   private measure(): void {
+    // Native material and clocks share this row. Keep the name centered on the
+    // board by reserving the lower player strip's width on both sides.
+    const strip = this.row.closest('.analyse')?.querySelector('.analyse__player_strip.bottom');
+    const width = strip?.getBoundingClientRect().width ?? 0;
+    this.row.style.setProperty('--nosweat-opening-clearance', `${width > 1 ? Math.ceil(width) + 8 : 0}px`);
     const truncated = this.label.scrollWidth > this.label.clientWidth;
     this.label.disabled = !truncated;
     this.label.classList.toggle('truncated', truncated);
