@@ -22,6 +22,11 @@ final class NoSweatStudy(env: Env)(using ec: Executor):
     publicRatings
   )
   require(!requested || enabled, "Study configuration does not match its explicit deployment scope")
+  private val plan = NoSweatStudyPlan
+    .find(
+      config.getOptional[String]("nosweat.study.profile").getOrElse("pilot-10-v1")
+    )
+    .getOrElse(throw IllegalArgumentException("Unknown study profile"))
   private lazy val started = config.get[Long]("nosweat.study.startedEpochMillis")
   private lazy val admissionEnd = started + 75L * 60000
   private lazy val deadline = started + 90L * 60000
@@ -61,7 +66,7 @@ final class NoSweatStudy(env: Env)(using ec: Executor):
         .foreach: found =>
           found
             .filter(active)
-            .foreach: doc =>
+            .foreach: _ =>
               val game = finish.game
               val result = Json.obj(
                 "status" -> game.status.name,
@@ -91,8 +96,7 @@ final class NoSweatStudy(env: Env)(using ec: Executor):
           lila.log("nosweat").error("Study deadline stop failed", error)
 
   private def stage(docs: List[Bdoc]): Int =
-    val finished = docs.count(_.getAsOpt[String]("state").contains("finished"))
-    if finished < 5 then 1 else if finished < 10 then 2 else if finished < 20 then 5 else 10
+    plan.capacity(docs.count(_.getAsOpt[String]("state").contains("finished")))
 
   def capacity: Fu[Int] =
     if !enabled || closed.get() || System.currentTimeMillis() >= deadline then fuccess(2)
@@ -138,6 +142,12 @@ final class NoSweatStudy(env: Env)(using ec: Executor):
       ps <- if withRatings then ratings else fuccess(JsNull)
     yield Json.obj(
       "runId" -> run,
+      "profile" -> plan.key,
+      "workers" -> plan.workers,
+      "maximumConcurrency" -> plan.maximumConcurrency,
+      "stages" -> plan.stages.map((completed, concurrency) =>
+        Json.obj("completed" -> completed, "concurrency" -> concurrency)
+      ),
       "publicRatings" -> publicRatings,
       "deadline" -> deadline,
       "admissionEnd" -> admissionEnd,
