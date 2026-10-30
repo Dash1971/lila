@@ -637,7 +637,7 @@ export class NoSweatAnalysis {
       hl(
         'button.nosweat-others',
         {
-          attrs: { type: 'button', 'aria-expanded': expanded, disabled: candidates.length <= 4 },
+          attrs: { type: 'button', 'aria-expanded': String(expanded), disabled: candidates.length <= 4 },
           hook: reviewClick(() => {
             this.expanded[Number(secondary)] = !expanded;
             this.colorCandidates();

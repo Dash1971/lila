@@ -74,6 +74,7 @@ export class OpeningLabel {
     };
     this.observer = new ResizeObserver(() => this.measure());
     this.observer.observe(this.label);
+    void document.fonts?.ready.then(() => this.measure());
     window.addEventListener('pagehide', () => this.observer.disconnect(), { once: true });
     void loadOpenings()
       .then(() => this.redraw())
