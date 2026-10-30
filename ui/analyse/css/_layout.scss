@@ -127,6 +127,10 @@ $analyse-gauge-gap: 4px;
 
     &__underboard {
       margin-top: $analyse-block-gap;
+
+      &:has(> .nosweat-opening) {
+        margin-top: 0;
+      }
     }
 
     .eval-gauge {
@@ -164,6 +168,11 @@ $analyse-gauge-gap: 4px;
       'uchat   . kb-move .     controls'
       'uchat   . under   .     controls'
       'uchat   . under   .     round-training';
+
+    // Offset the empty keyboard track between the board and opening row.
+    &__underboard:has(> .nosweat-opening) {
+      margin-top: min(0px, calc(2.5em - $col3-uniboard-controls));
+    }
 
     &__side {
       margin-top: 0;

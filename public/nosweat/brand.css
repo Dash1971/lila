@@ -113,7 +113,7 @@ cg-board square.nosweat-premove-dest { background:rgb(20 30 85 / .28); }
 .nosweat-summary .accuracy td { border-top:1px solid var(--c-border); padding-top:.5em; font-weight:bold; }
 .nosweat-summary > .button { margin-top:.7em; font-size:.85em; }
 .nosweat-opening { height:28px; min-height:28px; min-width:0; display:flex; align-items:center; margin:0 0 3px; }
-.nosweat-opening-name { width:100%; min-width:0; padding:4px 12px; font-size:13px; line-height:20px; background:none; color:var(--c-font-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; text-transform:none; cursor:default; }
+.nosweat-opening-name { width:100%; min-width:0; padding:0 12px 8px; font-size:13px; line-height:20px; background:none; color:var(--c-font-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; text-transform:none; cursor:default; }
 .nosweat-opening-name.truncated { cursor:pointer; }
 .nosweat-opening-name:disabled { opacity:1; cursor:default; }
 .nosweat-opening-name.truncated:hover { color:var(--c-font); }
