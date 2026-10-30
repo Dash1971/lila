@@ -43,16 +43,27 @@ object replay:
       bookmarked: Boolean
   )(using ctx: Context) =
 
-    val chatOpt = chatOption.map: c =>
-      views.chat.json(
-        c.chat,
-        c.lines,
-        name = trans.site.spectatorRoom.txt(),
-        timeout = c.timeout,
-        withNoteAge = ctx.isAuth.option(pov.game.secondsSinceCreation),
-        public = true,
-        resource = lila.core.chat.PublicSource.Watcher(pov.gameId)
-      ) -> views.chat.frag
+    val chatOpt = chatOption
+      .filter(_ => !env.noSweat.enabled || (ctx.isAuth && ctx.noBlind))
+      .map: c =>
+        val json = views.chat.json(
+          c.chat,
+          c.lines,
+          name = if env.noSweat.enabled then "Notes" else trans.site.spectatorRoom.txt(),
+          timeout = c.timeout,
+          withNoteAge = ctx.isAuth.option(pov.game.secondsSinceCreation),
+          public = true,
+          resource = lila.core.chat.PublicSource.Watcher(pov.gameId)
+        )
+        (if env.noSweat.enabled then
+           json.deepMerge(
+             Json.obj(
+               "notesOnly" -> true,
+               "writeable" -> false,
+               "data" -> Json.obj("lines" -> Json.arr())
+             )
+           )
+         else json) -> views.chat.frag
 
     val side = views.game.side(pov, initialFen, none, simul = simul, userTv = userTv, bookmarked = bookmarked)
 

@@ -42,7 +42,7 @@ export class ChatCtrl {
     this.data = opts.data;
     this.chatEnabled = storedBooleanProp(`chat.${this.data.resourceType}.enabled.${myUserId()}`, true);
     this.storedTabKey = storedStringProp(`chat.${opts.plugin ? opts.plugin.key + '.' : ''}tab`, 'discussion');
-    if (!opts.kidMode) this.allTabs.push({ key: 'discussion' });
+    if (!opts.kidMode && !opts.notesOnly) this.allTabs.push({ key: 'discussion' });
     if (opts.noteId) this.allTabs.push({ key: 'note' });
     if (opts.plugin && (opts.plugin.kidSafe || !opts.kidMode)) {
       opts.plugin.redraw = redraw;
@@ -70,7 +70,7 @@ export class ChatCtrl {
       redraw: this.redraw,
     });
 
-    if (opts.kidMode) return;
+    if (opts.kidMode || opts.notesOnly) return;
 
     this.instanciateModeration();
 

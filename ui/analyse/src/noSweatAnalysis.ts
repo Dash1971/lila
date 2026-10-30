@@ -10,6 +10,7 @@ import { domDialog, hl, type VNode } from 'lib/view';
 
 import type AnalyseCtrl from './ctrl';
 import { engineArrows, engineShapes, engineColors } from './noSweatArrows';
+import { candidateQuality, qualityLabels, stockfishWinrate } from './noSweatCandidateQuality';
 import { encodeHistory, policy, san, position, standardUci, legalUcis, type Candidate } from './noSweatCore';
 import { reviewClick } from './noSweatEvents';
 import { ReviewFish, type Review } from './noSweatFish';
@@ -86,6 +87,9 @@ export class NoSweatAnalysis {
   private readonly reviewCache = new Map<string, Review>();
   private fishBest?: string;
   private compareBusy = false;
+  private qualityBusy = false;
+  private qualityRoot?: Review;
+  private readonly qualityFailed = new Set<string>();
 
   constructor(readonly ctrl: AnalyseCtrl) {
     Object.assign(this, readEnginePreferences(storage.make('nosweat.enginePreferences.v2').get()));
@@ -202,6 +206,7 @@ export class NoSweatAnalysis {
     clearInterval(this.progress);
     this.progress = undefined;
     this.compareBusy = false;
+    this.qualityBusy = false;
   }
   release = (): void => {
     this.cancel();
@@ -222,10 +227,12 @@ export class NoSweatAnalysis {
     this.secondaryCandidates = [];
     this.expectedScore = this.secondaryExpectedScore = undefined;
     this.scores.clear();
+    this.fishBest = undefined;
+    this.qualityRoot = undefined;
+    this.qualityFailed.clear();
     const ratingContext = this.ratingKey();
     if (ratingContext !== this.ratingContext) this.byRating.clear();
     this.ratingContext = ratingContext;
-    this.fishBest = undefined;
     this.ctrl.setAutoShapes();
     this.error = '';
     this.status = '';
@@ -331,6 +338,7 @@ export class NoSweatAnalysis {
     this.status = '';
     this.ctrl.setAutoShapes();
     this.ctrl.redraw();
+    this.colorCandidates();
     if (this.ratingTable && this.candidates.length && this.sideRedraw) this.sampleRatings();
   }
   setEnabled(enabled: boolean): void {
@@ -393,58 +401,82 @@ export class NoSweatAnalysis {
     this.ctrl.redraw();
   };
   private async review(fen: string, generation: number, moves: string[] = [], time = 1200): Promise<Review> {
-    const key = JSON.stringify(['sf19-small-depth14-v1', fen, moves]);
+    const key = JSON.stringify(['sf19-candidate-depth12-v1', fen, moves, time]);
     const cached = this.reviewCache.get(key);
     if (cached) return cached;
-    const result = await this.fish.search(fen, moves, this.abort.signal, 14, time);
+    const result = await this.fish.search(fen, moves, this.abort.signal, 12, time);
     if (!this.valid(generation)) throw new Error('Cancelled');
     this.reviewCache.set(key, result);
     if (this.reviewCache.size > 400) this.reviewCache.delete(this.reviewCache.keys().next().value!);
     return result;
   }
-  compare = (): void => {
+  private visibleCandidates(): string[] {
+    return [
+      ...new Set(
+        [
+          ...this.candidates.slice(0, this.expanded[0] ? undefined : 4),
+          ...this.secondaryCandidates.slice(0, this.expanded[1] ? undefined : 4),
+        ].map(c => c.uci),
+      ),
+    ];
+  }
+  private colorCandidates(): void {
     const generation = this.generation;
-    if (this.compareBusy || (!this.candidates.length && !this.secondaryCandidates.length)) return;
-    this.compareBusy = true;
-    this.error = '';
+    if (!this.valid(generation) || this.qualityBusy || !this.visibleCandidates().length) return;
+    this.qualityBusy = true;
     (async () => {
       const fen = this.ctrl.node.fen;
-      this.status = 'Comparing candidates with Stockfish…';
-      this.ctrl.redraw();
-      const root = await this.review(fen, generation);
-      if (!this.valid(generation)) return;
-      this.fishBest = root.current.lines[0].moves[0];
-      for (const line of root.current.lines)
-        this.scores.set(line.moves[0], { score: line, depth: root.current.depth });
-      // Bound this comparison to the compact set, even when all legal moves are displayed.
-      const chosen = new Set(
-        [...this.candidates.slice(0, 3), ...this.secondaryCandidates.slice(0, 3)].map(c => c.uci),
-      );
-      root.current.lines.forEach(line => chosen.add(line.moves[0]));
-      const played = this.played();
-      if (played) chosen.add(played);
-      if (this.fishBest) chosen.add(this.fishBest);
-      for (const move of chosen) {
-        if (this.scores.has(move)) continue;
-        this.scores.set(move, undefined);
-        this.ctrl.redraw();
-        try {
-          const result = await this.review(fen, generation, [move], 700);
-          if (!this.valid(generation)) return;
-          this.scores.set(move, { score: result.current.lines[0], depth: result.current.depth });
-        } catch (error) {
-          if (!this.valid(generation)) return;
-          this.error = 'Some Stockfish candidates are unavailable: ' + String(error);
+      if (!this.qualityRoot) {
+        const root = await this.review(fen, generation, [], 500);
+        if (!this.valid(generation)) return;
+        if (root.current.depth < 8) return;
+        this.qualityRoot = root;
+        this.fishBest = this.normalUci(root.current.lines[0]?.moves[0]);
+        for (const line of root.current.lines) {
+          const move = this.normalUci(line.moves[0]);
+          if (move) this.scores.set(move, { score: line, depth: root.current.depth });
         }
-      }
-      if (this.valid(generation)) {
-        this.status = '';
-        this.compareBusy = false;
-        this.ctrl.setAutoShapes();
         this.ctrl.redraw();
       }
-    })().catch(e => this.failure(e, generation));
-  };
+      // Re-read the visible set so opening Others during a search joins this queue.
+      for (;;) {
+        const move = this.visibleCandidates().find(m => !this.scores.has(m) && !this.qualityFailed.has(m));
+        if (!move || !this.valid(generation)) break;
+        try {
+          const result = await this.review(fen, generation, [move], 300);
+          if (!this.valid(generation)) return;
+          if (result.current.depth >= 8)
+            this.scores.set(move, { score: result.current.lines[0], depth: result.current.depth });
+          else this.qualityFailed.add(move);
+        } catch {
+          if (!this.valid(generation)) return;
+          this.qualityFailed.add(move);
+        }
+        this.ctrl.redraw();
+      }
+    })()
+      .catch(() => {
+        // Color evidence is optional; Maia probabilities remain usable on failure.
+      })
+      .finally(() => {
+        if (this.valid(generation)) {
+          this.qualityBusy = false;
+          if (this.status === 'Loading Stockfish review…') this.status = '';
+          this.ctrl.redraw();
+        }
+      });
+  }
+  private moveQuality(uci: string) {
+    if (!this.enabled || !this.analysisAllowed() || this.ctrl.threatMode()) return undefined;
+    const white = position(this.ctrl.node.fen).turn === 'white';
+    const scores = [...this.scores.values()].flatMap(s => (s ? [s.score] : []));
+    const value = (s: EvalScore) => stockfishWinrate(s, white) ?? -1;
+    const best = scores.reduce<EvalScore | undefined>(
+      (a, b) => (!a || value(b) > value(a) ? b : a),
+      undefined,
+    );
+    return candidateQuality(best, this.scores.get(uci)?.score, white);
+  }
   sampleRatings = (): void => {
     if (this.compareBusy || !this.enabled || !this.analysisAllowed()) return;
     const context = this.ratingKey();
@@ -561,11 +593,7 @@ export class NoSweatAnalysis {
             },
           },
           [
-            hl('i', {
-              attrs: {
-                style: `background:${score === undefined ? 'var(--c-font-dim)' : score >= 0.55 ? '#12b886' : score <= 0.45 ? '#fa5252' : '#fab005'}`,
-              },
-            }),
+            hl('i.nosweat-score-side.' + side.toLowerCase(), { attrs: { 'aria-hidden': 'true' } }),
             score === undefined ? '—' : (score * 100).toFixed(1) + '%',
           ],
         ),
@@ -576,21 +604,34 @@ export class NoSweatAnalysis {
               hl('thead', hl('tr', [hl('th', 'Move'), hl('th', 'Probability')])),
               hl(
                 'tbody',
-                candidates
-                  .slice(0, expanded ? undefined : 4)
-                  .map(c =>
-                    hl('tr', { key: this.ctrl.node.fen + c.uci }, [
+                candidates.slice(0, expanded ? undefined : 4).map(c =>
+                  hl('tr', { key: this.ctrl.node.fen + c.uci }, [
+                    hl(
+                      'td',
                       hl(
-                        'td',
-                        hl(
-                          'button.fbt',
-                          { attrs: { type: 'button' }, hook: reviewClick(() => this.preview(c.uci)) },
-                          san(this.ctrl.node.fen, c.uci),
-                        ),
+                        'button.fbt',
+                        {
+                          attrs: {
+                            type: 'button',
+                            'data-quality': this.moveQuality(c.uci) ?? 'pending',
+                            title: this.moveQuality(c.uci)
+                              ? qualityLabels[this.moveQuality(c.uci)!] + ' · Stockfish estimate'
+                              : 'Move quality not yet available',
+                            'aria-label':
+                              san(this.ctrl.node.fen, c.uci) +
+                              ': ' +
+                              (this.moveQuality(c.uci)
+                                ? qualityLabels[this.moveQuality(c.uci)!]
+                                : 'quality not yet available'),
+                          },
+                          hook: reviewClick(() => this.preview(c.uci)),
+                        },
+                        san(this.ctrl.node.fen, c.uci),
                       ),
-                      hl('td', (c.probability * 100).toFixed(1) + '%'),
-                    ]),
-                  ),
+                    ),
+                    hl('td', (c.probability * 100).toFixed(1) + '%'),
+                  ]),
+                ),
               ),
             ]),
           ])
@@ -611,6 +652,7 @@ export class NoSweatAnalysis {
             attrs: { type: 'button', 'aria-expanded': expanded },
             hook: reviewClick(() => {
               this.expanded[Number(secondary)] = !expanded;
+              this.colorCandidates();
               this.ctrl.redraw();
             }),
           },

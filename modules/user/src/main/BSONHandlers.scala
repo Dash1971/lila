@@ -109,7 +109,8 @@ object BSONHandlers:
           case Some(f) if FlairApi.exists(f) => Option(f)
           case Some(f) => FlairApi.badFlairs.add(userId, f); None
           case None => None,
-        marks = r.getD[UserMarks](marks)
+        marks = r.getD[UserMarks](marks),
+        nostrKey = r.getO[String]("nostr")
       )
 
     def writes(w: BSON.Writer, o: User) =
@@ -130,7 +131,8 @@ object BSONHandlers:
         plan -> o.plan.nonEmpty,
         totpSecret -> o.totpSecret,
         flair -> o.flair,
-        marks -> w.zero(o.marks)
+        marks -> w.zero(o.marks),
+        "nostr" -> o.nostrKey
       )
 
   given BSONHandler[PatronColor] = lila.db.dsl.tryHandler[PatronColor](

@@ -68,14 +68,16 @@ cg-board square.nosweat-premove-dest { background:rgb(20 30 85 / .28); }
 .nosweat-maia-label { font-weight:bold; padding:.15em 0; border-radius:3px; text-align:left; font-size:.95em; }
 .nosweat-maia-label:hover { text-decoration:underline; text-underline-offset:.25em; }
 .nosweat-score { display:inline-flex; align-items:center; gap:.3em; font-size:.85em; white-space:nowrap; font-variant-numeric:tabular-nums; }
-.nosweat-score i { width:.55em; height:.55em; border-radius:50%; }
+.nosweat-score i { width:.65em; height:.65em; flex:0 0 .65em; border-radius:50%; border:1px solid #999; }
+.nosweat-score-side.white { background:#fff; }
+.nosweat-score-side.black { background:#111; }
 .nosweat-policy-scroll { max-height:24em; overflow:auto; }
 .nosweat-policy { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
 .nosweat-policy th { font-size:.75rem; font-weight:normal; color:var(--c-font-dim); padding:.3em .8em; }
 .nosweat-policy th:first-child,.nosweat-policy td:first-child { text-align:left; }
 .nosweat-policy th:last-child,.nosweat-policy td:last-child { text-align:right; }
 .nosweat-policy td { padding:.25em .6em; font-size:.9em; }
-.nosweat-policy button { color:var(--c-good); text-transform:none; padding:.25em 0; }
+.nosweat-policy button { color:var(--c-font); text-transform:none; padding:.25em 0; }
 .nosweat-others { display:flex; justify-content:space-between; gap:.3em; padding:.65em .75em; font-size:.8em; width:100%; border-top:1px solid var(--c-border); color:var(--c-font-dim); }
 .nosweat-others:hover { background:var(--c-bg-low); }
 .nosweat-maia-empty { padding:1em .6em; color:var(--c-font-dim); font-size:.85em; }
@@ -89,13 +91,31 @@ cg-board square.nosweat-premove-dest { background:rgb(20 30 85 / .28); }
 .nosweat-rating-grid button { padding:.65em .3em; border-radius:4px; background:var(--c-bg-low); }
 .nosweat-rating-grid button[aria-pressed=true] { background:var(--c-primary); color:var(--c-primary-over); }
 .nosweat-candidate-panel [role=status],.nosweat-candidate-panel .error { font-size:.8em; margin:.7em .2em; }
-.nosweat-summary table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
-.nosweat-summary th { color:var(--c-font-dim); font-weight:normal; padding:.4em; max-width:8em; overflow-wrap:anywhere; }
+.nosweat-summary table { table-layout:fixed; width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+.nosweat-summary th { width:27%; color:var(--c-font-dim); font-weight:normal; padding:.4em; text-align:right; vertical-align:bottom; }
+.nosweat-summary th:first-child { width:46%; }
+.nosweat-summary-player { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.nosweat-summary-player a { display:block; min-width:0; overflow:hidden; text-overflow:ellipsis; }
 .nosweat-summary td { padding:.2em .4em; text-align:right; }
-.nosweat-summary td:first-child { text-align:left; }
+.nosweat-summary td:first-child { text-align:left; overflow-wrap:break-word; }
 .nosweat-summary td button { min-width:2em; padding:.15em; }
 .nosweat-summary .accuracy td { border-top:1px solid var(--c-border); padding-top:.7em; font-weight:bold; }
 .nosweat-summary > .button { margin-top:1em; }
 .nosweat-review-settings { margin-top:1.5em; }
 .nosweat-review-quality { display:flex; gap:1em; flex-wrap:wrap; margin:1em 0; }
 .nosweat-review-quality label { display:flex; align-items:center; gap:.4em; }
+
+/* Candidate quality is Stockfish evidence, independent of model probability. */
+.nosweat-policy button[data-quality=good] { color:#74c476; }
+.nosweat-policy button[data-quality=ok] { color:#fed976; }
+.nosweat-policy button[data-quality=blunder] { color:#fc9272; }
+.light .nosweat-policy button[data-quality=good] { color:#238b45; }
+.light .nosweat-policy button[data-quality=ok] { color:#975000; }
+.light .nosweat-policy button[data-quality=blunder] { color:#b02020; }
+.analyse .mchat.mchat-notes-only { min-height:0; height:auto; align-self:start; }
+.analyse .mchat-notes-only .mchat__content { height:8em; min-height:0; }
+.nosweat-profile-key { min-width:0; max-width:100%; flex-basis:100%; font-size:.8em; }
+.nosweat-profile-key > span { display:block; margin:.3em 0; color:var(--c-font-dim); }
+.nosweat-profile-key input { max-width:100%; }
+
+.analyse .game__meta__players .player { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }

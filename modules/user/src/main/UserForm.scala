@@ -47,7 +47,7 @@ final class UserForm:
       "cfcRating" -> optional(number(min = 200, max = 3000)),
       "dsbRating" -> optional(number(min = 0, max = 3000)),
       "links" -> optional(cleanFewSymbolsAndNonEmptyText(maxLength = 3000)),
-      "displayName" -> optional(cleanFewSymbolsAndNonEmptyText(minLength = 3, maxLength = 30))
+      "displayName" -> UserForm.publicName(user.profile.flatMap(_.displayName))
     )(Profile.apply)(unapply)
   .fill(user.profileOrDefault)
 
@@ -55,6 +55,13 @@ final class UserForm:
     single(FlairApi.formPair(asMod))
 
 object UserForm:
+
+  private[user] def publicName(existing: Option[String]): Mapping[Option[String]] = optional(
+    cleanFewSymbolsAndNonEmptyText(minLength = 3, maxLength = 30).verifying(
+      "Use at most 20 characters for your public name",
+      name => name.length <= 20 || existing.contains(name)
+    )
+  )
 
   val note = Form:
     mapping(

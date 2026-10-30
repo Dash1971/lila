@@ -38,7 +38,8 @@ object user:
       plan: Plan,
       flair: Option[Flair] = None,
       totpSecret: Option[TotpSecret] = None,
-      marks: UserMarks = UserMarks(Nil)
+      marks: UserMarks = UserMarks(Nil),
+      nostrKey: Option[String] = None
   ):
     import lila.core.user.UserMarks.*
     import lila.core.user.UserEnabled.*
@@ -59,10 +60,13 @@ object user:
 
     def hasTitle: Boolean = title.exists(PlayerTitle.BOT != _)
 
-    def publicName: String = profile.flatMap(_.displayName).filter(_.nonEmpty).getOrElse(username.value)
+    def publicDisplayName: Option[String] =
+      NostrName.display(username.value, profile.flatMap(_.displayName), nostrKey)
+
+    def publicName: String = publicDisplayName.getOrElse(username.value)
 
     def light =
-      LightUser(id, username, title, flair, patronMonths, plan.color, profile.flatMap(_.displayName))
+      LightUser(id, username, title, flair, patronMonths, plan.color, publicDisplayName)
 
     def profileOrDefault = profile | Profile.default
 

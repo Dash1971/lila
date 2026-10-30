@@ -86,7 +86,7 @@ function analyseView(ctrl: AnalyseCtrl, deps?: typeof studyDeps): VNode {
       ],
     ),
     ctrl.chatCtrl && renderChat(ctrl.chatCtrl, { insert: v => v.elm && fixChatHeight(v.elm) }),
-    hl('div.chat__members.none', { hook: onInsert(watchers) }),
+    !ctrl.noSweat && hl('div.chat__members.none', { hook: onInsert(watchers) }),
   );
 }
 
@@ -104,7 +104,7 @@ function resizeHandler(ctrl: AnalyseCtrl) {
 }
 
 function fixChatHeight(el: Node) {
-  if (!(el instanceof HTMLElement)) return;
+  if (!(el instanceof HTMLElement) || el.classList.contains('mchat-notes-only')) return;
   resizeCache.board ??= document.querySelector<HTMLElement>('.analyse__board .cg-wrap');
   resizeCache.meta ??= document.querySelector<HTMLElement>('.game__meta');
   if (!resizeCache.board || !resizeCache.meta) return;

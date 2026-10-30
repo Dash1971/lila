@@ -79,7 +79,11 @@ final class LightUserApi(repo: UserRepo, cacheApi: CacheApi)(using Executor)
             flair = doc.getAsOpt[Flair](F.flair).filter(FlairApi.exists),
             patronMonths = patronMonths | PatronMonths.zero,
             patronColor = patronColor,
-            displayName = doc.child(F.profile).flatMap(_.getAsOpt[String]("displayName"))
+            displayName = lila.core.NostrName.display(
+              name.value,
+              doc.child(F.profile).flatMap(_.getAsOpt[String]("displayName")),
+              doc.getAsOpt[String]("nostr")
+            )
           )
 
   val projection =
@@ -89,7 +93,8 @@ final class LightUserApi(repo: UserRepo, cacheApi: CacheApi)(using Executor)
       F.title -> true,
       F.plan -> true,
       F.flair -> true,
-      s"${F.profile}.displayName" -> true
+      s"${F.profile}.displayName" -> true,
+      "nostr" -> true
     )
 
   export realNameCache.{ sync as realName, preloadMany as preloadRealNames }

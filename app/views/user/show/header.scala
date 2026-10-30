@@ -66,6 +66,13 @@ object header:
           .flatMap(_.displayName)
           .filter(_ != u.username.value)
           .map(_ => span(cls := "user-show__handle")(s"@${u.username.value}")),
+        u.nostrKey
+          .flatMap(lila.core.NostrName.npub)
+          .map: npub =>
+            div(cls := "nosweat-profile-key")(
+              span("Nostr public key"),
+              copyMeInput(npub)
+            ),
         div(cls := "trophies")(
           views.user.bits.perfTrophies(u, info.ranks),
           otherTrophies(info),

@@ -6,10 +6,10 @@ import { bind, dataIcon, onInsert } from 'lib/view';
 import { userLink } from 'lib/view/userLink';
 
 import type AnalyseCtrl from '@/ctrl';
-import { findTag } from '@/study/studyChapters';
 
 import type { AnalysisMetaSide, GamePhase } from '../interfaces';
 import { classificationCounts, moveClasses } from '../noSweatFullReview';
+import { findTag } from '../study/studyChapters';
 
 type AdviceKind = 'inaccuracy' | 'mistake' | 'blunder';
 
@@ -25,6 +25,7 @@ const renderPlayer = ({ data, study }: AnalyseCtrl, color: Color): VNode => {
     ? userLink({ ...user, name: user.username, ratingDiff, line: false })
     : h(
         'span',
+        { attrs: { title: name || '' } },
         name ||
           (ai && 'Stockfish level ' + ai) ||
           (study && findTag(study.data.chapter.tags, color)) ||
@@ -89,7 +90,12 @@ const doRender = (ctrl: AnalyseCtrl): VNode => {
       h('table', [
         h(
           'thead',
-          h('tr', [h('th'), ...(['white', 'black'] as Color[]).map(c => h('th', renderPlayer(ctrl, c)))]),
+          h('tr', [
+            h('th'),
+            ...(['white', 'black'] as Color[]).map(c =>
+              h('th', h('div.nosweat-summary-player', renderPlayer(ctrl, c))),
+            ),
+          ]),
         ),
         h('tbody', [
           ...moveClasses.map((category, i) =>
@@ -200,7 +206,13 @@ export function render(ctrl: AnalyseCtrl): VNode | undefined {
   if (ctrl.study) cacheKey += ctrl.study.data.chapter.id;
 
   return h('div.analyse__round-training', [
-    h('div.analyse__acpl', thunk('div.advice-summary', doRender, [ctrl, cacheKey])),
+    h(
+      'div.analyse__acpl',
+      thunk(ctrl.noSweat ? 'div.advice-summary.nosweat-summary' : 'div.advice-summary', doRender, [
+        ctrl,
+        cacheKey,
+      ]),
+    ),
     puzzleLink(ctrl),
   ]);
 }

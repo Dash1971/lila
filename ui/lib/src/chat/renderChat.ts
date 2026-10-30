@@ -10,7 +10,7 @@ import { noteView } from './note';
 export function renderChat(ctrl: ChatCtrl, hook: Hooks = {}): VNode {
   return hl(
     'section.mchat' + (ctrl.isOptional ? '.mchat-optional' : ''),
-    { class: { 'mchat-mod': !!ctrl.moderation }, hook },
+    { class: { 'mchat-mod': !!ctrl.moderation, 'mchat-notes-only': !!ctrl.opts.notesOnly }, hook },
     moderationView(ctrl.moderation) || normalView(ctrl),
   );
 }

@@ -141,9 +141,9 @@ final class AccountPages(helpers: Helpers, ui: AccountUi, flagApi: lila.core.use
             form("displayName"),
             "Public name",
             help = Some(
-              "Shown on your profile and in games. You can set or change it at any time; your account and game history stay the same."
+              "Up to 20 characters. Leave empty to use your username or a shortened Nostr public key. Your account and game history stay the same."
             )
-          )(form3.input(_)(maxlength := 30)),
+          )(form3.input(_)(maxlength := math.max(20, u.profile.flatMap(_.displayName).fold(0)(_.length)))),
           form3.split(
             ctx.kid.no.option(
               form3
