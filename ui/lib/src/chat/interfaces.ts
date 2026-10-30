@@ -14,7 +14,6 @@ export interface ChatOpts {
   permissions: Permissions;
   timeoutReasons?: ModerationReason[];
   preset?: string;
-  notesOnly?: boolean;
   noteId?: string;
   noteText?: string;
   plugin?: ChatPlugin;

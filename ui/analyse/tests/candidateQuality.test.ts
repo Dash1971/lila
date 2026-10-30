@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { candidateQuality, qualityFromLoss } from '../src/noSweatCandidateQuality';
+import { candidateQuality, qualityFromLoss, blunderRanks } from '../src/noSweatCandidateQuality';
 
 test('Maia-platform boundaries use five and ten percentage points of SF winrate loss', () => {
   assert.equal(qualityFromLoss(0.05), 'good');
@@ -11,6 +11,42 @@ test('Maia-platform boundaries use five and ten percentage points of SF winrate 
   assert.equal(candidateQuality({ cp: 0 }, { cp: 0 }, true), 'good');
   assert.equal(candidateQuality({ cp: 0 }, { cp: -100 }, true), 'ok');
   assert.equal(candidateQuality({ cp: 0 }, { cp: -500 }, true), 'blunder');
+});
+
+test('blunder shades follow Stockfish loss order, cap at five and ignore missing evidence', () => {
+  const scores = new Map<string, EvalScore>([
+    ['best', { cp: 0 }],
+    ['mild', { cp: -500 }],
+    ['worse', { cp: -700 }],
+    ['worst', { mate: -2 }],
+    ['unknown', { cp: NaN }],
+  ]);
+  assert.deepEqual(
+    [...blunderRanks(scores, true)],
+    [
+      ['mild', 0],
+      ['worse', 1],
+      ['worst', 2],
+    ],
+  );
+  assert.deepEqual(
+    [
+      ...blunderRanks(
+        new Map(
+          [...scores].map(([uci, score]) => [
+            uci,
+            score.mate !== undefined ? { mate: -score.mate } : { cp: -(score.cp ?? 0) },
+          ]),
+        ),
+        false,
+      ),
+    ],
+    [
+      ['mild', 0],
+      ['worse', 1],
+      ['worst', 2],
+    ],
+  );
 });
 test('quality has the same mover perspective for Black and White, with honest missing evidence', () => {
   assert.equal(candidateQuality({ cp: 0 }, { cp: 500 }, false), 'blunder');

@@ -15,6 +15,7 @@ export const stockfishName = 'Stockfish 19';
 
 export default function (element: HTMLElement, ctrl: AnalyseCtrl) {
   $(element).replaceWith(ctrl.opts.$underboard);
+  if (ctrl.opts.$underboard?.[0]) ctrl.noSweat?.mountOpening(ctrl.opts.$underboard[0]);
   // No public fishnet worker is configured. Keep the native on-device review.
   if (ctrl.noSweat) {
     document.querySelector('form.future-game-analysis')?.remove();
@@ -103,6 +104,19 @@ export default function (element: HTMLElement, ctrl: AnalyseCtrl) {
         ${loading ? chartLoader() : ''}`,
       );
     } else if (loading && !$('#acpl-chart-container-loader').length) $panel.append(chartLoader());
+    if (ctrl.noSweat) {
+      const container = document.getElementById('acpl-chart-container');
+      const canvas = container?.querySelector('canvas');
+      if (container && canvas && !container.classList.contains('nosweat-chart')) {
+        const plot = document.createElement('div');
+        plot.className = 'analysis-chart-plot';
+        canvas.before(plot);
+        plot.append(canvas);
+        const actions = container.querySelector('.analysis-chart-actions');
+        if (actions) container.prepend(actions);
+        container.classList.add('nosweat-chart');
+      }
+    }
     site.asset.loadEsm<ChartGame>('chart.game').then(m => {
       m.acpl($('#acpl-chart')[0] as HTMLCanvasElement, data, ctrl.mainline).then(chart => {
         advChart = chart;

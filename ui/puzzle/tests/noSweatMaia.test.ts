@@ -4,7 +4,7 @@ import { attributesModule, init, type VNode } from 'snabbdom';
 
 import { hl } from 'lib/view';
 
-import { puzzleMaiaChannel } from '../src/noSweatMaia';
+import { puzzleMaiaChannel, fitPuzzleMaiaRow } from '../src/noSweatMaia';
 
 const fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 const primary = [
@@ -14,6 +14,40 @@ const primary = [
   { uci: 'c2c4', probability: 0.2876 },
   { uci: 'b1c3', probability: 0.0004 },
 ];
+
+test('one-line fitting preserves raw probability mass and restores previews when width grows', () => {
+  const channel = {
+    id: 'fit',
+    fen,
+    rating: 1600,
+    candidates: primary,
+    color: 'orange',
+    status: '',
+    expanded: false,
+    toggle: () => {},
+    play: () => {},
+  };
+  const host = document.createElement('div');
+  document.body.append(host);
+  const vnode = init([attributesModule])(host, puzzleMaiaChannel(channel));
+  const root = vnode.elm as HTMLElement;
+  const row = root.querySelector<HTMLElement>('.nosweat-maia-line')!;
+  let width = 240;
+  Object.defineProperty(row, 'clientWidth', { get: () => width });
+  Object.defineProperty(row, 'scrollWidth', {
+    get: () =>
+      140 + [...row.querySelectorAll<HTMLElement>('.nosweat-maia-move')].filter(e => !e.hidden).length * 60,
+  });
+  fitPuzzleMaiaRow(row, channel);
+  assert.equal([...row.querySelectorAll<HTMLElement>('.nosweat-maia-move')].filter(e => !e.hidden).length, 1);
+  assert.equal(row.querySelector('.nosweat-maia-other')!.textContent, 'Other 50.8%');
+  assert.equal(root.querySelectorAll('.nosweat-puzzle-policy tbody tr').length, primary.length);
+  width = 400;
+  fitPuzzleMaiaRow(row, channel);
+  assert.ok([...row.querySelectorAll<HTMLElement>('.nosweat-maia-move')].every(e => !e.hidden));
+  assert.equal(row.querySelector('.nosweat-maia-other')!.textContent, 'Other 28.8%');
+  root.remove();
+});
 
 test('compact channels preserve raw probabilities and independently expand all legal moves', () => {
   const patch = init([attributesModule]);

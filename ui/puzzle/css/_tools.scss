@@ -186,9 +186,14 @@
 
 .nosweat-maia-moves {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: baseline;
-  gap: 2px 0.85em;
+  min-width: 0;
+  gap: 0.45em;
+}
+
+.nosweat-maia-move[hidden] {
+  display: none;
 }
 
 .nosweat-maia-move {

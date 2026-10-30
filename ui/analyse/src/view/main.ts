@@ -104,7 +104,7 @@ function resizeHandler(ctrl: AnalyseCtrl) {
 }
 
 function fixChatHeight(el: Node) {
-  if (!(el instanceof HTMLElement) || el.classList.contains('mchat-notes-only')) return;
+  if (!(el instanceof HTMLElement)) return;
   resizeCache.board ??= document.querySelector<HTMLElement>('.analyse__board .cg-wrap');
   resizeCache.meta ??= document.querySelector<HTMLElement>('.game__meta');
   if (!resizeCache.board || !resizeCache.meta) return;

@@ -26,45 +26,99 @@ interface PolicyChannel {
 const probability = (value: number) =>
   value > 0 && value < 0.001 ? '<0.1%' : `${(100 * value).toFixed(1)}%`;
 
+const rowObservers = new WeakMap<Element, ResizeObserver>();
+
+export function fitPuzzleMaiaRow(row: HTMLElement, channel: PolicyChannel): void {
+  if (!row.clientWidth || !channel.candidates.length) return;
+  const pairs = [...row.querySelectorAll<HTMLElement>('.nosweat-maia-move')];
+  const other = row.querySelector<HTMLButtonElement>('.nosweat-maia-other')!;
+  let shown = pairs.length;
+  pairs.forEach(p => (p.hidden = false));
+  const update = () => {
+    const rest = channel.candidates.slice(shown).reduce((sum, c) => sum + c.probability, 0);
+    other.textContent = 'Other ' + probability(rest);
+    other.setAttribute(
+      'aria-label',
+      `${channel.expanded ? 'Hide' : 'Show'} all legal moves for Maia ${channel.rating}, other ${probability(rest)}`,
+    );
+  };
+  update();
+  while (row.scrollWidth > row.clientWidth + 1 && shown > 1) {
+    pairs[--shown].hidden = true;
+    update();
+  }
+}
+
 export function puzzleMaiaChannel(channel: PolicyChannel) {
   const { id, fen, rating, candidates, color, status, expanded, toggle, play } = channel;
   const others = candidates.slice(3).reduce((sum, candidate) => sum + candidate.probability, 0);
   const panel = id + '-moves';
   return hl('div.nosweat-maia-channel', { key: id + fen + rating }, [
-    hl('div.nosweat-maia-line', [
-      hl('strong.nosweat-maia-label', { attrs: { style: 'color:' + color } }, 'M' + rating),
-      candidates.length
-        ? hl('div.nosweat-maia-moves', [
-            candidates
-              .slice(0, 3)
-              .map(candidate =>
-                hl('span.nosweat-maia-move', { key: candidate.uci }, [
-                  hl('span.nosweat-maia-san', san(fen, candidate.uci)),
-                  ' ',
-                  hl(
-                    'span.nosweat-maia-probability',
-                    { attrs: { title: `${(100 * candidate.probability).toPrecision(6)}%` } },
-                    probability(candidate.probability),
-                  ),
-                ]),
-              ),
-            hl(
-              'button.fbt.nosweat-maia-other',
-              {
-                attrs: {
-                  type: 'button',
-                  'aria-expanded': String(expanded),
-                  'aria-controls': panel,
-                  'aria-label': `${expanded ? 'Hide' : 'Show'} all legal moves for Maia ${rating}, other ${probability(others)}`,
-                  title: expanded ? 'Hide all legal moves' : 'Show all legal moves',
+    hl(
+      'div.nosweat-maia-line',
+      {
+        hook: {
+          insert: vnode => {
+            const row = vnode.elm as HTMLElement;
+            if (typeof ResizeObserver === 'undefined') {
+              fitPuzzleMaiaRow(row, channel);
+              return;
+            }
+            const observer = new ResizeObserver(() => fitPuzzleMaiaRow(row, channel));
+            rowObservers.set(row, observer);
+            observer.observe(row);
+            fitPuzzleMaiaRow(row, channel);
+          },
+          postpatch: (_old, vnode) => {
+            const row = vnode.elm as HTMLElement;
+            rowObservers.get(row)?.disconnect();
+            if (typeof ResizeObserver === 'undefined') {
+              fitPuzzleMaiaRow(row, channel);
+              return;
+            }
+            const observer = new ResizeObserver(() => fitPuzzleMaiaRow(row, channel));
+            rowObservers.set(row, observer);
+            observer.observe(row);
+            fitPuzzleMaiaRow(row, channel);
+          },
+          destroy: vnode => rowObservers.get(vnode.elm as Element)?.disconnect(),
+        },
+      },
+      [
+        hl('strong.nosweat-maia-label', { attrs: { style: 'color:' + color } }, 'M' + rating),
+        candidates.length
+          ? hl('div.nosweat-maia-moves', [
+              candidates
+                .slice(0, 3)
+                .map(candidate =>
+                  hl('span.nosweat-maia-move', { key: candidate.uci }, [
+                    hl('span.nosweat-maia-san', san(fen, candidate.uci)),
+                    ' ',
+                    hl(
+                      'span.nosweat-maia-probability',
+                      { attrs: { title: `${(100 * candidate.probability).toPrecision(6)}%` } },
+                      probability(candidate.probability),
+                    ),
+                  ]),
+                ),
+              hl(
+                'button.fbt.nosweat-maia-other',
+                {
+                  attrs: {
+                    type: 'button',
+                    'aria-expanded': String(expanded),
+                    'aria-controls': panel,
+                    'aria-label': `${expanded ? 'Hide' : 'Show'} all legal moves for Maia ${rating}, other ${probability(others)}`,
+                    title: expanded ? 'Hide all legal moves' : 'Show all legal moves',
+                  },
+                  hook: bind('click', toggle),
                 },
-                hook: bind('click', toggle),
-              },
-              'Other ' + probability(others),
-            ),
-          ])
-        : hl('span.nosweat-maia-status', status),
-    ]),
+                'Other ' + probability(others),
+              ),
+            ])
+          : hl('span.nosweat-maia-status', status),
+      ],
+    ),
     hl('div.nosweat-puzzle-policy', { attrs: { id: panel, hidden: !expanded || !candidates.length } }, [
       hl('div.nosweat-puzzle-policy__scroll', [
         hl('table', { attrs: { 'aria-label': `All legal moves for Maia ${rating}` } }, [

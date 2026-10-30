@@ -10,13 +10,14 @@ import { domDialog, hl, type VNode } from 'lib/view';
 
 import type AnalyseCtrl from './ctrl';
 import { engineArrows, engineShapes, engineColors } from './noSweatArrows';
-import { candidateQuality, qualityLabels, stockfishWinrate } from './noSweatCandidateQuality';
-import { encodeHistory, policy, san, position, standardUci, legalUcis, type Candidate } from './noSweatCore';
+import { candidateQuality, qualityLabels, stockfishWinrate, blunderRanks } from './noSweatCandidateQuality';
+import { encodeHistory, policy, san, position, standardUci, type Candidate } from './noSweatCore';
 import { reviewClick } from './noSweatEvents';
 import { ReviewFish, type Review } from './noSweatFish';
 import { gameReviewQualities, gameReviewQuality } from './noSweatFullReview';
+import { OpeningLabel } from './noSweatOpening';
 import { readEnginePreferences, type EnginePreferences } from './noSweatPreferences';
-import { ratingSamples as samples, ratingChart } from './noSweatRatingChart';
+import { ratingSamples as samples, ratingChart, ratingLegend } from './noSweatRatingChart';
 
 interface MaiaClient {
   predict(input: {
@@ -52,10 +53,14 @@ export class NoSweatAnalysis {
   expectedScore?: number;
   secondaryExpectedScore?: number;
   private sideRedraw?: () => void;
+  private opening?: OpeningLabel;
+  mountOpening(element: HTMLElement): void {
+    this.opening?.destroy();
+    this.opening = new OpeningLabel(this.ctrl, element);
+  }
   history = true;
   maiaArrows = true;
   fishArrows = true;
-  allMoves = false;
   ratingTable = true;
   private ratingContext = '';
   private ratingKey(): string {
@@ -85,7 +90,6 @@ export class NoSweatAnalysis {
   private readonly cache = new Map<string, Prediction>();
   private readonly fish: ReviewFish;
   private readonly reviewCache = new Map<string, Review>();
-  private fishBest?: string;
   private compareBusy = false;
   private qualityBusy = false;
   private qualityRoot?: Review;
@@ -227,7 +231,6 @@ export class NoSweatAnalysis {
     this.secondaryCandidates = [];
     this.expectedScore = this.secondaryExpectedScore = undefined;
     this.scores.clear();
-    this.fishBest = undefined;
     this.qualityRoot = undefined;
     this.qualityFailed.clear();
     const ratingContext = this.ratingKey();
@@ -343,8 +346,10 @@ export class NoSweatAnalysis {
   }
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
-    if (!enabled) this.release();
-    else this.ctrl.ceval.storedPv(2);
+    if (!enabled) {
+      this.release();
+      this.byRating.clear();
+    } else this.ctrl.ceval.storedPv(2);
     this.positionChanged(true);
   }
   mountSide(element: HTMLElement): void {
@@ -359,6 +364,7 @@ export class NoSweatAnalysis {
   }
   redrawSide(): void {
     this.sideRedraw?.();
+    this.opening?.redraw();
   }
   private nativeLines() {
     return this.ctrl.cevalEnabled() && !this.ctrl.threatMode()
@@ -366,35 +372,11 @@ export class NoSweatAnalysis {
       : [];
   }
 
-  private currentFishBest(): string | undefined {
-    return this.normalUci(this.nativeLines()[0]?.moves[0]) ?? this.fishBest;
-  }
   private normalUci(uci?: string): string | undefined {
     if (!uci) return undefined;
     const move = parseUci(uci);
     return move ? standardUci(position(this.ctrl.node.fen), move) : undefined;
   }
-  private readonly played = (): string | undefined => this.normalUci(this.ctrl.node.children[0]?.uci);
-  private readonly rows = (): Candidate[] => {
-    const chosen = new Set([
-      ...(this.allMoves
-        ? [...this.candidates, ...this.secondaryCandidates]
-        : [...this.candidates.slice(0, 3), ...this.secondaryCandidates.slice(0, 3)]
-      ).map(c => c.uci),
-      ...this.nativeLines().flatMap(pv => {
-        const uci = this.normalUci(pv.moves[0]);
-        return uci ? [uci] : [];
-      }),
-    ]);
-    const played = this.played();
-    if (played) chosen.add(played);
-    const best = this.currentFishBest();
-    if (best) chosen.add(best);
-    const legal = new Set(legalUcis(this.ctrl.node.fen));
-    return [...chosen]
-      .filter(uci => legal.has(uci))
-      .map(uci => ({ uci, probability: this.candidates.find(c => c.uci === uci)?.probability ?? 0 }));
-  };
   private readonly preview = (uci: string): void => {
     this.returnPath ??= this.ctrl.path;
     this.ctrl.playUci(uci);
@@ -431,7 +413,6 @@ export class NoSweatAnalysis {
         if (!this.valid(generation)) return;
         if (root.current.depth < 8) return;
         this.qualityRoot = root;
-        this.fishBest = this.normalUci(root.current.lines[0]?.moves[0]);
         for (const line of root.current.lines) {
           const move = this.normalUci(line.moves[0]);
           if (move) this.scores.set(move, { score: line, depth: root.current.depth });
@@ -566,9 +547,23 @@ export class NoSweatAnalysis {
     const candidates = secondary ? this.secondaryCandidates : this.candidates;
     const score = secondary ? this.secondaryExpectedScore : this.expectedScore;
     const color = secondary ? engineColors.maiaSecond : engineColors.maia;
-    const side = position(this.ctrl.node.fen).turn === 'white' ? 'White' : 'Black';
+    const white = position(this.ctrl.node.fen).turn === 'white';
+    const side = white ? 'White' : 'Black';
     const expanded = this.expanded[Number(secondary)];
     const rest = candidates.slice(4).reduce((sum, c) => sum + c.probability, 0);
+    const grades = blunderRanks(
+      new Map([...this.scores].flatMap(([uci, result]) => (result ? [[uci, result.score] as const] : []))),
+      white,
+    );
+    const moves: (Candidate | undefined)[] = candidates.slice(0, expanded ? undefined : 4);
+    while (moves.length < 4) moves.push(undefined);
+    const status = !this.enabled
+      ? 'Analysis off'
+      : position(this.ctrl.node.fen).isEnd()
+        ? 'No legal moves'
+        : this.error
+          ? 'Unavailable'
+          : 'Analyzing…';
     return hl('section.nosweat-maia-card', { attrs: { 'aria-label': `Maia ${rating}` } }, [
       hl('header', [
         hl(
@@ -598,98 +593,101 @@ export class NoSweatAnalysis {
           ],
         ),
       ]),
-      candidates.length
-        ? hl('div.nosweat-policy-scroll', [
-            hl('table.nosweat-policy', [
-              hl('thead', hl('tr', [hl('th', 'Move'), hl('th', 'Probability')])),
-              hl(
-                'tbody',
-                candidates.slice(0, expanded ? undefined : 4).map(c =>
-                  hl('tr', { key: this.ctrl.node.fen + c.uci }, [
-                    hl(
-                      'td',
-                      hl(
-                        'button.fbt',
-                        {
-                          attrs: {
-                            type: 'button',
-                            'data-quality': this.moveQuality(c.uci) ?? 'pending',
-                            title: this.moveQuality(c.uci)
-                              ? qualityLabels[this.moveQuality(c.uci)!] + ' · Stockfish estimate'
-                              : 'Move quality not yet available',
-                            'aria-label':
-                              san(this.ctrl.node.fen, c.uci) +
-                              ': ' +
-                              (this.moveQuality(c.uci)
-                                ? qualityLabels[this.moveQuality(c.uci)!]
-                                : 'quality not yet available'),
-                          },
-                          hook: reviewClick(() => this.preview(c.uci)),
-                        },
-                        san(this.ctrl.node.fen, c.uci),
-                      ),
-                    ),
-                    hl('td', (c.probability * 100).toFixed(1) + '%'),
-                  ]),
+      hl('div.nosweat-policy-scroll', [
+        hl('table.nosweat-policy', [
+          hl('thead', hl('tr', [hl('th', 'Move'), hl('th', 'Probability')])),
+          hl(
+            'tbody',
+            moves.map((c, index) => {
+              if (!c)
+                return hl('tr.nosweat-policy-placeholder', { key: 'empty-' + index }, [
+                  hl('td', !candidates.length && index === 0 ? status : '—'),
+                  hl('td', '—'),
+                ]);
+              const quality = this.moveQuality(c.uci);
+              return hl('tr', { key: this.ctrl.node.fen + c.uci }, [
+                hl(
+                  'td',
+                  hl(
+                    'button.fbt',
+                    {
+                      attrs: {
+                        type: 'button',
+                        'data-quality': quality ?? 'pending',
+                        'data-blunder-rank': quality === 'blunder' ? (grades.get(c.uci) ?? 0) : false,
+                        title: quality
+                          ? qualityLabels[quality] + ' · Stockfish estimate'
+                          : 'Move quality not yet available',
+                        'aria-label':
+                          san(this.ctrl.node.fen, c.uci) +
+                          ': ' +
+                          (quality ? qualityLabels[quality] : 'quality not yet available'),
+                      },
+                      hook: reviewClick(() => this.preview(c.uci)),
+                    },
+                    san(this.ctrl.node.fen, c.uci),
+                  ),
                 ),
-              ),
-            ]),
-          ])
-        : hl(
-            'p.nosweat-maia-empty',
-            !this.enabled
-              ? 'Analysis off'
-              : position(this.ctrl.node.fen).isEnd()
-                ? 'No legal moves'
-                : this.error
-                  ? 'Unavailable'
-                  : 'Analyzing…',
-          ),
-      candidates.length > 4 &&
-        hl(
-          'button.nosweat-others',
-          {
-            attrs: { type: 'button', 'aria-expanded': expanded },
-            hook: reviewClick(() => {
-              this.expanded[Number(secondary)] = !expanded;
-              this.colorCandidates();
-              this.ctrl.redraw();
+                hl('td', (c.probability * 100).toFixed(1) + '%'),
+              ]);
             }),
-          },
-          [
-            hl('span', expanded ? 'Leading moves' : 'Others'),
-            hl('span', expanded ? '−' : (rest * 100).toFixed(1) + '% +'),
-          ],
-        ),
+          ),
+        ]),
+      ]),
+      hl(
+        'button.nosweat-others',
+        {
+          attrs: { type: 'button', 'aria-expanded': expanded, disabled: candidates.length <= 4 },
+          hook: reviewClick(() => {
+            this.expanded[Number(secondary)] = !expanded;
+            this.colorCandidates();
+            this.ctrl.redraw();
+          }),
+        },
+        [
+          hl('span', expanded ? 'Leading moves' : 'Others'),
+          hl('span', !candidates.length ? '—' : expanded ? '−' : (rest * 100).toFixed(1) + '% +'),
+        ],
+      ),
     ]);
   }
 
   private candidateView(): VNode {
     return hl('section.nosweat-candidate-panel', { attrs: { 'aria-label': 'Maia analysis' } }, [
-      hl('h2', 'Maia'),
       hl('div.nosweat-maia-cards', [this.maiaCard(false), this.secondMaiaEnabled && this.maiaCard(true)]),
-      this.returnPath !== undefined &&
-        hl(
-          'button.fbt.nosweat-return',
-          {
-            attrs: { type: 'button' },
-            hook: reviewClick(() => {
-              const path = this.returnPath!;
-              this.returnPath = undefined;
-              this.ctrl.userJump(path);
-              this.ctrl.redraw();
-            }),
-          },
-          'Return to game position',
-        ),
-      this.enabled &&
-        hl('section.nosweat-rating-explorer', [
+      hl('section.nosweat-rating-explorer', [
+        hl('header.nosweat-rating-heading', [
           hl('h3', 'Moves by Rating'),
-          this.renderRatingChart(),
-          hl('details', [hl('summary', 'Move probabilities'), this.renderRatings()]),
+          ratingLegend(
+            this.byRating,
+            uci => san(this.ctrl.node.fen, uci),
+            uci => this.preview(uci),
+          ),
         ]),
-      this.error && hl('p.error', { attrs: { role: 'alert' } }, this.error),
-      !this.error && this.status && hl('p', { attrs: { role: 'status' } }, this.status),
+        this.renderRatingChart(),
+      ]),
+      hl('div.nosweat-maia-feedback', [
+        this.returnPath !== undefined &&
+          hl(
+            'button.fbt.nosweat-return',
+            {
+              attrs: { type: 'button' },
+              hook: reviewClick(() => {
+                const path = this.returnPath!;
+                this.returnPath = undefined;
+                this.ctrl.userJump(path);
+                this.ctrl.redraw();
+              }),
+            },
+            'Return to game position',
+          ),
+        this.returnPath === undefined &&
+          hl(
+            'span',
+            { attrs: { role: this.error ? 'alert' : 'status', title: this.error || this.status } },
+            this.error || this.status,
+          ),
+      ]),
     ]);
   }
   private chooseRating(rating: number, secondary = false, keepOpponent = false): void {
@@ -708,61 +706,7 @@ export class NoSweatAnalysis {
       uci => san(this.ctrl.node.fen, uci),
       rating => this.chooseRating(rating, false, true),
       uci => this.preview(uci),
+      () => this.sideRedraw?.(),
     );
-  }
-  private renderRatings(): VNode {
-    const moves = new Set(this.rows().map(c => c.uci));
-    for (const values of this.byRating.values()) for (const c of values.slice(0, 3)) moves.add(c.uci);
-    return hl('div.nosweat-rating-scroll', [
-      hl('table.nosweat-ratings', [
-        hl('caption', 'Move probabilities'),
-        hl('thead', [
-          hl('tr', [
-            hl('th', 'Move'),
-            ...samples.map(n =>
-              hl('th', [
-                hl(
-                  'button.fbt',
-                  {
-                    attrs: { type: 'button', 'aria-label': 'Use Maia mover input ' + n },
-                    hook: reviewClick(() => this.chooseRating(n, false, true)),
-                  },
-                  String(n),
-                ),
-              ]),
-            ),
-          ]),
-        ]),
-        hl(
-          'tbody',
-          [...moves].map(move =>
-            hl('tr', [
-              hl('td', [
-                hl(
-                  'button.fbt',
-                  { hook: reviewClick(() => this.preview(move)) },
-                  san(this.ctrl.node.fen, move),
-                ),
-              ]),
-              ...samples.map(n => {
-                const probability = this.byRating.get(n)?.find(c => c.uci === move)?.probability;
-                return hl(
-                  'td',
-                  {
-                    attrs: {
-                      style:
-                        probability === undefined
-                          ? ''
-                          : `background:linear-gradient(90deg,#c8a54033 ${probability * 100}%,transparent 0)`,
-                    },
-                  },
-                  probability === undefined ? '—' : (probability * 100).toFixed(1) + '%',
-                );
-              }),
-            ]),
-          ),
-        ),
-      ]),
-    ]);
   }
 }

@@ -91,42 +91,44 @@ const doRender = (ctrl: AnalyseCtrl): VNode => {
         h(
           'thead',
           h('tr', [
+            h('th', h('div.nosweat-summary-player', renderPlayer(ctrl, 'white'))),
             h('th'),
-            ...(['white', 'black'] as Color[]).map(c =>
-              h('th', h('div.nosweat-summary-player', renderPlayer(ctrl, c))),
-            ),
+            h('th', h('div.nosweat-summary-player', renderPlayer(ctrl, 'black'))),
           ]),
         ),
         h('tbody', [
-          ...moveClasses.map((category, i) =>
-            h('tr', [
-              h('td', { attrs: { style: 'color:' + category.color } }, category.symbol + ' ' + category.name),
-              ...(['white', 'black'] as Color[]).map(c =>
+          ...moveClasses.map((category, i) => {
+            const count = (c: Color) =>
+              h(
+                'td',
                 h(
-                  'td',
-                  h(
-                    'button.fbt',
-                    {
-                      attrs: {
-                        type: 'button',
-                        disabled: !counts[c][i],
-                        'aria-label': `${category.name}: ${counts[c][i]} for ${c}`,
-                      },
-                      hook: bind('click', () => ctrl.jumpToGlyphSymbol(c, category.symbol), ctrl.redraw),
+                  'button.fbt',
+                  {
+                    attrs: {
+                      type: 'button',
+                      disabled: !counts[c][i],
+                      'aria-label': `${category.name}: ${counts[c][i]} for ${c}`,
                     },
-                    String(counts[c][i]),
-                  ),
+                    hook: bind('click', () => ctrl.jumpToGlyphSymbol(c, category.symbol), ctrl.redraw),
+                  },
+                  String(counts[c][i]),
                 ),
-              ),
-            ]),
-          ),
+              );
+            return h('tr', [
+              count('white'),
+              h('td', { attrs: { style: 'color:' + category.color } }, category.symbol + ' ' + category.name),
+              count('black'),
+            ]);
+          }),
           h('tr.accuracy', [
+            h('td', `${ctrl.mainlineAnalysis!.white.accuracy}%`),
             h('td', i18n.site.accuracy),
-            ...(['white', 'black'] as Color[]).map(c => h('td', `${ctrl.mainlineAnalysis![c].accuracy}%`)),
+            h('td', `${ctrl.mainlineAnalysis!.black.accuracy}%`),
           ]),
           h('tr', [
+            h('td', String(ctrl.mainlineAnalysis!.white.acpl)),
             h('td', 'Avg. centipawn loss'),
-            ...(['white', 'black'] as Color[]).map(c => h('td', String(ctrl.mainlineAnalysis![c].acpl))),
+            h('td', String(ctrl.mainlineAnalysis!.black.acpl)),
           ]),
         ]),
       ]),

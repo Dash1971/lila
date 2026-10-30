@@ -181,11 +181,9 @@ $analyse-gauge-gap: 4px;
 
       .analyse__side {
         grid-row: 1 / 3;
-        height: var(---cg-height);
-        overflow-y: auto;
-        overflow-x: hidden;
+        height: auto;
+        overflow: visible;
         display: block;
-        scrollbar-gutter: stable;
       }
 
       .nosweat-candidate-panel {

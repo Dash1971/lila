@@ -44,26 +44,17 @@ object replay:
   )(using ctx: Context) =
 
     val chatOpt = chatOption
-      .filter(_ => !env.noSweat.enabled || (ctx.isAuth && ctx.noBlind))
+      .filter(_ => !env.noSweat.enabled)
       .map: c =>
-        val json = views.chat.json(
+        views.chat.json(
           c.chat,
           c.lines,
-          name = if env.noSweat.enabled then "Notes" else trans.site.spectatorRoom.txt(),
+          name = trans.site.spectatorRoom.txt(),
           timeout = c.timeout,
           withNoteAge = ctx.isAuth.option(pov.game.secondsSinceCreation),
           public = true,
           resource = lila.core.chat.PublicSource.Watcher(pov.gameId)
-        )
-        (if env.noSweat.enabled then
-           json.deepMerge(
-             Json.obj(
-               "notesOnly" -> true,
-               "writeable" -> false,
-               "data" -> Json.obj("lines" -> Json.arr())
-             )
-           )
-         else json) -> views.chat.frag
+        ) -> views.chat.frag
 
     val side = views.game.side(pov, initialFen, none, simul = simul, userTv = userTv, bookmarked = bookmarked)
 

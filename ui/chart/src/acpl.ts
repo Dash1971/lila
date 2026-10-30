@@ -33,6 +33,7 @@ import {
 } from './index';
 import type { AcplChart, AnalyseData, Player } from './interface';
 import { classificationPoint } from './moveClassifications';
+import { phasePlugin } from './noSweatPhases';
 
 Chart.register(LineController, LinearScale, PointElement, LineElement, Tooltip, Filler, ChartDataLabels);
 export default async function (
@@ -45,7 +46,8 @@ export default async function (
   const blurBackgroundColorWhite = 'white';
   const blurBackgroundColorBlack = 'black';
   const ply = plyLine(0);
-  const divisionLines = division(data.game.division);
+  const mobilePhases = data.game.variant.key === 'standard';
+  const divisionLines = mobilePhases ? [] : division(data.game.division);
   const firstPly = mainline[0].ply;
 
   const makeDataset = (
@@ -129,6 +131,7 @@ export default async function (
   const moveLabels = dataset.moveLabels;
   const config: ChartConfiguration<'line'> = {
     type: 'line',
+    plugins: mobilePhases ? [phasePlugin(() => mainline)] : [],
     data: {
       labels: moveLabels.map((_, index) => index),
       datasets: [acpl, ply, ...divisionLines],

@@ -230,3 +230,24 @@ export function candidateQuality(
 }
 
 export const qualityLabels = { good: 'Good move', ok: 'Acceptable move', blunder: 'Blunder' };
+
+// Maia's shades are ranks within the evaluated blunder group, not probability
+// buckets or additional loss thresholds. Unknown scores never receive a shade.
+export function blunderRanks(scores: ReadonlyMap<string, EvalScore>, white: boolean): Map<string, number> {
+  const known = [...scores].flatMap(([uci, score]) => {
+    const value = stockfishWinrate(score, white);
+    return value === undefined ? [] : [{ uci, score, value }];
+  });
+  const best = Math.max(...known.map(s => s.value));
+  return new Map(
+    known
+      .filter(s => qualityFromLoss(best - s.value) === 'blunder')
+      .sort(
+        (a, b) =>
+          b.value - a.value ||
+          (white ? 1 : -1) * ((b.score.cp ?? 0) - (a.score.cp ?? 0)) ||
+          a.uci.localeCompare(b.uci),
+      )
+      .map((s, i) => [s.uci, Math.min(i, 4)]),
+  );
+}
