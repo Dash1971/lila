@@ -30,6 +30,7 @@ final class RemoteSocket(
   private type UserIds = Set[UserId]
 
   val onlineUserIds: AtomicReference[Set[UserId]] = AtomicReference(initialUserIds)
+  private val managedOnlineIds = AtomicReference(Set.empty[UserId])
 
   def kit = SocketKit(subscribe, channel => makeSender(channel, 1).send, baseHandler)
   def parallelKit = ParallelSocketKit(subscribeRoundRobin, makeSender, baseHandler)
@@ -54,7 +55,8 @@ final class RemoteSocket(
     case In.Ping(id) => send.exec(Out.pong(id))
     case In.WsBoot =>
       logger.warn("Remote socket boot")
-      onlineUserIds.set(initialUserIds)
+      onlineUserIds.set(initialUserIds ++ managedOnlineIds.get)
+      managedOnlineIds.get.foreach(id => send.exec(Out.apiUserOnline(id, true)))
 
   Bus.sub[SendTos]:
     case SendTos(userIds, payload) =>
@@ -108,6 +110,15 @@ final class RemoteSocket(
     case ApiUserIsOnline(userId, value) =>
       send.exec(Out.apiUserOnline(userId, value))
       if value then onlineUserIds.getAndUpdate(_ + userId)
+
+  Bus.sub[ManagedApiUsersOnline]:
+    case ManagedApiUsersOnline(ids) =>
+      val previous = managedOnlineIds.getAndSet(ids)
+      val removed = previous -- ids
+      val added = ids -- previous
+      onlineUserIds.getAndUpdate(current => (current -- removed) ++ added)
+      removed.foreach(id => send.exec(Out.apiUserOnline(id, false)))
+      added.foreach(id => send.exec(Out.apiUserOnline(id, true)))
 
   Bus.sub[Follow]:
     case Follow(u1, u2) => send.exec(Out.follow(u1, u2))

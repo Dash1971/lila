@@ -46,6 +46,7 @@ object SendTos:
     SendTos(userIds, makeMessage(typ, data))
 
 case class ApiUserIsOnline(userId: UserId, isOnline: Boolean)
+case class ManagedApiUsersOnline(userIds: Set[UserId])
 
 // announce something to all clients
 case class Announce(msg: String, date: Instant, json: JsObject)

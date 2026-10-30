@@ -2,8 +2,8 @@ package lila.bot
 
 import lila.common.Bus
 import lila.core.perf.UserWithPerfs
-import lila.core.socket.{ ApiUserIsOnline, IsOnline }
-import lila.memo.CacheApi.buildAsyncTimeout
+import lila.core.socket.{ ApiUserIsOnline, IsOnline, ManagedApiUsersOnline }
+import lila.memo.CacheApi.{ buildAsyncTimeout, invalidate }
 import lila.memo.ExpireCallbackMemo
 
 final class OnlineApiUsers(
@@ -27,12 +27,25 @@ final class OnlineApiUsers(
     cache.put(userId)
     if wasOffline then publish(userId, isOnline = true)
 
+  private val managed: ManagedPresence = new ManagedPresence(
+    cacheTtl.toMillis,
+    () => System.nanoTime() / 1_000_000,
+    ids =>
+      usersCache.invalidate({})
+      jsonCache.invalidate({})
+      Bus.pub(ManagedApiUsersOnline(ids))
+  )
+
+  scheduler.scheduleWithFixedDelay(1.second, 1.second)(() => managed.expire())
+
+  def setManagedOnline(ids: Set[UserId]): Unit = managed.heartbeat(ids)
+
   private def publish(userId: UserId, isOnline: Boolean) =
     Bus.pub(ApiUserIsOnline(userId, isOnline))
 
   private val usersCache = cacheApi.unit[List[UserWithPerfs]]("onlineApiUsers.list"):
     _.expireAfterWrite(cacheTtl).buildAsyncTimeout(): _ =>
-      userApi.visibleBotsByIds(cache.keySet)
+      userApi.visibleBotsByIds(cache.keySet ++ managed.activeIds)
 
   def getUsers = usersCache.get({})
 

@@ -3,6 +3,12 @@
 main.lobby .lobby__app__content{background-image:url("/assets/nosweat/watermark-dark.svg")}.light main.lobby .lobby__app__content{background-image:url("/assets/nosweat/watermark-light.svg")}
 
 
+.nosweat-bot-policy { margin:1em 0; max-width:32em; }
+.nosweat-bot-policy h2 { font-size:1.1em; margin-bottom:.6em; }
+.nosweat-bot-policy table { width:100%; border-collapse:collapse; }
+.nosweat-bot-policy th,.nosweat-bot-policy td { text-align:left; padding:.3em .6em .3em 0; vertical-align:top; }
+.nosweat-bot-policy th { font-weight:normal; color:var(--c-font-dim); width:40%; }
+.nosweat-bot-policy p { color:var(--c-font-dim); font-size:.85em; margin:.7em 0; }
 .nosweat-analysis { padding:.7em; border-bottom:1px solid var(--c-border); font-size:.85em; max-height:48vh; overflow:auto; flex-shrink:0; }
 .nosweat-analysis__heading,.nosweat-analysis__settings,.nosweat-analysis__options,.nosweat-analysis__actions { display:flex; flex-wrap:wrap; align-items:center; gap:.4em .7em; }
 .nosweat-analysis__heading { justify-content:space-between; }

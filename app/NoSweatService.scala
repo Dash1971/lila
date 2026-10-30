@@ -23,7 +23,6 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
   private lazy val token = env.config.get[String]("nosweat.adapterToken")
   private val records = env.mongo.mainDb(CollName("nosweat_game"))
   private val lastPoll = AtomicLong(System.currentTimeMillis())
-  private val lastOnline = AtomicLong(0L)
   private val adapterInstance = AtomicReference("")
   private val connectedBots = java.util.concurrent.ConcurrentHashMap.newKeySet[GameId]()
   private val queue = scalalib.actor.AsyncActorSequencer(
@@ -38,6 +37,61 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
     )
     .as[List[JsObject]]
   private def botId(bot: JsObject): UserId = UserId((bot \ "username").as[String].toLowerCase)
+  private lazy val botsById = roster.map(bot => botId(bot) -> bot).toMap
+  private lazy val botIds = botsById.keySet
+  private val ratingCatalog = new lila.bot.PoolCatalog
+  private val poolKeys = List(
+    PerfKey.ultraBullet,
+    PerfKey.bullet,
+    PerfKey.blitz,
+    PerfKey.rapid,
+    PerfKey.classical,
+    PerfKey.correspondence
+  )
+
+  def botPolicy(id: UserId): Option[JsObject] =
+    Option
+      .when(enabled)(botsById.get(id))
+      .flatten
+      .filter(bot => (bot \ "personality").asOpt[JsObject].isDefined)
+
+  private def reloadBotRatings(): Funit =
+    env.user.perfsRepo
+      .idsMap(botIds.toList, _.pri)
+      .map: perfs =>
+        requireThat(perfs.size == botIds.size, 503, "Bot rating data is unavailable")
+        ratingCatalog.replace(perfs.map: (id, ps) =>
+          id -> poolKeys.map(key => key -> ps(key).intRating.value).toMap)
+
+  private def refreshBotRating(id: UserId): Funit =
+    env.user.perfsRepo
+      .perfsOf(id)
+      .map: ps =>
+        ratingCatalog.update(id, poolKeys.map(key => key -> ps(key).intRating.value).toMap)
+
+  private def poolOpponent(key: PerfKey, rating: Int, busy: Set[UserId]): Fu[lila.core.user.WithPerf] =
+    def pick(excluded: Set[UserId], retries: Int): Fu[lila.core.user.WithPerf] =
+      val eligible = ratingCatalog.within(key, rating, excluded)
+      if eligible.isEmpty || retries == 0 then
+        fufail(
+          NoSweatError(503, "No opponent within 200 rating points is available. Please try again shortly.")
+        )
+      else
+        val id = eligible(scalalib.SecureRandom.nextInt(eligible.size))
+        env.user.api
+          .byIdWithPerf(id, key)
+          .flatMap:
+            case Some(opponent)
+                if opponent.user.isBot && opponent.user.enabled.yes && math.abs(
+                  opponent.perf.intRating.value - rating
+                ) <= 200 =>
+              fuccess(opponent)
+            case Some(opponent) if opponent.user.isBot && opponent.user.enabled.yes =>
+              refreshBotRating(id).flatMap(_ => pick(excluded + id, retries - 1))
+            case _ =>
+              ratingCatalog.update(id, Map.empty)
+              pick(excluded + id, retries - 1)
+    pick(busy, 4)
   private def requireThat(ok: Boolean, status: Int, message: String): Unit =
     if !ok then throw NoSweatError(status, message)
 
@@ -152,67 +206,70 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
       )
     yield Json.obj("confirmed" -> true, "until" -> until.toString)
 
+  private def provisionBot(bot: JsObject): Funit =
+    val name = UserName((bot \ "username").as[String])
+    for
+      existing <- env.user.repo.byId(name.id)
+      loaded <- existing.fold(env.user.repo.createNoSweatBot(name))(u => fuccess(u.some))
+      user = loaded.getOrElse(throw NoSweatError(503, "Could not provision bot"))
+      doc <- env.user.repo.withColl(_.byId[Bdoc](name.id))
+      _ = requireThat(
+        user.isBot && doc.exists(_.getAsOpt[Boolean]("noSweatBot").contains(true)),
+        503,
+        "A roster name is occupied by an account outside the club roster"
+      )
+      _ <-
+        if doc.exists(_.getAsOpt[String]("noSweatSeedVersion").isDefined) then funit
+        else
+          List(("blitz", PerfKey.blitz), ("rapid", PerfKey.rapid))
+            .foldLeft(funit): (prev, entry) =>
+              prev.flatMap: _ =>
+                val prior = (bot \ "ratings" \ entry._1)
+                val perf = lila.rating.Perf.default.copy(
+                  glicko = new chess.rating.glicko.Glicko(
+                    (prior \ "initial_rating").as[Double],
+                    (prior \ "initial_rd").as[Double],
+                    0.09
+                  ),
+                  latest = nowInstant.some
+                )
+                env.user.perfsRepo.setPerf(user.id, entry._2, perf)
+            .flatMap(_ =>
+              env.user.repo.withColl(
+                _.update.one(bid(name.id), set("noSweatSeedVersion" -> "roster-priors-v1")).void
+              )
+            )
+      _ <-
+        if doc.exists(_.getAsOpt[String]("noSweatPoolSeedVersion").isDefined) then funit
+        else
+          List(PerfKey.ultraBullet, PerfKey.bullet, PerfKey.classical, PerfKey.correspondence)
+            .foldLeft(funit): (prev, key) =>
+              prev.flatMap: _ =>
+                val prior =
+                  (bot \ "ratings" \ (if key == PerfKey.classical || key == PerfKey.correspondence then
+                                        "rapid"
+                                      else "blitz"))
+                val perf = lila.rating.Perf.default.copy(
+                  glicko = new chess.rating.glicko.Glicko(
+                    (prior \ "initial_rating").as[Double],
+                    (prior \ "initial_rd").as[Double],
+                    0.09
+                  ),
+                  latest = nowInstant.some
+                )
+                env.user.perfsRepo.setPerf(user.id, key, perf)
+            .flatMap(_ =>
+              env.user.repo.withColl(
+                _.update.one(bid(name.id), set("noSweatPoolSeedVersion" -> "pool-priors-v1")).void
+              )
+            )
+    yield env.user.lightUserApi.invalidate(user.id)
+
   private def initialize(): Funit =
     roster
-      .foldLeft(funit): (previous, bot) =>
-        previous.flatMap: _ =>
-          val name = UserName((bot \ "username").as[String])
-          for
-            existing <- env.user.repo.byId(name.id)
-            loaded <- existing.fold(env.user.repo.createNoSweatBot(name))(u => fuccess(u.some))
-            user = loaded.getOrElse(throw NoSweatError(503, "Could not provision bot"))
-            doc <- env.user.repo.withColl(_.byId[Bdoc](name.id))
-            _ = requireThat(
-              user.isBot && doc.exists(_.getAsOpt[Boolean]("noSweatBot").contains(true)),
-              503,
-              "A roster name is occupied by an account outside the club roster"
-            )
-            _ <-
-              if doc.exists(_.getAsOpt[String]("noSweatSeedVersion").isDefined) then funit
-              else
-                List(("blitz", PerfKey.blitz), ("rapid", PerfKey.rapid))
-                  .foldLeft(funit): (prev, entry) =>
-                    prev.flatMap: _ =>
-                      val prior = (bot \ "ratings" \ entry._1)
-                      val perf = lila.rating.Perf.default.copy(
-                        glicko = new chess.rating.glicko.Glicko(
-                          (prior \ "initial_rating").as[Double],
-                          (prior \ "initial_rd").as[Double],
-                          0.09
-                        ),
-                        latest = nowInstant.some
-                      )
-                      env.user.perfsRepo.setPerf(user.id, entry._2, perf)
-                  .flatMap(_ =>
-                    env.user.repo.withColl(
-                      _.update.one(bid(name.id), set("noSweatSeedVersion" -> "roster-priors-v1")).void
-                    )
-                  )
-            _ <-
-              if doc.exists(_.getAsOpt[String]("noSweatPoolSeedVersion").isDefined) then funit
-              else
-                List(PerfKey.ultraBullet, PerfKey.bullet, PerfKey.classical, PerfKey.correspondence)
-                  .foldLeft(funit): (prev, key) =>
-                    prev.flatMap: _ =>
-                      val prior =
-                        (bot \ "ratings" \ (if key == PerfKey.classical || key == PerfKey.correspondence then
-                                              "rapid"
-                                            else "blitz"))
-                      val perf = lila.rating.Perf.default.copy(
-                        glicko = new chess.rating.glicko.Glicko(
-                          (prior \ "initial_rating").as[Double],
-                          (prior \ "initial_rd").as[Double],
-                          0.09
-                        ),
-                        latest = nowInstant.some
-                      )
-                      env.user.perfsRepo.setPerf(user.id, key, perf)
-                  .flatMap(_ =>
-                    env.user.repo.withColl(
-                      _.update.one(bid(name.id), set("noSweatPoolSeedVersion" -> "pool-priors-v1")).void
-                    )
-                  )
-          yield env.user.lightUserApi.invalidate(user.id)
+      .grouped(16)
+      .foldLeft(funit)((previous, batch) => previous.flatMap(_ => batch.toList.traverse(provisionBot).void))
+      .flatMap(_ => reloadBotRatings())
       .flatMap: _ =>
         // A process restart never guesses how much time unfinished games lost.
         records
@@ -225,6 +282,14 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
             )
 
   val ready: Funit = if enabled then initialize() else funit
+
+  if enabled then
+    lila.common.Bus.sub[lila.core.game.FinishGame]: finish =>
+      finish.game.userIds
+        .filter(botIds)
+        .foreach: id =>
+          queue(ready.flatMap(_ => refreshBotRating(id))).failed.foreach: error =>
+            lila.log("nosweat").error("Could not refresh bot rating catalog", error)
 
   if enabled then
     env.system.scheduler.scheduleWithFixedDelay(5.seconds, 5.seconds): () =>
@@ -461,19 +526,9 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
           val busy = games.flatMap(_._1.getAsOpt[UserId]("bot")).toSet
           for
             human <- user.traverse(u => env.user.api.byIdWithPerf(u.id, perfKey)).map(_.flatten)
-            opponents <- roster.traverse(b => env.user.api.byIdWithPerf(botId(b), perfKey))
             rating = human.fold(1500)(_.perf.intRating.value)
-            eligible = opponents.flatten.filter(o =>
-              o.user.isBot && !busy(o.user.id) &&
-                math.abs(o.perf.intRating.value - rating) <= 200
-            )
-            _ = requireThat(
-              eligible.nonEmpty,
-              503,
-              "No opponent within 200 rating points is available. Please try again shortly."
-            )
-            opponent = eligible(scalalib.SecureRandom.nextInt(eligible.size))
-            bot = roster.find(b => botId(b) == opponent.user.id).get
+            opponent <- poolOpponent(perfKey, rating, busy)
+            bot = botsById(opponent.user.id)
             slug = (bot \ "id").as[String]
             frozen <- adapter("/freeze", Json.obj("bot" -> slug))
             policy = frozen.as[JsObject] ++ Json.obj("rated" -> rated)
@@ -532,15 +587,12 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
     )
 
   def games(instance: Option[String]): Fu[JsValue] =
-    val restarted = instance
-      .filter(_.matches("[0-9a-f-]{36}"))
+    val pollingInstance = instance.filter(_.matches("[0-9a-f-]{36}"))
+    val restarted = pollingInstance
       .exists: next =>
         lastPoll.set(System.currentTimeMillis())
         val previous = adapterInstance.getAndSet(next)
         previous.nonEmpty && previous != next
-    if System.currentTimeMillis() - lastOnline.get() > 5000 then
-      lastOnline.set(System.currentTimeMillis())
-      roster.foreach(bot => env.bot.onlineApiUsers.setOnline(botId(bot)))
     val recover = if !restarted then funit
     else
       ready
@@ -550,6 +602,7 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
             prev.flatMap(_ => failGame(entry._2.id, "maia_adapter_restart"))
           )
     ready
+      .map(_ => pollingInstance.foreach(_ => env.bot.onlineApiUsers.setManagedOnline(botIds)))
       .flatMap(_ => recover)
       .flatMap(_ => current())
       .flatMap: games =>

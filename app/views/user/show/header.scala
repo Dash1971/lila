@@ -173,6 +173,7 @@ object header:
                   .so(profile.nonEmptyBio)
                   .map: bio =>
                     p(cls := List("bio" -> true, "muted" -> muted))(richText(bio, nl2br = true)),
+                env.noSweat.botPolicy(u.id).map(views.noSweatBot(_)),
                 div(cls := "stats")(
                   profile.officialRating.map: r =>
                     div(r.name.toUpperCase, " rating: ", strong(r.rating)),
