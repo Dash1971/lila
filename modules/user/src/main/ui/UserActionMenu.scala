@@ -12,6 +12,7 @@ final class UserActionMenu(helpers: Helpers, focused: Boolean = false):
       Menu(
         List(
           ctx.is(u).option(MenuItem(trans.site.editProfile.txt(), Icon.Gear, routes.Account.profile.url)),
+          (ctx.is(u) && u.nostrKey.isDefined).option(MenuItem("Nostr", Icon.User, "/club/nostr")),
           Some(MenuItem(trans.site.exportGames.txt(), Icon.Download, routes.User.download(u.username).url)),
           ctx
             .is(u)

@@ -156,14 +156,18 @@ export const renderBoard = ({ ctrl, study, playerBars, playerStrips }: ViewConte
   );
 
 export const renderUnderboard = ({ ctrl, deps, study }: ViewContext): VNode =>
-  hl(
-    'div.analyse__underboard',
-    {
-      hook:
-        ctrl.synthetic || playable(ctrl.data) ? undefined : onInsert(elm => serverSideUnderboard(elm, ctrl)),
-    },
-    study ? deps?.studyView.underboard(ctrl) : [renderInputs(ctrl)],
-  );
+  ctrl.synthetic && ctrl.noSweat && !study && !ctrl.isEmbed
+    ? ctrl.noSweat.boardReview.view(renderInputs(ctrl))
+    : hl(
+        'div.analyse__underboard',
+        {
+          hook:
+            ctrl.synthetic || playable(ctrl.data)
+              ? undefined
+              : onInsert(elm => serverSideUnderboard(elm, ctrl)),
+        },
+        study ? deps?.studyView.underboard(ctrl) : [renderInputs(ctrl)],
+      );
 
 export function renderInputs(ctrl: AnalyseCtrl): VNode | undefined {
   if (ctrl.ongoing || !ctrl.data.userAnalysis) return undefined;

@@ -567,6 +567,20 @@ final class User(
         env.security.forms.signup.firstUsernameError(name) match
           case Some(error) => BadRequest(jsonError(error))
           case None => UserStr.read(name).so(env.user.repo.existsSec).map(JsonOk)
+      else if env.noSweat.enabled && getBool("publicName") then
+        get("term")
+          .flatMap(lila.user.NoSweatUserSearch.read)
+          .fold(BadRequest("Invalid search term").toFuccess): term =>
+            for
+              ids <- env.user.repo.noSweatUserIdsLike(term)
+              users <- lightUserApi.asyncMany(ids)
+            yield JsonOk(
+              Json.obj(
+                "result" -> users.flatten.map(u =>
+                  lila.common.Json.lightUser.write(u).add("online" -> env.socket.isOnline.exec(u.id))
+                )
+              )
+            )
       else
         get("term")
           .flatMap(UserSearch.read)

@@ -157,8 +157,8 @@ export default function () {
     });
   }
 
-  {
-    // cli
+  (() => {
+    // The focused header omits search. Skip only CLI setup, not native scrolling.
     const $wrap = $('#clinput');
     if (!$wrap.length) return;
     const $input = $wrap.find('input');
@@ -200,7 +200,7 @@ export default function () {
         $input[0]!.focus();
         top.classList.remove('hide');
       });
-  }
+  })();
 
   {
     // stick top bar

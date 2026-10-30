@@ -82,6 +82,7 @@ const error = (nb: number, color: Color, advice: Advice) =>
 
 const doRender = (ctrl: AnalyseCtrl): VNode => {
   if (ctrl.noSweat) {
+    const metric = (value: number, suffix = '') => (Number.isFinite(value) ? `${value}${suffix}` : '—');
     const counts = {
       white: classificationCounts(ctrl.mainline, 'white'),
       black: classificationCounts(ctrl.mainline, 'black'),
@@ -121,14 +122,14 @@ const doRender = (ctrl: AnalyseCtrl): VNode => {
             ]);
           }),
           h('tr.accuracy', [
-            h('td', `${ctrl.mainlineAnalysis!.white.accuracy}%`),
+            h('td', metric(ctrl.mainlineAnalysis!.white.accuracy, '%')),
             h('td', i18n.site.accuracy),
-            h('td', `${ctrl.mainlineAnalysis!.black.accuracy}%`),
+            h('td', metric(ctrl.mainlineAnalysis!.black.accuracy, '%')),
           ]),
           h('tr', [
-            h('td', String(ctrl.mainlineAnalysis!.white.acpl)),
+            h('td', metric(ctrl.mainlineAnalysis!.white.acpl)),
             h('td', 'Avg. centipawn loss'),
-            h('td', String(ctrl.mainlineAnalysis!.black.acpl)),
+            h('td', metric(ctrl.mainlineAnalysis!.black.acpl)),
           ]),
         ]),
       ]),
@@ -204,7 +205,7 @@ export function render(ctrl: AnalyseCtrl): VNode | undefined {
   // don't cache until the analysis is complete!
   const buster = ctrl.mainlineAnalysis.partial ? Math.random() : '';
   let cacheKey = String(buster) + !!ctrl.retro + Boolean(ctrl.idbTree.hasLocalAnalysis);
-  if (ctrl.noSweat) cacheKey += JSON.stringify(ctrl.mainline.map(n => n.glyphs));
+  if (ctrl.noSweat) cacheKey += JSON.stringify([ctrl.mainlineAnalysis, ctrl.mainline.map(n => n.glyphs)]);
   if (ctrl.study) cacheKey += ctrl.study.data.chapter.id;
 
   return h('div.analyse__round-training', [

@@ -7,6 +7,7 @@ import type { ClientEval, LocalEval, TreeNodeLite, TreePath } from 'lib/tree/typ
 import type AnalyseCtrl from './ctrl';
 import type { AnalysisMeta } from './interfaces';
 import type { LocalAnalysisResult, ServerAnalysisDocument } from './local/localAnalysisEngine';
+import { mainlineKey } from './noSweatBrilliants';
 import { pruneMainlineAnalysis } from './util';
 
 export type DiscloseState = undefined | 'expanded' | 'collapsed';
@@ -93,6 +94,21 @@ export class IdbTree {
   }
 
   clear = async (what?: 'analysis' | 'ceval' | 'collapse' | 'moves'): Promise<void> => {
+    if (this.noop && this.ctrl.noSweat) {
+      if (what && what !== 'analysis') return;
+      this.cache.localAnalysis = undefined;
+      this.cache.analysisKey = undefined;
+      this.ctrl.data.analysis = undefined;
+      this.ctrl.retro = undefined;
+      treeOps.updateAll(this.ctrl.tree.root, node => {
+        node.eval = undefined;
+        node.glyphs = node.glyphs?.filter(g => !g.comp);
+        node.comments = node.comments?.filter(c => !c.comp);
+      });
+      pruneMainlineAnalysis(this.ctrl.tree.root);
+      this.ctrl.redraw();
+      return;
+    }
     if (this.noop) return;
     await Promise.all([
       (!what || what === 'ceval') && this.cevalDb().then(db => db.remove(this.cevalRange())),
@@ -116,6 +132,11 @@ export class IdbTree {
   }
 
   async saveAnalysis(analysis: LocalAnalysisResult) {
+    if (this.noop && this.ctrl.noSweat) {
+      this.cache.analysisKey = mainlineKey(treeOps.mainlineNodeList(analysis.localUpdate.tree));
+      this.cache.localAnalysis = analysis.localUpdate.analysis;
+      return undefined;
+    }
     if (this.noop) return undefined;
     this.cache.localAnalysis = analysis.localUpdate.analysis;
     return this.analysisDb().then(db => db.putVerified(this.id, analysis));
@@ -175,15 +196,17 @@ export class IdbTree {
   }
 
   get hasLocalAnalysis(): boolean {
-    return Boolean(this.cache.localAnalysis);
+    return Boolean(this.localAnalysis);
   }
 
   get localAnalysis(): AnalysisMeta | undefined {
+    if (this.noop && this.cache.localAnalysis && this.cache.analysisKey !== mainlineKey(this.ctrl.mainline))
+      return undefined;
     return this.cache.localAnalysis;
   }
 
   get localAnalysisNpm(): number | undefined {
-    return this.cache.localAnalysis?.engine?.nodesPerMove;
+    return this.localAnalysis?.engine?.nodesPerMove;
   }
 
   get movesDirty(): boolean {
@@ -261,4 +284,9 @@ export class IdbTree {
   }
 }
 
-type State = { movesDirty: boolean; cevals: Map<TreePath, LocalEval>; localAnalysis?: AnalysisMeta };
+type State = {
+  movesDirty: boolean;
+  cevals: Map<TreePath, LocalEval>;
+  localAnalysis?: AnalysisMeta;
+  analysisKey?: string;
+};

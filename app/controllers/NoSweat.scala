@@ -102,6 +102,10 @@ final class NoSweat(env: Env) extends LilaController(env):
   def securityPage = Auth: context ?=>
     me ?=> handle(Ok.page(views.noSweatSecurity(me.value)))
 
+  def nostrKeys = Auth: context ?=>
+    me ?=>
+      handle(Ok.page(views.noSweatNostr(me.value)).map(_.withHeaders("Cache-Control" -> "no-store")))
+
   def securityApply = AuthBody(parse.tolerantText(4096)): context ?=>
     me ?=>
       handle:

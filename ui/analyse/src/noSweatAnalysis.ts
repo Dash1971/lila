@@ -10,6 +10,7 @@ import { domDialog, hl, type VNode } from 'lib/view';
 
 import type AnalyseCtrl from './ctrl';
 import { engineArrows, engineShapes, engineColors } from './noSweatArrows';
+import { BoardReview } from './noSweatBoardReview';
 import { candidateQuality, qualityLabels, stockfishWinrate, blunderRanks } from './noSweatCandidateQuality';
 import { encodeHistory, policy, san, position, standardUci, type Candidate } from './noSweatCore';
 import { reviewClick } from './noSweatEvents';
@@ -43,6 +44,7 @@ interface Scored {
 }
 const ratings = Array.from({ length: 21 }, (_, i) => 600 + i * 100);
 export class NoSweatAnalysis {
+  readonly boardReview: BoardReview;
   enabled = false;
   model = '5m';
   selfElo = 1500;
@@ -96,6 +98,7 @@ export class NoSweatAnalysis {
   private readonly qualityFailed = new Set<string>();
 
   constructor(readonly ctrl: AnalyseCtrl) {
+    this.boardReview = new BoardReview(ctrl);
     Object.assign(this, readEnginePreferences(storage.make('nosweat.enginePreferences.v2').get()));
     this.enabled = !!ctrl.cevalEnabled();
     ctrl.ceval.storedPv(2);

@@ -179,8 +179,11 @@ export class LocalAnalysisDialog {
           redraw();
         },
       );
+      if (this.closed) return;
+      if (!engine.isCurrent) return dlg.close('cancel');
       await this.ctrl.idbTree.saveAnalysis(result);
       if (this.closed) return;
+      if (!engine.isCurrent) return dlg.close('cancel');
       const mergeResult = () =>
         this.ctrl.mergeMainlineAnalysisData({
           ...result.localUpdate,
@@ -275,7 +278,7 @@ export class LocalAnalysisDialog {
   private readonly clickClearLocal = async () => {
     if (await confirm(i18n.study.clearLocal)) {
       await this.ctrl.idbTree.clear('analysis');
-      site.reload();
+      if (!this.ctrl.synthetic || this.ctrl.study) site.reload();
     }
   };
 

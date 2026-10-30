@@ -275,6 +275,20 @@ final class UserRepo(c: Coll)(using Executor) extends lila.core.user.UserRepo(c)
   def userIdsLikeClosed(text: UserSearch, max: Int = 10): Fu[List[UserId]] =
     userIdsLikeFilter(text, bdoc(F.enabled -> false), max)
 
+  def noSweatUserIdsLike(term: String): Fu[List[UserId]] =
+    coll
+      .find(
+        or(
+          bdoc(F.id.regex(NoSweatUserSearch.literalPrefix(term.toLowerCase), "i")),
+          bdoc(s"${F.profile}.displayName".regex(NoSweatUserSearch.literalPrefix(term), "i"))
+        ) ++ enabledSelect,
+        bdoc(F.id -> true).some
+      )
+      .sort(bdoc("len" -> 1))
+      .cursor[Bdoc](ReadPref.sec)
+      .list(10)
+      .map(_.flatMap(_.getAsOpt[UserId](F.id)))
+
   private[user] def userIdsLikeFilter(text: UserSearch, filter: Bdoc, max: Int): Fu[List[UserId]] =
     coll
       .find(

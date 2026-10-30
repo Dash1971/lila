@@ -9,7 +9,7 @@ import { storage } from 'lib/storage';
 import { mainlineNodeList, structuredCloneLite } from 'lib/tree/ops';
 import type { ClientEval, Glyph, TreeNodeLite, TreePath } from 'lib/tree/types';
 
-import AnalyseCtrl from '../ctrl';
+import type AnalyseCtrl from '../ctrl';
 import type { AnalysisUpdate, AnalysisEngineInfo, AnalysisMeta, Division } from '../interfaces';
 import { mainlineKey } from '../noSweatBrilliants';
 import { ClassifierClient } from '../noSweatClassifierClient';
@@ -63,6 +63,9 @@ export class LocalAnalysisEngine {
   }
 
   async getDivision(): Promise<Division> {
+    // A board line has no saved game to export. Overall native accuracy does not
+    // require phase boundaries; the existing chart plugin labels its phases.
+    if (this.ctrl.synthetic && this.ctrl.noSweat && !this.ctrl.study) return {};
     const url = this.ctrl.study?.chapterConfigUrl() ?? `/game/export/${this.ctrl.data.game.id}`;
     const rsp = await fetch(`${url}?divisionOnly=1`);
     if (!rsp.ok) throw new Error(`${rsp.status} ${rsp.statusText} ${(await rsp.text()).slice(0, 255)}`);
@@ -84,6 +87,7 @@ export class LocalAnalysisEngine {
       };
       for (update(); this.isRunning(); update()) {
         await this.evaluateNode();
+        if (!this.isCurrent) throw 'cancelled';
       }
       return this.review(division);
     } finally {
@@ -91,6 +95,12 @@ export class LocalAnalysisEngine {
       this.ctrl.initCeval();
       this.ctrl.startCevalIfEnabled();
     }
+  }
+
+  get isCurrent(): boolean {
+    return (
+      !this.ctrl.synthetic || !!this.ctrl.study || mainlineKey(this.nodes) === mainlineKey(this.ctrl.mainline)
+    );
   }
 
   async verifyBrilliants(

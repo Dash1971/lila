@@ -10,6 +10,7 @@ import { profileUrl } from 'lib/view/userLink';
 type Entry = LightUserOnline | HTMLAnchorElement;
 
 export function addClinputKeyHandler({ input }: { input: HTMLInputElement }) {
+  const publicNames = document.documentElement.dataset.brand === 'mutechess';
   const fetchLinks = (term: string): HTMLAnchorElement[] => {
     const all = menuLinks()
       .filter(a => a.textContent?.toLowerCase().includes(term.toLowerCase()))
@@ -28,7 +29,7 @@ export function addClinputKeyHandler({ input }: { input: HTMLInputElement }) {
     return all;
   };
 
-  const debouncedXhr = debounce((t: string) => fetchUsers(t, { friend: true }), 150);
+  const debouncedXhr = debounce((t: string) => fetchUsers(t, { friend: true, publicNames }), 150);
 
   const completeOpts: CompleteOpts<Entry> = {
     input,
@@ -39,7 +40,7 @@ export function addClinputKeyHandler({ input }: { input: HTMLInputElement }) {
     render: o => (isLink(o) ? o : renderUserEntry(o)),
     populate: r => r.name,
     onSelect: r => execute(r),
-    regex: /^[a-z][\w-]{2,29}$/i,
+    regex: publicNames ? /^[^\u0000-\u001f\u007f]{2,30}$/u : /^[a-z][\w-]{2,29}$/i,
   };
 
   complete<Entry>(completeOpts);

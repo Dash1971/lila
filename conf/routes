@@ -10,6 +10,7 @@ GET   /club/roster                     controllers.NoSweat.roster
 POST  /club/challenge                  controllers.NoSweat.challenge
 POST  /club/login                      controllers.NoSweat.login
 GET   /club/security                   controllers.NoSweat.securityPage
+GET   /club/nostr                      controllers.NoSweat.nostrKeys
 POST  /club/security                   controllers.NoSweat.securityApply
 POST  /club/play                       controllers.NoSweat.play
 GET   /club/internal/study             controllers.NoSweat.experimentStatus

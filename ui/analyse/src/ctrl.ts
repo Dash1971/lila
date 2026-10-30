@@ -277,6 +277,7 @@ export default class AnalyseCtrl implements CevalHandler {
   }
 
   get mainlineAnalysis() {
+    if (this.synthetic && this.noSweat && !this.opts.study) return this.idbTree.localAnalysis;
     return this.idbTree.localAnalysis ?? this.data.analysis;
   }
 
@@ -1101,6 +1102,8 @@ export default class AnalyseCtrl implements CevalHandler {
       : `/game/${this.data.game.id}/edit?fen=${this.node.fen}`;
 
   canAnalyseMainline(): boolean {
+    if (this.synthetic && this.noSweat && !this.isEmbed && !this.study && !this.opts.study)
+      return this.isCevalAllowed() && this.mainline.length > 1;
     return !this.ongoing && this.mainline.length > 4 && (this.study?.isCevalAllowed() ?? !this.synthetic);
   }
 

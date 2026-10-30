@@ -1,5 +1,7 @@
 import debounce from 'debounce-promise';
 
+import { escapeHtml } from 'lib';
+
 import * as xhr from '@/xhr';
 
 import { complete } from './complete';
@@ -20,6 +22,7 @@ export interface UserCompleteOpts {
   tour?: string;
   swiss?: string;
   team?: string;
+  publicNames?: boolean;
 }
 
 export function userComplete(opts: UserCompleteOpts): void {
@@ -40,7 +43,7 @@ type ResultOfTerm = { term: string } & UserCompleteResult;
 
 export const fetchUsers = async (
   term: string,
-  { friend, tour, swiss, team }: Partial<UserCompleteOpts>,
+  { friend, tour, swiss, team, publicNames }: Partial<UserCompleteOpts>,
 ): Promise<ResultOfTerm> => {
   const result = await xhr.json(
     xhr.url('/api/player/autocomplete', {
@@ -50,6 +53,7 @@ export const fetchUsers = async (
       swiss,
       team,
       object: 1,
+      publicName: publicNames ? 1 : undefined,
     }),
   );
   return { term, ...result };
@@ -67,5 +71,5 @@ export const renderUserEntry = (o: LightUserOnline, tag = 'a'): string => {
     ? `<span class="utitle"${o.title === 'BOT' ? ' data-bot="data-bot"' : ''}>${o.title}</span>&nbsp;`
     : '';
   const flair = o.flair ? `<img class="uflair" src="${site.asset.flairSrc(o.flair)}" alt="" />` : '';
-  return `<${tag} class="complete-result ulpt user-link${o.online ? ' online' : ''}" ${hrefAttr}="${profileUrl(o.name)}"><icon class="line${o.patron ? ' patron' : ''}${patronClass}"></icon>${title}${o.name}${flair}</${tag}>`;
+  return `<${tag} class="complete-result ulpt user-link${o.online ? ' online' : ''}" ${hrefAttr}="${profileUrl(o.name)}"><icon class="line${o.patron ? ' patron' : ''}${patronClass}"></icon>${title}${escapeHtml(o.displayName || o.name)}${flair}</${tag}>`;
 };

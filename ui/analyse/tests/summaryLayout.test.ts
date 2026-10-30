@@ -35,3 +35,23 @@ test('cached summary keeps its layout class on the actual DOM with long player n
   );
   root.remove();
 });
+
+test('short FEN-start reviews show unavailable native metrics without inventing scores', () => {
+  const ctrl = {
+    noSweat: {},
+    mainline: [],
+    mainlineAnalysis: { white: {}, black: { acpl: 0 } },
+    settings: { showMainlineAnalysis: true },
+    idbTree: { hasLocalAnalysis: true },
+    data: { player: { color: 'white' }, opponent: { color: 'black' } },
+  } as unknown as AnalyseCtrl;
+  const host = document.createElement('div');
+  document.body.append(host);
+  const vnode = init([attributesModule, classModule])(host, render(ctrl));
+  const root = vnode.elm as HTMLElement;
+  assert.ok(!root.textContent?.includes('undefined'));
+  const cells = [...root.querySelectorAll('.accuracy td')];
+  assert.deepEqual([cells[0].textContent, cells[2].textContent], ['—', '—']);
+  assert.equal(root.querySelector('tbody tr:last-child td:last-child')?.textContent, '0');
+  root.remove();
+});
