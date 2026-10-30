@@ -113,6 +113,12 @@ $analyse-gauge-gap: 4px;
       'uchat      .     side';
     row-gap: 0;
 
+    @include mq-less-than-col3 {
+      &:has(.nosweat-opening):not(:has(> .keyboard-move)) {
+        grid-template-rows: fit-content(0) 0;
+      }
+    }
+
     &__side {
       margin: $analyse-block-gap 0 0 0;
     }
