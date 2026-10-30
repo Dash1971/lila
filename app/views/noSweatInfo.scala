@@ -33,15 +33,54 @@ object noSweatInfo:
         p(
           "Nostr is your login. Your profile holds your public name and game history. Anonymous games are casual; signed-in accounts can play rated games."
         ),
-        h2("Built on open chess"),
-        p(
-          "The chess interface is based on Lichess. Stacked premoves, Maia analysis and additive brilliant-move detection build on work from Mobile Maia and En Croissant. Mute Chess is an independent project, not a service operated by Lichess."
+        h2(id := "credits")("Credits"),
+        p("Mute Chess exists because of these open-source projects and their communities:"),
+        ul(
+          li(
+            p(
+              strong(a(href := "https://lichess.org")("Lichess")),
+              " and ",
+              a(href := "https://github.com/lichess-org/lila")("Lila"),
+              " provide the foundation: the chess interface, games, clocks, profiles, puzzles and native analysis experience."
+            )
+          ),
+          li(
+            p(
+              strong(a(href := "https://github.com/CSSLab/maia3")("Maia3 by CSSLab")),
+              " powers our human-like opponents, move probabilities and expected-score predictions. The ",
+              a(href := "https://github.com/CSSLab/maia-platform-frontend")("Maia platform"),
+              " also informs our analysis features and move-quality colors."
+            )
+          ),
+          li(
+            p(
+              strong(a(href := "https://github.com/franciscoBSalgueiro/en-croissant")("En Croissant")),
+              " supplies the move-classification and material/sacrifice rules we adapt through Mobile Maia."
+            )
+          ),
+          li(
+            p(
+              strong(a(href := "https://github.com/Dash1971/maia-chess-android-preview")("Mobile Maia")),
+              " contributes stacked-premove behavior, analysis design and the En Croissant classification adaptations."
+            )
+          ),
+          li(
+            p(
+              strong(a(href := "https://stockfishchess.org")("Stockfish")),
+              " supplies the chess engine used for position evaluations, best moves and full-game searches."
+            )
+          )
         ),
         p(
-          a(href := "/source")("Download the source"),
+          "Mute Chess is an independent project. Each upstream project retains its own licenses and credits. See our ",
+          a(href := "https://github.com/Dash1971/mute-chess/blob/main/THIRD_PARTY.md")("third-party notices"),
+          " for licenses, exact source revisions and further component and asset attributions."
+        ),
+        p(
+          a(href := "/source")("Download the corresponding source"),
           " or ",
           a(href := "https://github.com/Dash1971/mute-chess")("browse GitHub"),
-          ". Upstream licenses and attributions are included."
+          "."
         ),
         p(contactLink)
       )

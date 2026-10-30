@@ -28,6 +28,12 @@ object noSweatPatron:
               dataIcon := Icon.X
             )
           ),
+          p(cls := "patron-upstream")(
+            strong("Lichess first. "),
+            "Mute Chess exists largely thanks to Lichess. If you haven't donated to them yet, or can only afford to support one project, please ",
+            a(href := "https://lichess.org/patron")("donate to Lichess"),
+            ". Donate to Mute Chess only if you really love our work integrating Maia with the Lichess experience."
+          ),
           p(cls := "patron-intro")("Bitcoin over Lightning. Any amount helps."),
           ctx.me
             .exists(_.isPatron)
@@ -92,5 +98,8 @@ object noSweatPatron:
               "Zap Mute Chess on Nostr"
             )
           ),
-          p(cls := "patron-note")("For automatic wings, create your invoice here while signed in.")
+          p(cls := "patron-note")(
+            "For automatic wings, create your invoice here while signed in. ",
+            a(href := "/about#credits")("Credits and source")
+          )
         )
