@@ -1,16 +1,20 @@
 import type { AcplChart, ChartGame } from 'chart';
 
+import { escapeHtml } from 'lib';
 import { licon } from 'lib/licon';
 import { pubsub } from 'lib/pubsub';
-import { bind, confirm, hl, onInsert, type VNode } from 'lib/view';
+import { bind, confirm, dataIcon, domDialog, hl, onInsert, type VNode } from 'lib/view';
 
 import type AnalyseCtrl from './ctrl';
-import { boardPgn, downloadBoardPgn } from './noSweatPgn';
+import { canExportAnalysisGif, positionImageUrl, positionShareUrl } from './noSweatExport';
+import { boardPgn, downloadBoardPgn, type PgnExportMode } from './noSweatPgn';
+
+type ExportCopy = 'fen' | 'image' | 'share' | PgnExportMode;
 
 // The free board uses the same local review, chart and summary as game replay.
 // The unsaved board separates editable imports from native-styled local exports.
 export class BoardReview {
-  private selected = 'computer-analysis';
+  private selected = 'import';
   private panel?: HTMLElement;
   private chart?: AcplChart;
   private pending = false;
@@ -18,7 +22,7 @@ export class BoardReview {
   private dirty = false;
   private failed = false;
   private button?: HTMLButtonElement;
-  private copied?: 'pgn' | 'fen';
+  private copied?: ExportCopy;
   private copyError = '';
   private copyTimer?: ReturnType<typeof setTimeout>;
 
@@ -83,53 +87,146 @@ export class BoardReview {
   }
 
   private exportView(): VNode[] {
-    const copyButton = (kind: 'pgn' | 'fen') =>
-      hl('button.copy-me__button.button', {
-        class: { 'button-metal': this.copied !== kind },
-        attrs: {
-          type: 'button',
-          title: `Copy ${kind.toUpperCase()}`,
-          'aria-label': this.copied === kind ? `${kind.toUpperCase()} copied` : `Copy ${kind.toUpperCase()}`,
-          'data-icon': this.copied === kind ? licon.Checkmark : licon.Clipboard,
-        },
-        hook: bind('click', event => {
-          event.stopPropagation();
-          void this.copy(kind);
+    const names: Record<ExportCopy, string> = {
+      fen: 'FEN',
+      image: String(i18n.site.positionAsImage),
+      share: 'position link',
+      annotated: 'annotated PGN',
+      raw: 'raw PGN',
+    };
+    const copyMe = (target: VNode, kind: ExportCopy, cls = '') =>
+      hl('div.copy-me' + cls, [
+        target,
+        hl('button.copy-me__button.button', {
+          class: { 'button-metal': this.copied !== kind },
+          attrs: {
+            type: 'button',
+            title: `Copy ${names[kind]}`,
+            'aria-label': this.copied === kind ? `${names[kind]} copied` : `Copy ${names[kind]}`,
+            'data-icon': this.copied === kind ? licon.Checkmark : licon.Clipboard,
+          },
+          hook: bind('click', event => {
+            event.stopPropagation();
+            void this.copy(kind);
+          }),
         }),
+      ]);
+    const input = (value: string, label: string) =>
+      hl('input.copy-me__target', {
+        attrs: { readonly: true, spellcheck: 'false', 'aria-label': label },
+        props: { value },
       });
+    const pgn = (mode: PgnExportMode) =>
+      copyMe(
+        hl(
+          'a.copy-me__target',
+          {
+            attrs: { href: '#', role: 'button' },
+            hook: bind('click', event => {
+              event.preventDefault();
+              downloadBoardPgn(this.ctrl, mode);
+            }),
+          },
+          mode === 'raw' ? i18n.site.downloadRaw : i18n.site.downloadAnnotated,
+        ),
+        mode,
+      );
+    const gifAvailable = canExportAnalysisGif(this.ctrl);
     return [
       hl('div', [
         hl('strong', 'FEN'),
-        hl('div.copy-me.analyse__underboard__fen', [
-          hl('input.copy-me__target', {
-            attrs: { readonly: true, spellcheck: 'false', 'aria-label': 'FEN export' },
-            props: { value: this.ctrl.node.fen },
-          }),
-          copyButton('fen'),
-        ]),
+        copyMe(input(this.ctrl.node.fen, 'FEN export'), 'fen', '.analyse__underboard__fen'),
       ]),
       hl('div', [
-        hl('strong', 'PGN'),
-        hl('div.copy-me', [
-          hl(
-            'button.copy-me__target.text',
-            {
-              attrs: { type: 'button', 'data-icon': licon.Download },
-              hook: bind('click', () => downloadBoardPgn(this.ctrl)),
+        hl('strong', 'Image'),
+        hl(
+          'a.text.game-gif',
+          {
+            attrs: {
+              href: '#',
+              ...dataIcon(licon.Download),
+              'aria-disabled': String(!gifAvailable),
+              ...(!gifAvailable && {
+                title:
+                  this.ctrl.mainline.length < 2
+                    ? 'Add moves to export a GIF.'
+                    : 'This line is too long for GIF export. Download the PGN instead.',
+              }),
             },
-            'Download PGN',
+            hook: bind('click', event => {
+              event.preventDefault();
+              if (gifAvailable) void site.asset.loadEsm('analyse.gifDialog', { init: this.ctrl });
+            }),
+          },
+          i18n.site.gameAsGIF,
+        ),
+        copyMe(
+          hl(
+            'a.copy-me__target',
+            { attrs: { href: positionImageUrl(this.ctrl), target: '_blank', rel: 'noopener' } },
+            i18n.site.positionAsImage,
           ),
-          copyButton('pgn'),
-        ]),
+          'image',
+          '.position-gif',
+        ),
       ]),
+      hl('div', [
+        hl('strong', 'Share'),
+        hl(
+          'a.text.embed-howto',
+          {
+            attrs: { href: '#', ...dataIcon(licon.Expand), title: 'Embed this position' },
+            hook: bind('click', event => {
+              event.preventDefault();
+              this.embedPosition();
+            }),
+          },
+          i18n.site.embedInYourWebsite,
+        ),
+        copyMe(input(positionShareUrl(this.ctrl), 'Share current position'), 'share'),
+      ]),
+      hl('div', [hl('strong', 'PGN'), pgn('annotated'), pgn('raw')]),
       ...(this.copyError ? [hl('p', { attrs: { role: 'status' } }, this.copyError)] : []),
-      hl('div.pgn', { attrs: { 'aria-label': 'PGN export', tabindex: 0 } }, boardPgn(this.ctrl)),
+      hl(
+        'div.pgn',
+        {
+          attrs: { 'aria-label': 'PGN export', tabindex: 0 },
+          hook: bind('click', event => {
+            const selection = window.getSelection();
+            const range = document.createRange();
+            range.selectNodeContents(event.currentTarget as HTMLElement);
+            const unselected = selection?.isCollapsed;
+            selection?.removeAllRanges();
+            if (unselected) selection?.addRange(range);
+          }),
+        },
+        boardPgn(this.ctrl),
+      ),
     ];
   }
 
-  private async copy(kind: 'pgn' | 'fen'): Promise<void> {
+  private embedPosition(): void {
+    const iframe = `<iframe src="${positionShareUrl(this.ctrl, true)}"
+width=600 height=397 frameborder=0></iframe>`;
+    void domDialog({
+      modal: true,
+      show: true,
+      easyClose: 'clickOutside',
+      htmlText: `<div><strong style="font-size:1.5em">${escapeHtml(String(i18n.site.embedInYourWebsite))}</strong><br /><br /><pre>${escapeHtml(iframe)}</pre><br />${iframe}</div>`,
+    });
+  }
+
+  private async copy(kind: ExportCopy): Promise<void> {
     try {
-      await navigator.clipboard.writeText(kind === 'pgn' ? boardPgn(this.ctrl) : this.ctrl.node.fen);
+      const value =
+        kind === 'fen'
+          ? this.ctrl.node.fen
+          : kind === 'image'
+            ? positionImageUrl(this.ctrl)
+            : kind === 'share'
+              ? positionShareUrl(this.ctrl)
+              : boardPgn(this.ctrl, kind);
+      await navigator.clipboard.writeText(value);
       this.copied = kind;
       this.copyError = '';
       clearTimeout(this.copyTimer);
@@ -138,7 +235,7 @@ export class BoardReview {
         this.ctrl.redraw();
       }, 1000);
     } catch {
-      this.copyError = 'Copy is unavailable. Select the FEN or PGN text, or download the PGN.';
+      this.copyError = 'Copy is unavailable. Select the FEN, link or PGN text, or download the PGN.';
     }
     this.ctrl.redraw();
   }

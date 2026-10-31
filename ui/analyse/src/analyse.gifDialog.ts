@@ -6,6 +6,7 @@ import { domDialog, type Dialog } from 'lib/view';
 import { url as xhrUrl } from 'lib/xhr';
 
 import type AnalyseCtrl from './ctrl';
+import { analysisGifUrl } from './noSweatExport';
 
 export function initModule(ctrl: AnalyseCtrl): void {
   let gifOrientation: Color = ctrl.bottomColor();
@@ -29,7 +30,13 @@ export function initModule(ctrl: AnalyseCtrl): void {
     },
   };
 
+  const keys = (Object.keys(gifPrefs) as Array<keyof typeof gifPrefs>).filter(
+    key => !ctrl.synthetic || (key !== 'glyphs' && key !== 'clocks'),
+  );
+
   const buildGifUrl = () => {
+    if (ctrl.synthetic)
+      return analysisGifUrl(ctrl, gifOrientation, Object.fromEntries(keys.map(k => [k, gifPrefs[k].prop()])));
     const ds = document.body.dataset;
     return xhrUrl(`${ds.assetUrl}/game/export/gif/${gifOrientation}/${ctrl.data.game.id}.gif`, {
       theme: ds.board,
@@ -71,7 +78,7 @@ export function initModule(ctrl: AnalyseCtrl): void {
           <button class="button button-empty text gif-flip" data-icon="${licon.ChasingArrows}">
             ${i18n.site[gifOrientation]}
           </button>
-          ${Object.keys(gifPrefs).map(makeToggle).join('')}
+          ${keys.map(makeToggle).join('')}
         </div>
         <div class="gif-actions">
           <button class="button button-metal text gif-copy" data-icon="${licon.Clipboard}">
@@ -110,7 +117,7 @@ export function initModule(ctrl: AnalyseCtrl): void {
         selector: '.gif-download',
         listener: (_, dlg) => dlg.close(),
       },
-      ...Object.keys(gifPrefs).map(toggleAction),
+      ...keys.map(toggleAction),
     ],
   });
 }

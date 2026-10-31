@@ -188,6 +188,7 @@ test('separate native Import and Export tabs preserve drafts and export only the
     canAnalyseMainline: () => true,
     changePgn,
     changeFen,
+    bottomColor: () => 'white',
   } as unknown as AnalyseCtrl;
   const board = new BoardReview(ctrl);
   const host = document.createElement('div');
@@ -201,6 +202,12 @@ test('separate native Import and Export tabs preserve drafts and export only the
   const tab = (name: string) =>
     Array.from(root.querySelectorAll<HTMLButtonElement>('[role="tab"]')).find(el => el.textContent === name)!;
   assert.equal(root.querySelectorAll('[role="tab"]').length, 3);
+  assert.equal(
+    tab('Import').getAttribute('aria-selected'),
+    'true',
+    'a fresh standalone board opens its native import fields',
+  );
+  assert.equal(root.querySelector('[role=tab]')!.getAttribute('aria-selected'), 'false');
   assert.deepEqual(
     Array.from(root.querySelectorAll('[role="tab"]'))
       .slice(1)
@@ -231,11 +238,22 @@ test('separate native Import and Export tabs preserve drafts and export only the
   assert.equal(output.querySelector<HTMLInputElement>('input')!.readOnly, true);
   assert.equal(output.querySelector<HTMLInputElement>('input')!.value, fen);
   assert.ok(output.querySelector('.copy-me__button.button-metal'));
+  assert.deepEqual(
+    [...output.querySelectorAll(':scope > div > strong')].map(el => el.textContent),
+    ['FEN', 'Image', 'Share', 'PGN'],
+  );
+  assert.equal(
+    output.querySelectorAll('a[role=button]').length,
+    2,
+    'annotated and raw downloads have separate native targets',
+  );
   let downloaded = '';
   t.mock.method(window.HTMLAnchorElement.prototype, 'click', function (this: HTMLAnchorElement) {
     downloaded = this.href;
   });
-  output.querySelector<HTMLButtonElement>('button.copy-me__target')!.click();
+  output
+    .querySelector<HTMLAnchorElement>('a.copy-me__target[role=button]')!
+    .dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
   const downloadedPgn = await (await fetch(downloaded)).text();
   assert.ok(downloadedPgn.includes('e4'));
   assert.equal(downloadedPgn.includes('d4'), false);

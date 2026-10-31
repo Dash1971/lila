@@ -241,6 +241,7 @@ GET   /$lang<\w\w\w?>/racer             controllers.Racer.homeLang(lang: Languag
 
 # User Analysis
 GET   /analysis/help                   controllers.UserAnalysis.help
+GET   /analysis/export.gif             controllers.Export.analysisGif(pgn: String, color: Color = Color.white, theme: Option[String], piece: Option[String])
 GET   /analysis/pgn/*pgn               controllers.UserAnalysis.pgn(pgn)
 GET   /analysis/*something             controllers.UserAnalysis.parseArg(something)
 GET   /analysis                        controllers.UserAnalysis.index

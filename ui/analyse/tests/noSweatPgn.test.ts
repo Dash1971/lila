@@ -43,11 +43,69 @@ test('PGN export preserves the actual tree, variations, judgments, comments and 
 
 test('PGN export preserves a nonzero black-to-move FEN and the actual checkmate result', () => {
   const fen = '6k1/5ppp/8/8/8/5q2/5PPP/6K1 b - - 0 35';
-  const exported = parsePgn(boardPgn(board(`[SetUp "1"]\n[FEN "${fen}"]\n\n35... Qd1# *`)))[0];
-  assert.equal(exported.headers.get('FEN'), fen);
-  assert.equal(exported.headers.get('SetUp'), '1');
-  assert.equal(exported.headers.get('Result'), '0-1');
-  assert.equal(exported.moves.children[0].data.san, 'Qd1#');
+  const ctrl = board(`[SetUp "1"]\n[FEN "${fen}"]\n\n35... Qd1# *`);
+  for (const mode of ['annotated', 'raw'] as const) {
+    const exported = parsePgn(boardPgn(ctrl, mode))[0];
+    assert.equal(exported.headers.get('FEN'), fen);
+    assert.equal(exported.headers.get('SetUp'), '1');
+    assert.equal(exported.headers.get('Result'), '0-1');
+    assert.equal(exported.moves.children[0].data.san, 'Qd1#');
+  }
+});
+
+test('raw matches native postgame SAN export, omitting imported and computed annotations and all sidelines', () => {
+  const ctrl = board(
+    '[White "Byrne"]\n[Black "Fischer"]\n[Result "1/2-1/2"]\n\n' +
+      '1. e4 $1 { Original note [%eval 0.20] [%clk 0:05:00] } ' +
+      '(1. d4 $2 { Sideline note } d5) e5 (1... c5) 2. Nf3 1/2-1/2',
+  );
+  ctrl.tree.root.comments = [{ id: 'r', by: 'PGN', text: 'Before the game' }];
+  const first = ctrl.tree.root.children[0];
+  first.comments!.push({ id: 'c', by: 'lichess', text: 'Generated review', comp: true });
+  first.glyphs!.push({ id: 3, name: 'Brilliant', symbol: '!!', comp: true });
+  first.eval = { cp: 43, depth: 14, fen: first.fen, knodes: 10, pvs: [] };
+  first.clock = 12345;
+  const annotated = boardPgn(ctrl);
+  assert.equal(annotated, boardPgn(ctrl, 'annotated'), 'default stays annotated');
+  const full = parsePgn(annotated)[0];
+  assert.deepEqual(full.comments, ['Before the game']);
+  assert.deepEqual(full.moves.children[0].data.nags, [1, 3]);
+  assert.equal(full.moves.children.length, 2);
+  assert.ok(full.moves.children[0].data.comments?.some(c => c.includes('Original note')));
+  assert.ok(full.moves.children[0].data.comments?.some(c => c.includes('Generated review')));
+  const rawText = boardPgn(ctrl, 'raw');
+  const raw = parsePgn(rawText)[0];
+  assert.deepEqual(raw.headers, full.headers);
+  assert.equal(raw.headers.get('Result'), '1/2-1/2');
+  assert.equal(raw.comments?.length ?? 0, 0);
+  const sans: string[] = [];
+  let node = raw.moves;
+  while (node.children.length) {
+    assert.equal(node.children.length, 1, 'raw contains only the current mainline');
+    const child = node.children[0];
+    sans.push(child.data.san);
+    assert.equal(child.data.nags?.length ?? 0, 0);
+    assert.equal(child.data.comments?.length ?? 0, 0);
+    node = child;
+  }
+  assert.deepEqual(sans, ['e4', 'e5', 'Nf3']);
+  assert.equal(rawText.includes('[%'), false);
+  assert.equal(rawText.includes('unsubmitted draft'), false);
+  assert.equal(boardPgn(ctrl), annotated, 'raw export must not mutate the annotated tree or headers');
+});
+
+test('annotated exports native centisecond clocks including zero and mate evaluations on variations', () => {
+  const ctrl = board('1. e4 (1. d4 d5) e5 *');
+  const [first, variation] = ctrl.tree.root.children;
+  first.clock = 12345;
+  variation.clock = 0;
+  variation.eval = { mate: -3, depth: 20, fen: variation.fen, knodes: 10, pvs: [] };
+  const exported = parsePgn(boardPgn(ctrl))[0];
+  const comment = (index: number) =>
+    exported.moves.children[index].data.comments?.map(parseComment).find(c => c.clock !== undefined);
+  assert.equal(comment(0)?.clock, 123.45);
+  assert.equal(comment(1)?.clock, 0);
+  assert.deepEqual(comment(1)?.evaluation, { mate: -3, depth: 20 });
 });
 
 test('download creates a real PGN file with the current board content', async t => {
@@ -61,4 +119,7 @@ test('download creates a real PGN file with the current board content', async t 
   downloadBoardPgn(ctrl);
   assert.equal(filename, 'mutechess-analysis.pgn');
   assert.equal(await (await fetch(href)).text(), boardPgn(ctrl));
+  downloadBoardPgn(ctrl, 'raw');
+  assert.equal(filename, 'mutechess-analysis-raw.pgn');
+  assert.equal(await (await fetch(href)).text(), boardPgn(ctrl, 'raw'));
 });

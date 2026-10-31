@@ -1,6 +1,7 @@
 package controllers
 
 import chess.format.{ Fen, Uci }
+import chess.format.pgn.PgnStr
 import chess.variant.Variant
 import org.apache.pekko.stream.scaladsl.*
 import org.apache.pekko.util.ByteString
@@ -38,6 +39,30 @@ final class Export(env: Env) extends LilaController(env):
               options
             )
           yield source
+
+  def analysisGif(pgn: String, color: Color, theme: Option[String], piece: Option[String]) = Anon:
+    NoCrawlersUnlessPreview:
+      lila.game.NoSweatAnalysisGif
+        .parse(PgnStr(pgn))
+        .fold(
+          _ => fuccess(BadRequest("Invalid PGN")),
+          game =>
+            exportImageOf(fuccess(game.some)): g =>
+              val requested = lila.game.GifExport.Options.fromReq
+              // Local PGN glyphs are not persisted server analysis and cannot use its glyph map.
+              val options =
+                lila.game.GifExport.Options(requested.players, requested.ratings, requested.clocks, false)
+              env.game.gifExport
+                .fromPov(
+                  Pov(g.withId(lila.game.Game.syntheticId), color),
+                  g.initialFen,
+                  Theme(theme).name,
+                  PieceSet.get(piece).name,
+                  none,
+                  options
+                )
+                .pipe(stream("mutechess-analysis.gif", cache = 0.seconds))
+        )
 
   def legacyGameThumbnail(id: GameId, theme: Option[String], piece: Option[String]) = Anon:
     MovedPermanently(routes.Export.gameThumbnail(id, theme, piece).url).publicCache(1.day)
