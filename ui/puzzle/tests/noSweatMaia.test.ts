@@ -2,9 +2,12 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { attributesModule, init, type VNode } from 'snabbdom';
 
+import { saveEnginePreferences } from 'lib/nosweat/engineSettings';
+import { defaultEnginePreferences } from 'lib/nosweat/preferences';
 import { hl } from 'lib/view';
 
-import { puzzleMaiaChannel, fitPuzzleMaiaRow } from '../src/noSweatMaia';
+import type PuzzleCtrl from '../src/ctrl';
+import { puzzleMaiaChannel, fitPuzzleMaiaRow, PuzzleMaia } from '../src/noSweatMaia';
 
 const fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 const primary = [
@@ -141,4 +144,72 @@ test('pending and terminal channels have no misleading Other control', () => {
     assert.ok(root.querySelector<HTMLElement>('.nosweat-puzzle-policy')!.hidden);
     root.remove();
   }
+});
+
+test('puzzle Maia labels are keyboard-accessible rating buttons for their own channel', () => {
+  const chosen: number[] = [];
+  const host = document.createElement('div');
+  document.body.append(host);
+  const vnode = init([attributesModule])(
+    host,
+    hl(
+      'section',
+      [1600, 2600].map((rating, i) =>
+        puzzleMaiaChannel({
+          id: `rating-${i}`,
+          fen,
+          rating,
+          candidates: primary,
+          color: 'orange',
+          status: '',
+          expanded: false,
+          toggle: () => {},
+          play: () => {},
+          chooseRating: () => chosen.push(rating),
+        }),
+      ),
+    ),
+  );
+  const root = vnode.elm as HTMLElement;
+  const labels = root.querySelectorAll<HTMLButtonElement>('button.nosweat-maia-label');
+  assert.equal(labels.length, 2);
+  assert.equal(labels[0].getAttribute('aria-haspopup'), 'dialog');
+  labels[0].click();
+  labels[1].click();
+  assert.deepEqual(chosen, [1600, 2600]);
+  root.remove();
+});
+
+test('puzzle review drops only the second row and still withholds all Maia UI while solving', () => {
+  const ctrl = {
+    mode: 'view',
+    cevalEnabled: () => true,
+    threatMode: () => false,
+    node: { fen, outcome: () => undefined },
+    data: { puzzle: { id: 'test' } },
+    setAutoShapes: () => {},
+    redraw: () => {},
+  } as unknown as PuzzleCtrl;
+  const maia = new PuzzleMaia(ctrl);
+  saveEnginePreferences({ ...defaultEnginePreferences });
+  const host = document.createElement('div');
+  document.body.append(host);
+  const patch = init([attributesModule]);
+  let vnode = patch(host, maia.view()!);
+  assert.equal((vnode.elm as HTMLElement).querySelectorAll('.nosweat-maia-channel').length, 2);
+  saveEnginePreferences({ ...defaultEnginePreferences, secondMaiaEnabled: false });
+  vnode = patch(vnode, maia.view()!);
+  assert.equal((vnode.elm as HTMLElement).querySelectorAll('.nosweat-maia-channel').length, 1);
+  assert.equal((vnode.elm as HTMLElement).querySelector('.nosweat-maia-label')!.textContent, 'M1500');
+  saveEnginePreferences({ ...defaultEnginePreferences, maiaArrows: false });
+  vnode = patch(vnode, maia.view()!);
+  assert.ok(
+    (vnode.elm as HTMLElement).querySelector('.nosweat-maia-settings'),
+    'settings remain reachable with arrows off',
+  );
+  assert.equal((vnode.elm as HTMLElement).querySelectorAll('.nosweat-maia-channel').length, 2);
+  ctrl.mode = 'play';
+  assert.equal(maia.view(), undefined);
+  maia.cancel();
+  (vnode.elm as HTMLElement).remove();
 });

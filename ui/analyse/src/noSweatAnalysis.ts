@@ -4,18 +4,19 @@ import { attributesModule, classModule, init } from 'snabbdom';
 
 import { frag } from 'lib';
 import { winningChances } from 'lib/ceval';
+import { licon } from 'lib/licon';
+import { saveEnginePreferences, showMaiaRating, showEngineSettings } from 'lib/nosweat/engineSettings';
 import { maiaExpectedScore } from 'lib/nosweat/expectedScore';
 import { storage } from 'lib/storage';
-import { domDialog, hl, type VNode } from 'lib/view';
+import { hl, type VNode } from 'lib/view';
 
 import type AnalyseCtrl from './ctrl';
-import { engineArrows, engineShapes, engineColors } from './noSweatArrows';
+import { engineArrows, engineShapes, engineColors, type EngineColors } from './noSweatArrows';
 import { BoardReview } from './noSweatBoardReview';
 import { candidateQuality, qualityLabels, stockfishWinrate, blunderRanks } from './noSweatCandidateQuality';
 import { encodeHistory, policy, san, position, standardUci, type Candidate } from './noSweatCore';
 import { reviewClick } from './noSweatEvents';
 import { ReviewFish, type Review } from './noSweatFish';
-import { gameReviewQualities, gameReviewQuality } from './noSweatFullReview';
 import { OpeningLabel } from './noSweatOpening';
 import { readEnginePreferences, type EnginePreferences } from './noSweatPreferences';
 import {
@@ -49,7 +50,6 @@ interface Scored {
   score: EvalScore;
   depth: number;
 }
-const ratings = Array.from({ length: 21 }, (_, i) => 600 + i * 100);
 export class NoSweatAnalysis {
   readonly boardReview: BoardReview;
   enabled = false;
@@ -71,6 +71,7 @@ export class NoSweatAnalysis {
   history = true;
   maiaArrows = true;
   fishArrows = true;
+  arrowColors: EngineColors = { ...engineColors };
   ratingTable = true;
   private ratingContext = '';
   private chartHover?: { fen: string; uci: Uci };
@@ -141,55 +142,37 @@ export class NoSweatAnalysis {
       history: this.history,
       maiaArrows: this.maiaArrows,
       fishArrows: this.fishArrows,
+      arrowColors: this.arrowColors,
     };
   }
   engineSettings(): HTMLElement {
-    const select = (key: keyof EnginePreferences, name: string, options: [string, string][]) =>
-      `<label class="setting"><span>${name}</span><select data-engine-pref="${key}" aria-label="${name}">${options
-        .map(
-          ([value, text]) =>
-            `<option value="${value}" ${String(this[key]) === value ? 'selected' : ''}>${text}</option>`,
-        )
-        .join('')}</select></label>`;
-    const toggle = (key: 'history' | 'maiaArrows' | 'fishArrows' | 'secondMaiaEnabled', name: string) =>
-      `<label class="setting"><span>${name}</span><input type="checkbox" data-engine-pref="${key}" ${this[key] ? 'checked' : ''}></label>`;
-    const options: [string, string][] = ratings.map(n => [String(n), String(n)]);
-    const view = frag<HTMLElement>(`<div><fieldset class="nosweat-engine-settings"><legend>Engines</legend>
-      ${select('model', 'Maia model', [
-        ['5m', 'Maia3 5M · light'],
-        ['79m', 'Maia3 79M'],
-      ])}
-      ${select('selfElo', 'Primary Maia rating', options)}${select('opponentElo', 'Primary opponent input', options)}
-      ${toggle('secondMaiaEnabled', 'Second Maia')}${select('secondMaiaElo', 'Second Maia rating', options)}
-      ${toggle('history', 'Use move history')}${toggle('maiaArrows', 'Show Maia arrows')}${toggle('fishArrows', 'Show Stockfish arrows')}
-      <small>Maia downloads 36 MB for 5M or 331 MB for 79M on first use. Ratings are model inputs, not calibrated Elo.</small>
-      </fieldset><fieldset class="nosweat-review-settings"><legend>Whole-game analysis</legend>
-      <div class="nosweat-review-quality">${gameReviewQualities.map(q => `<label><input type="radio" name="nosweat-review-quality" value="${q.name}" ${q.name === gameReviewQuality(storage.get('nosweat.gameReview.quality')).name ? 'checked' : ''}><span>${q.name}</span></label>`).join('')}</div>
-      <button type="button" class="button button-empty nosweat-review-engine">Engine settings</button></fieldset></div>`);
-    view.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-engine-pref]').forEach(input => {
-      input.addEventListener('change', () => {
-        const key = input.dataset.enginePref as keyof EnginePreferences;
-        const value =
-          input instanceof HTMLInputElement
-            ? input.checked
-            : key === 'selfElo' || key === 'opponentElo' || key === 'secondMaiaElo'
-              ? Number(input.value)
-              : input.value;
-        const next = readEnginePreferences(JSON.stringify({ ...this.enginePreferences(), [key]: value }));
-        if (next.model !== this.model) this.release();
-        Object.assign(this, next);
-        storage.make('nosweat.enginePreferences.v2').set(JSON.stringify(next));
-        this.positionChanged(true);
-        this.ctrl.setAutoShapes();
-        this.refreshReview();
-      });
-    });
-    view.querySelectorAll<HTMLInputElement>('input[name="nosweat-review-quality"]').forEach(input => {
-      input.onchange = () => storage.set('nosweat.gameReview.quality', input.value);
-    });
+    const view = frag<HTMLElement>(`<fieldset class="nosweat-engine-settings"><legend>Engines</legend>
+      <button type="button" class="button button-empty nosweat-maia-settings">Engine Analysis settings</button>
+      <button type="button" class="button button-empty nosweat-review-engine">Advanced Stockfish settings</button></fieldset>`);
+    view.querySelector<HTMLButtonElement>('.nosweat-maia-settings')!.onclick = () => this.openMaiaSettings();
     view.querySelector<HTMLButtonElement>('.nosweat-review-engine')!.onclick = () =>
       site.asset.loadEsm('analyse.local', { init: this.ctrl });
     return view;
+  }
+  private applyEnginePreferences(next: EnginePreferences): void {
+    const inferenceChanged = (
+      ['model', 'selfElo', 'opponentElo', 'secondMaiaEnabled', 'secondMaiaElo', 'history'] as const
+    ).some(key => this[key] !== next[key]);
+    if (next.model !== this.model) this.release();
+    Object.assign(this, next);
+    saveEnginePreferences(next);
+    if (inferenceChanged) this.positionChanged(true);
+    this.refreshReview();
+  }
+  private openMaiaSettings(): void {
+    showEngineSettings(
+      this.enginePreferences(),
+      next => this.applyEnginePreferences(next),
+      () => site.asset.loadEsm('analyse.local', { init: this.ctrl }),
+    );
+  }
+  private get leadingMoveCount(): number {
+    return this.secondMaiaEnabled ? 4 : 8;
   }
   private readonly analysisAllowed = (): boolean =>
     this.ctrl.isCevalAllowed() && !this.ctrl.opts.practice && !this.ctrl.study?.data.chapter.practice;
@@ -421,7 +404,7 @@ export class NoSweatAnalysis {
     return [
       ...new Set(
         [
-          ...this.candidates.slice(0, this.expanded[0] ? undefined : 4),
+          ...this.candidates.slice(0, this.expanded[0] ? undefined : this.leadingMoveCount),
           ...this.secondaryCandidates.slice(0, this.expanded[1] ? undefined : 4),
         ]
           .map(c => c.uci)
@@ -609,6 +592,7 @@ export class NoSweatAnalysis {
         stockfish,
         this.maiaArrows ? this.candidates[0]?.uci : undefined,
         this.maiaArrows && this.secondMaiaEnabled ? this.secondaryCandidates[0]?.uci : undefined,
+        this.arrowColors,
       ),
       this.ctrl.bottomColor(),
     );
@@ -616,46 +600,30 @@ export class NoSweatAnalysis {
   private readonly expanded = [false, false];
 
   private openRating(secondary: boolean): void {
-    const value = secondary ? this.secondMaiaElo : this.selfElo;
-    domDialog({
-      class: 'nosweat-rating-dialog',
-      modal: true,
-      show: true,
-      easyClose: 'clickOutside',
-      focus: '[aria-pressed="true"]',
-      htmlText: `<h2>Maia rating</h2><div class="nosweat-rating-grid">${ratings
-        .map(
-          n =>
-            `<button type="button" class="fbt" data-rating="${n}" aria-pressed="${n === value}">${n}</button>`,
-        )
-        .join('')}</div>`,
-      actions: [
-        {
-          selector: '[data-rating]',
-          listener: (event, dialog) => {
-            this.chooseRating(Number((event.currentTarget as HTMLElement).dataset.rating), secondary);
-            dialog.close();
-          },
-        },
-      ],
-    });
+    showMaiaRating(secondary ? this.secondMaiaElo : this.selfElo, rating =>
+      this.chooseRating(rating, secondary),
+    );
   }
 
   private maiaCard(secondary: boolean): VNode {
     const rating = secondary ? this.secondMaiaElo : this.selfElo;
     const candidates = secondary ? this.secondaryCandidates : this.candidates;
     const score = secondary ? this.secondaryExpectedScore : this.expectedScore;
-    const color = secondary ? engineColors.maiaSecond : engineColors.maia;
+    const color = secondary ? this.arrowColors.maiaSecond : this.arrowColors.maia;
     const white = position(this.ctrl.node.fen).turn === 'white';
     const side = white ? 'White' : 'Black';
     const expanded = this.expanded[Number(secondary)];
-    const rest = candidates.slice(4).reduce((sum, c) => sum + c.probability, 0);
+    const leading = this.leadingMoveCount;
+    const rest = candidates.slice(leading).reduce((sum, c) => sum + c.probability, 0);
     const grades = blunderRanks(
       new Map([...this.scores].flatMap(([uci, result]) => (result ? [[uci, result.score] as const] : []))),
       white,
     );
-    const moves: (Candidate | undefined)[] = candidates.slice(0, expanded ? undefined : 4);
-    while (moves.length < 4) moves.push(undefined);
+    const moves: (Candidate | undefined)[] = candidates.slice(0, expanded ? undefined : leading);
+    while (moves.length < leading) moves.push(undefined);
+    const groups = this.secondMaiaEnabled
+      ? [moves]
+      : [moves.slice(0, Math.ceil(moves.length / 2)), moves.slice(Math.ceil(moves.length / 2))];
     const status = !this.enabled
       ? 'Analysis off'
       : position(this.ctrl.node.fen).isEnd()
@@ -693,50 +661,59 @@ export class NoSweatAnalysis {
         ),
       ]),
       hl('div.nosweat-policy-scroll', [
-        hl('table.nosweat-policy', [
-          hl('thead', hl('tr', [hl('th', 'Move'), hl('th', 'Probability')])),
-          hl(
-            'tbody',
-            moves.map((c, index) => {
-              if (!c)
-                return hl('tr.nosweat-policy-placeholder', { key: 'empty-' + index }, [
-                  hl('td', !candidates.length && index === 0 ? status : '—'),
-                  hl('td', '—'),
-                ]);
-              const quality = this.moveQuality(c.uci);
-              return hl('tr', { key: this.ctrl.node.fen + c.uci }, [
-                hl(
-                  'td',
-                  hl(
-                    'button.fbt',
-                    {
-                      attrs: {
-                        type: 'button',
-                        'data-quality': quality ?? 'pending',
-                        'data-blunder-rank': quality === 'blunder' ? (grades.get(c.uci) ?? 0) : false,
-                        title: quality
-                          ? qualityLabels[quality] + ' · Stockfish estimate'
-                          : 'Move quality not yet available',
-                        'aria-label':
-                          san(this.ctrl.node.fen, c.uci) +
-                          ': ' +
-                          (quality ? qualityLabels[quality] : 'quality not yet available'),
-                      },
-                      hook: reviewClick(() => this.preview(c.uci)),
-                    },
-                    san(this.ctrl.node.fen, c.uci),
-                  ),
-                ),
-                hl('td', (c.probability * 100).toFixed(1) + '%'),
-              ]);
-            }),
+        hl(
+          'div.nosweat-policy-columns',
+          groups.map((group, column) =>
+            hl('table.nosweat-policy', { key: column }, [
+              hl('thead', hl('tr', [hl('th', 'Move'), hl('th', 'Probability')])),
+              hl(
+                'tbody',
+                group.map((c, index) => {
+                  if (!c)
+                    return hl('tr.nosweat-policy-placeholder', { key: 'empty-' + index }, [
+                      hl('td', !candidates.length && index === 0 && column === 0 ? status : '—'),
+                      hl('td', '—'),
+                    ]);
+                  const quality = this.moveQuality(c.uci);
+                  return hl('tr', { key: this.ctrl.node.fen + c.uci }, [
+                    hl(
+                      'td',
+                      hl(
+                        'button.fbt',
+                        {
+                          attrs: {
+                            type: 'button',
+                            'data-quality': quality ?? 'pending',
+                            'data-blunder-rank': quality === 'blunder' ? (grades.get(c.uci) ?? 0) : false,
+                            title: quality
+                              ? qualityLabels[quality] + ' · Stockfish estimate'
+                              : 'Move quality not yet available',
+                            'aria-label':
+                              san(this.ctrl.node.fen, c.uci) +
+                              ': ' +
+                              (quality ? qualityLabels[quality] : 'quality not yet available'),
+                          },
+                          hook: reviewClick(() => this.preview(c.uci)),
+                        },
+                        san(this.ctrl.node.fen, c.uci),
+                      ),
+                    ),
+                    hl('td', (c.probability * 100).toFixed(1) + '%'),
+                  ]);
+                }),
+              ),
+            ]),
           ),
-        ]),
+        ),
       ]),
       hl(
         'button.nosweat-others',
         {
-          attrs: { type: 'button', 'aria-expanded': String(expanded), disabled: candidates.length <= 4 },
+          attrs: {
+            type: 'button',
+            'aria-expanded': String(expanded),
+            disabled: candidates.length <= leading,
+          },
           hook: reviewClick(() => {
             this.expanded[Number(secondary)] = !expanded;
             this.colorCandidates();
@@ -757,6 +734,16 @@ export class NoSweatAnalysis {
       hl('section.nosweat-rating-explorer', [
         hl('header.nosweat-rating-heading', [
           hl('h3', 'Moves by Rating'),
+          hl('button.fbt.nosweat-maia-settings', {
+            attrs: {
+              type: 'button',
+              'aria-label': 'Engine Analysis settings',
+              title: 'Engine Analysis settings',
+              'data-icon': licon.Gear,
+              'aria-haspopup': 'dialog',
+            },
+            hook: reviewClick(() => this.openMaiaSettings()),
+          }),
           ratingLegend(
             this.byRating,
             uci => this.chartSan(uci),
@@ -796,7 +783,7 @@ export class NoSweatAnalysis {
       this.selfElo = rating;
       if (!keepOpponent) this.opponentElo = rating;
     }
-    storage.make('nosweat.enginePreferences.v2').set(JSON.stringify(this.enginePreferences()));
+    saveEnginePreferences(this.enginePreferences());
     this.positionChanged(true);
     this.ctrl.redraw();
   }

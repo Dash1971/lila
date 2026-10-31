@@ -189,16 +189,22 @@ $analyse-gauge-gap: 4px;
       min-height: 10em;
     }
 
-    // The optional explorer scrolls in the side column, without changing the
-    // board row or pushing native move controls below an expanded table.
+    // Keep Maia cards and opening text inside the board-height sidebar so a
+    // long WikiBook article cannot push the native underboard below the page.
     &:has(.nosweat-candidate-panel) {
       ---col3-uniboard-side-min: 320px;
 
       .analyse__side {
         grid-row: 1 / 3;
-        height: auto;
-        overflow: visible;
-        display: block;
+        height: var(---cg-height, auto);
+        min-height: 0;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .analyse__wiki {
+        min-height: 0;
       }
 
       .nosweat-candidate-panel {
@@ -220,4 +226,21 @@ $analyse-gauge-gap: 4px;
 
 .blind-mode .analyse {
   display: block;
+}
+
+/* One Maia uses the same compact frame for two columns of four leading moves. */
+.nosweat-policy-columns {
+  display: flex;
+  min-width: 0;
+  align-items: start;
+}
+
+.nosweat-policy-columns > table {
+  flex: 1;
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.nosweat-policy-columns > table + table {
+  border-left: 1px solid var(--c-border);
 }

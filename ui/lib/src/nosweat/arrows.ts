@@ -6,6 +6,7 @@ export const engineColors = {
   maia: '#e89b3c',
   maiaSecond: '#e85d68',
 };
+export type EngineColors = typeof engineColors;
 export interface EngineArrow {
   uci: string;
   tail: string[];
@@ -18,6 +19,7 @@ export function engineArrows(
   stockfish: { uci: string; width?: number }[],
   primary?: string,
   secondary?: string,
+  colors: EngineColors = engineColors,
 ): EngineArrow[] {
   const sf = [
     ...new Map(
@@ -29,13 +31,13 @@ export function engineArrows(
   ];
   const maia = new Map<string, string[]>();
   for (const [move, color] of [
-    [primary, engineColors.maia],
-    [secondary, engineColors.maiaSecond],
+    [primary, colors.maia],
+    [secondary, colors.maiaSecond],
   ] as const)
     if (valid(move)) maia.set(move, [...(maia.get(move) ?? []), color]);
   const result: EngineArrow[] = [];
   sf.forEach((s, i) => {
-    const color = i ? engineColors.stockfishSecond : engineColors.stockfish;
+    const color = i ? colors.stockfishSecond : colors.stockfish;
     const agreed = maia.get(s.uci);
     result.push({ uci: s.uci, tail: [color], head: agreed ?? [color], width: agreed ? 25 : (s.width ?? 25) });
     maia.delete(s.uci);

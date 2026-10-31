@@ -159,6 +159,7 @@ describe('Native analysis extensions', () => {
         history: false,
         maiaArrows: false,
         fishArrows: true,
+        arrowColors: { ...engineColors },
       },
     );
     const invalid = readEnginePreferences(
@@ -238,4 +239,17 @@ describe('Native analysis extensions', () => {
     assert.equal(workers.length, 2);
     client.release();
   });
+});
+
+test('custom arrow palettes retain split agreement and native move geometry', () => {
+  const colors = { stockfish: '#112233', stockfishSecond: '#445566', maia: '#778899', maiaSecond: '#aabbcc' };
+  const arrows = engineArrows([{ uci: 'e2e4' }, { uci: 'd2d4' }], 'e2e4', 'e2e4', colors);
+  assert.deepEqual(arrows[0].tail, [colors.stockfish]);
+  assert.deepEqual(arrows[0].head, [colors.maia, colors.maiaSecond]);
+  assert.deepEqual(arrows[1].head, [colors.stockfishSecond]);
+  const shapes = engineShapes(arrows, 'white');
+  assert.equal(shapes[0].orig, 'e2');
+  assert.equal(shapes[0].dest, 'e4');
+  assert.ok(shapes[0].customSvg!.html.includes('#778899'));
+  assert.ok(shapes[0].customSvg!.html.includes('#aabbcc'));
 });

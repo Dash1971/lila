@@ -2,6 +2,7 @@
 // Accuracy, ACPL, best lines and Learn from your mistakes stay native.
 import { parseUci } from 'chessops/util';
 
+import { gameReviewQualities } from 'lib/nosweat/reviewQuality';
 import type { Glyph, TreeNodeBase } from 'lib/tree/types';
 
 import { type Annotation, type ClassificationInput, type ClassificationResult } from './noSweatClassify';
@@ -22,13 +23,7 @@ export const qualityGlyph = (symbol: Annotation): Glyph | undefined => {
   return c && { id: c.id, name: c.name, symbol, comp: true, source: reviewSource };
 };
 
-export const gameReviewQualities = [
-  { name: 'Fast', depth: 12, movetime: 500 },
-  { name: 'Balanced', depth: 14, movetime: 1000 },
-  { name: 'Thorough', depth: 16, movetime: 1500 },
-] as const;
-export const gameReviewQuality = (name: string | null) =>
-  gameReviewQualities.find(q => q.name === name) ?? gameReviewQualities[0];
+export { gameReviewQualities, gameReviewQuality } from 'lib/nosweat/reviewQuality';
 
 export function nativeReview(node: TreeNodeBase): Review | undefined {
   const terminal = terminalScore(node.fen);

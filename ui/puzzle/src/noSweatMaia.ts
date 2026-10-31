@@ -2,11 +2,16 @@ import { parseUci } from 'chessops/util';
 
 import { winningChances } from 'lib/ceval';
 import { fenColor } from 'lib/game';
-import { engineArrows, engineShapes, engineColors } from 'lib/nosweat/arrows';
+import { licon } from 'lib/licon';
+import { engineArrows, engineShapes } from 'lib/nosweat/arrows';
 import { san, type Candidate } from 'lib/nosweat/core';
-import { readEnginePreferences } from 'lib/nosweat/preferences';
+import {
+  loadEnginePreferences,
+  saveEnginePreferences,
+  showMaiaRating,
+  showEngineSettings,
+} from 'lib/nosweat/engineSettings';
 import { loadBrowserMaia, ReviewMaia, reviewAllowed } from 'lib/nosweat/reviewMaia';
-import { storage } from 'lib/storage';
 import { hl, bind } from 'lib/view';
 
 import type PuzzleCtrl from './ctrl';
@@ -20,6 +25,7 @@ interface PolicyChannel {
   status: string;
   expanded: boolean;
   toggle: () => void;
+  chooseRating?: () => void;
   play: (uci: string) => void;
 }
 
@@ -50,7 +56,7 @@ export function fitPuzzleMaiaRow(row: HTMLElement, channel: PolicyChannel): void
 }
 
 export function puzzleMaiaChannel(channel: PolicyChannel) {
-  const { id, fen, rating, candidates, color, status, expanded, toggle, play } = channel;
+  const { id, fen, rating, candidates, color, status, expanded, toggle, play, chooseRating } = channel;
   const others = candidates.slice(3).reduce((sum, candidate) => sum + candidate.probability, 0);
   const panel = id + '-moves';
   return hl('div.nosweat-maia-channel', { key: id + fen + rating }, [
@@ -85,7 +91,19 @@ export function puzzleMaiaChannel(channel: PolicyChannel) {
         },
       },
       [
-        hl('strong.nosweat-maia-label', { attrs: { style: 'color:' + color } }, 'M' + rating),
+        hl(
+          'button.nosweat-maia-label',
+          {
+            attrs: {
+              type: 'button',
+              style: 'color:' + color,
+              'aria-label': `Change Maia rating, ${rating}`,
+              'aria-haspopup': 'dialog',
+            },
+            hook: bind('click', () => chooseRating?.()),
+          },
+          'M' + rating,
+        ),
         candidates.length
           ? hl('div.nosweat-maia-moves', [
               candidates
@@ -162,8 +180,7 @@ export class PuzzleMaia {
   private readonly engine: ReviewMaia;
   private expanded: [boolean, boolean] = [false, false];
   private displayKey = '';
-  private readonly preferences = () =>
-    readEnginePreferences(storage.make('nosweat.enginePreferences.v2').get());
+  private readonly preferences = loadEnginePreferences;
   constructor(private readonly ctrl: PuzzleCtrl) {
     this.engine = new ReviewMaia(loadBrowserMaia, () => {
       ctrl.setAutoShapes();
@@ -178,7 +195,7 @@ export class PuzzleMaia {
   sync = (): void => {
     const prefs = this.preferences();
     this.engine.set(
-      this.allowed() && prefs.maiaArrows && !this.ctrl.node.outcome()
+      this.allowed() && !this.ctrl.node.outcome()
         ? {
             id: this.ctrl.data.puzzle.id,
             fens: this.ctrl.nodeList.map(n => n.fen),
@@ -187,6 +204,12 @@ export class PuzzleMaia {
         : undefined,
     );
   };
+  private applyPreferences(prefs: ReturnType<typeof loadEnginePreferences>): void {
+    saveEnginePreferences(prefs);
+    this.sync();
+    this.ctrl.setAutoShapes();
+    this.ctrl.redraw();
+  }
   shapes() {
     if (!this.allowed()) return [];
     const prefs = this.preferences();
@@ -203,6 +226,7 @@ export class PuzzleMaia {
         fish,
         prefs.maiaArrows ? this.engine.primary[0]?.uci : undefined,
         prefs.maiaArrows ? this.engine.secondary[0]?.uci : undefined,
+        prefs.arrowColors,
       ),
       this.ctrl.flipped() ? (this.ctrl.pov === 'white' ? 'black' : 'white') : this.ctrl.pov,
     );
@@ -210,7 +234,6 @@ export class PuzzleMaia {
   view() {
     if (!this.allowed()) return undefined;
     const prefs = this.preferences();
-    if (!prefs.maiaArrows) return undefined;
     const fen = this.ctrl.node.fen;
     const status = this.ctrl.node.outcome() ? 'No legal moves' : this.engine.status || 'Analyzing…';
     const key = `${this.ctrl.data.puzzle.id}:${fen}:${prefs.selfElo}:${prefs.secondMaiaElo}:${prefs.secondMaiaEnabled}`;
@@ -227,6 +250,13 @@ export class PuzzleMaia {
         color,
         status,
         expanded: this.expanded[index],
+        chooseRating: () =>
+          showMaiaRating(rating, selected => {
+            const next = this.preferences();
+            if (index) next.secondMaiaElo = selected;
+            else next.selfElo = next.opponentElo = selected;
+            this.applyPreferences(next);
+          }),
         toggle: () => {
           this.expanded[index] = !this.expanded[index];
           this.ctrl.redraw();
@@ -234,8 +264,24 @@ export class PuzzleMaia {
         play: uci => this.ctrl.sendMove(parseUci(uci)!),
       });
     return hl('section.nosweat-engine-lines', { attrs: { 'aria-label': 'Maia analysis channels' } }, [
-      row(prefs.selfElo, this.engine.primary, engineColors.maia, 0),
-      prefs.secondMaiaEnabled && row(prefs.secondMaiaElo, this.engine.secondary, engineColors.maiaSecond, 1),
+      hl('header.nosweat-puzzle-maia-heading', [
+        hl('span', 'Maia Analysis'),
+        hl('button.fbt.nosweat-maia-settings', {
+          attrs: {
+            type: 'button',
+            'aria-label': 'Engine Analysis settings',
+            title: 'Engine Analysis settings',
+            'data-icon': licon.Gear,
+            'aria-haspopup': 'dialog',
+          },
+          hook: bind('click', () =>
+            showEngineSettings(this.preferences(), next => this.applyPreferences(next)),
+          ),
+        }),
+      ]),
+      row(prefs.selfElo, this.engine.primary, prefs.arrowColors.maia, 0),
+      prefs.secondMaiaEnabled &&
+        row(prefs.secondMaiaElo, this.engine.secondary, prefs.arrowColors.maiaSecond, 1),
     ]);
   }
 }

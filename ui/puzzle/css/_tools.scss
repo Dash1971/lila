@@ -269,3 +269,29 @@ button.nosweat-maia-other {
     text-transform: none;
   }
 }
+
+.nosweat-puzzle-maia-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: $c-font-dim;
+  font-size: 0.8em;
+
+  button {
+    padding: 0 2px;
+    font-size: 16px;
+  }
+}
+
+button.nosweat-maia-label {
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  font-weight: bold;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+}

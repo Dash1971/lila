@@ -106,3 +106,39 @@ test('puzzle assistance is available only in visible review with the engine enab
             mode === 'view' && enabled && !hidden && !threat,
           );
 });
+
+test('arrow color and visibility changes preserve completed policy without new inference', async () => {
+  let predictions = 0;
+  const engine = new ReviewMaia(
+    async () => ({
+      predict: async () => {
+        predictions++;
+        return new Float32Array(4352);
+      },
+      release: () => {},
+    }),
+    () => {},
+  );
+  engine.set(context);
+  await tick();
+  await tick();
+  assert.equal(predictions, 2);
+  const primary = engine.primary;
+  engine.set({
+    ...context,
+    preferences: {
+      ...context.preferences,
+      maiaArrows: false,
+      arrowColors: { ...context.preferences.arrowColors, maia: '#abcdef' },
+    },
+  });
+  await tick();
+  assert.equal(predictions, 2);
+  assert.equal(engine.primary, primary);
+  engine.set({ ...context, preferences: { ...context.preferences, secondMaiaEnabled: false } });
+  await tick();
+  await tick();
+  assert.equal(predictions, 3);
+  assert.deepEqual(engine.secondary, []);
+  engine.cancel();
+});

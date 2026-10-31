@@ -33,7 +33,19 @@ export class ReviewMaia {
     private readonly changed: () => void,
   ) {}
   set(context?: ReviewContext): void {
-    const key = context ? JSON.stringify(context) : '';
+    const key = context
+      ? JSON.stringify({
+          ...context,
+          preferences: {
+            model: context.preferences.model,
+            selfElo: context.preferences.selfElo,
+            opponentElo: context.preferences.opponentElo,
+            secondMaiaEnabled: context.preferences.secondMaiaEnabled,
+            secondMaiaElo: context.preferences.secondMaiaElo,
+            history: context.preferences.history,
+          },
+        })
+      : '';
     if (key === this.key) return;
     const previousModel = this.key && (JSON.parse(this.key) as ReviewContext).preferences.model;
     this.key = key;
