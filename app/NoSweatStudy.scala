@@ -42,6 +42,9 @@ final class NoSweatStudy(env: Env)(using ec: Executor):
   private def documents = records.find(bdoc("runId" -> run)).cursor[Bdoc]().list(plan.maximumAdmitted + 1)
   private def active(doc: Bdoc) = doc.getAsOpt[String]("state").exists(Set("reserved", "active").contains)
   private def id(doc: Bdoc) = doc.getAsOpt[GameId]("_id").get
+  private def presence(gameId: GameId, online: Boolean): Unit =
+    Color.all.foreach: color =>
+      lila.common.Bus.pub(lila.core.round.Tell(gameId, lila.core.round.RoundBus.BotConnected(color, online)))
 
   private def ratings: Fu[JsValue] =
     env.user.perfsRepo
@@ -68,6 +71,7 @@ final class NoSweatStudy(env: Env)(using ec: Executor):
             .filter(active)
             .foreach: _ =>
               val game = finish.game
+              presence(game.id, false)
               val result = Json.obj(
                 "status" -> game.status.name,
                 "winner" -> game.winnerColor.map(_.name),
@@ -256,9 +260,7 @@ final class NoSweatStudy(env: Env)(using ec: Executor):
       _ <- env.game.gameRepo.insertDenormalized(game)
       _ <- env.round.onStart.exec(gameId)
       _ <- records.update.one(bid(gameId), set("state" -> "active"))
-      _ = Color.all.foreach(c =>
-        env.round.roundApi.tell(gameId, lila.core.round.RoundBus.BotConnected(c, true))
-      )
+      _ = presence(gameId, true)
     yield Json.obj("id" -> gameId.value)
 
   def move(gameId: GameId, ply: Int, uci: String): Funit =
@@ -292,6 +294,7 @@ final class NoSweatStudy(env: Env)(using ec: Executor):
       docs
         .filter(active)
         .traverse: doc =>
+          presence(id(doc), false)
           env.round.roundApi.tell(id(doc), lila.core.round.RoundBus.AbortForce)
           records.update.one(bid(id(doc)), set("state" -> "aborted", "failure" -> "bounded_study_stop")).void
         .void

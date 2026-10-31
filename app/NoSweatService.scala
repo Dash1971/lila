@@ -24,7 +24,10 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
   private val records = env.mongo.mainDb(CollName("nosweat_game"))
   private val lastPoll = AtomicLong(System.currentTimeMillis())
   private val adapterInstance = AtomicReference("")
-  private val connectedBots = java.util.concurrent.ConcurrentHashMap.newKeySet[GameId]()
+  private val connectedBots = new java.util.concurrent.ConcurrentHashMap[GameId, Color]()
+  private def disconnectBot(id: GameId): Unit =
+    Option(connectedBots.remove(id)).foreach: color =>
+      lila.common.Bus.pub(lila.core.round.Tell(id, lila.core.round.RoundBus.BotConnected(color, false)))
   private[app] val queue = scalalib.actor.AsyncActorSequencer(
     maxSize = Max(32),
     timeout = 20.seconds,
@@ -285,6 +288,7 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
 
   if enabled then
     lila.common.Bus.sub[lila.core.game.FinishGame]: finish =>
+      disconnectBot(finish.game.id)
       finish.game.userIds
         .filter(botIds)
         .foreach: id =>
@@ -474,7 +478,7 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
               .flatMap:
                 case Some(game) if game.playable => fuccess((doc -> game).some)
                 case _ =>
-                  connectedBots.remove(doc.getAsOpt[GameId]("_id").get)
+                  disconnectBot(doc.getAsOpt[GameId]("_id").get)
                   records.update
                     .one(bid(doc.getAsOpt[GameId]("_id").get), set("state" -> "finished"))
                     .map(_ => none)
@@ -618,10 +622,10 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
               .gameState(WithInitialFen(game, None))
               .map: state =>
                 val bot = doc.getAsOpt[UserId]("bot").get
-                if connectedBots.add(game.id) then
-                  env.round.roundApi.tell(
-                    game.id,
-                    lila.core.round.RoundBus.BotConnected(game.player(bot).get.color, true)
+                val color = game.player(bot).get.color
+                if Option(connectedBots.putIfAbsent(game.id, color)).isEmpty then
+                  lila.common.Bus.pub(
+                    lila.core.round.Tell(game.id, lila.core.round.RoundBus.BotConnected(color, true))
                   )
                 Json.obj(
                   "id" -> game.id.value,
@@ -675,10 +679,10 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
             .game(id)
             .flatMap:
               case Some(game) if !game.playable =>
-                connectedBots.remove(id)
+                disconnectBot(id)
                 records.update.one(bid(id), set("state" -> "finished")).void
               case _ =>
-                connectedBots.remove(id)
+                disconnectBot(id)
                 env.round.roundApi.tell(id, lila.core.round.RoundBus.AbortForce)
                 records.update
                   .one(bid(id), set("state" -> "service_failure", "failure" -> reason.take(80)))
