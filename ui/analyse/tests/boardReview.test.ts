@@ -9,6 +9,7 @@ import type AnalyseCtrl from '../src/ctrl';
 import { IdbTree } from '../src/idbTree';
 import { LocalAnalysisEngine, type LocalAnalysisResult } from '../src/local/localAnalysisEngine';
 import { BoardReview } from '../src/noSweatBoardReview';
+import { FullGameClassifier } from '../src/noSweatFullReview';
 
 const fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 const makeLine = () => {
@@ -88,6 +89,37 @@ test('study review retains its native chapter division request', async () => {
   assert.deepEqual(await engine.getDivision(), { middle: 20 });
   assert.equal(fetch.mock.calls[0].arguments[0], '/study/config/chapter?divisionOnly=1');
   fetch.mock.restore();
+});
+
+test('switching tabs cannot silently cancel whole-game classifications; leaving the page still cancels', async () => {
+  const nodes = makeLine();
+  const ctrl = {
+    noSweat: {},
+    synthetic: true,
+    mainline: nodes,
+    tree: { root: nodes[0] },
+    isCevalAllowed: () => true,
+    ceval: { engines: { getEngine: () => ({ tech: 'NNUE', assets: {} }) } },
+  } as unknown as AnalyseCtrl;
+  const engine = new LocalAnalysisEngine(ctrl);
+  const result = { localUpdate: { tree: structuredClone(nodes[0]), analysis: {} } } as LocalAnalysisResult;
+  const hidden = Object.getOwnPropertyDescriptor(document, 'hidden');
+  const run = mock.method(FullGameClassifier.prototype, 'run', async (_nodes, signal, current) => {
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+    document.dispatchEvent(new window.Event('visibilitychange'));
+    assert.equal(signal.aborted, false, 'background native review also needs its classifications');
+    assert.equal(current(), true);
+    window.dispatchEvent(new window.Event('pagehide'));
+    assert.equal(signal.aborted, true, 'page navigation must discard the temporary job');
+    return new Map();
+  });
+  try {
+    assert.equal(await engine.verifyBrilliants(result, () => {}), false);
+  } finally {
+    run.mock.restore();
+    if (hidden) Object.defineProperty(document, 'hidden', hidden);
+    else delete (document as any).hidden;
+  }
 });
 
 test('board uses native review entry point and chart, preserving editable inputs when analysis is cleared', async () => {

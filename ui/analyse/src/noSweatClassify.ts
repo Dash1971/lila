@@ -136,17 +136,19 @@ export function classify(input: ClassificationInput, evaluateMaterial = naiveMat
         : after.previous;
     const previousPrevious = checked ? checked[checked.length - 3]?.current : previous?.previous;
     const sufficient =
-      !checked ||
-      checked.every((r, i) => {
-        const original = reviews[reviews.length - checked.length + i];
-        return (
-          original &&
-          r.quality === original.quality &&
-          r.current.depth >= original.current.depth &&
-          (!original.terminal ||
-            JSON.stringify(r.current.lines[0]) === JSON.stringify(original.current.lines[0]))
-        );
-      });
+      before.quality === after.quality &&
+      (!needsPrevious || previous?.quality === before.quality) &&
+      (!checked ||
+        checked.every((r, i) => {
+          const original = reviews[reviews.length - checked.length + i];
+          return (
+            original &&
+            r.quality === original.quality &&
+            r.current.depth >= original.current.depth &&
+            (!original.terminal ||
+              JSON.stringify(r.current.lines[0]) === JSON.stringify(original.current.lines[0]))
+          );
+        }));
     if (
       !sufficient ||
       !previousBefore ||

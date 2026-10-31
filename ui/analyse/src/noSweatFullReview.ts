@@ -8,7 +8,7 @@ import { type Annotation, type ClassificationInput, type ClassificationResult } 
 import { legalUcis, position, standardUci, terminalScore } from './noSweatCore';
 import type { Review } from './noSweatFish';
 
-export const reviewSource = 'mobile-maia-full-review-v1';
+export const reviewSource = 'mobile-maia-full-review-v2';
 export const moveClasses = [
   { symbol: '!!', id: 3, name: 'Brilliant', color: '#15aabf' },
   { symbol: '!', id: 1, name: 'Good', color: '#12b886' },
@@ -54,7 +54,7 @@ export function nativeReview(node: TreeNodeBase): Review | undefined {
 
 interface Dependencies {
   classify(input: ClassificationInput, signal: AbortSignal): Promise<ClassificationResult>;
-  search(fen: string, signal: AbortSignal, depth: number, time: number): Promise<Review>;
+  search(fen: string, signal: AbortSignal, depth: number, time: number, session?: symbol): Promise<Review>;
 }
 export class FullGameClassifier {
   constructor(private readonly deps: Dependencies) {}
@@ -62,44 +62,70 @@ export class FullGameClassifier {
     nodes: TreeNodeBase[],
     signal: AbortSignal,
     current: () => boolean,
-    progress: (done: number, total: number) => void,
+    progress: (done: number, total: number, phase?: string) => void,
     quality: { depth: number; movetime: number } = gameReviewQualities[0],
   ): Promise<Map<number, Annotation>> {
     const valid = () => {
       if (signal.aborted || !current()) throw new Error('Cancelled');
     };
     const results = new Map<number, Annotation>();
-    const confirmations = new Map<string, Review>();
+    if (!nodes.slice(1).some(n => n.uci && !n.glyphs?.some(g => !g.comp && g.id >= 1 && g.id <= 6)))
+      return results;
+    // Mobile Maia reviews the line forwards in one isolated engine session.
+    // Native replay evaluates backwards and does not retain earlier complete
+    // iterations. Keep its graph/accuracy untouched, and collect the complete
+    // classification evidence separately instead of silently dropping it.
+    const session = Symbol();
+    const reviews: Review[] = [];
+    for (const [i, node] of nodes.entries()) {
+      valid();
+      progress(i, nodes.length - 1, 'Checking move evidence');
+      reviews.push({
+        ...(await this.deps.search(node.fen, signal, quality.depth, quality.movetime, session)),
+        quality: `${reviewSource}:${quality.depth}:${quality.movetime}`,
+      });
+      valid();
+    }
+    let confirmationBudget = 6;
     for (let i = 1; i < nodes.length; i++) {
       valid();
       progress(i - 1, nodes.length - 1);
       if (!nodes[i].uci || nodes[i].glyphs?.some(g => !g.comp && g.id >= 1 && g.id <= 6)) continue;
       const window = nodes.slice(Math.max(0, i - 2), i + 1);
-      const reviews = window.map(nativeReview);
-      if (reviews.some(r => !r)) continue;
+      const windowReviews = reviews.slice(Math.max(0, i - 2), i + 1);
       const before = window[window.length - 2];
       const move = parseUci(nodes[i].uci!);
       if (!move) continue;
       const input = {
         positions: window.map(n => n.fen),
-        reviews: reviews as Review[],
+        reviews: windowReviews,
         move: standardUci(position(before.fen), move),
       };
       let result = await this.deps.classify(input, signal);
       valid();
       const provisional = result.provisional ?? result.symbol;
-      if (provisional === '!!' || provisional === '!') {
+      // A complete earlier-iteration window is already corroboration. Only an
+      // unsupported award consumes Mobile Maia's six-search check allowance.
+      if ((provisional === '!!' || provisional === '!') && result.withheld) {
+        const start = provisional === '!' && i > 1 ? i - 2 : i - 1;
+        const cost = i - start + 1;
+        if (cost > confirmationBudget) continue;
+        confirmationBudget -= cost;
         const confirmation: Review[] = [];
-        for (const [n, node] of window.entries()) {
+        const confirmationSession = Symbol();
+        for (let n = start; n <= i; n++) {
           valid();
-          const depth = Math.max(quality.depth + 2, input.reviews[n].current.depth + 2);
-          const key = node.fen + ':' + depth;
-          if (!confirmations.has(key))
-            confirmations.set(key, {
-              ...(await this.deps.search(node.fen, signal, depth, quality.movetime * 2)),
-              quality: reviewSource,
-            });
-          confirmation.push(confirmations.get(key)!);
+          confirmation.push({
+            ...(await this.deps.search(
+              nodes[n].fen,
+              signal,
+              quality.depth + 2,
+              quality.movetime,
+              confirmationSession,
+            )),
+            quality: reviews[n].quality,
+          });
+          valid();
         }
         result = await this.deps.classify({ ...input, confirmation }, signal);
         valid();

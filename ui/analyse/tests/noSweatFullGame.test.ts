@@ -19,6 +19,53 @@ import { SearchSnapshots } from '../src/noSweatSnapshots';
 const game = JSON.parse(
   readFileSync(new URL('./fixtures/noSweat/stockfish18-fast.json', import.meta.url), 'utf8'),
 ).runs.find((g: any) => g.name === 'opera-1858');
+
+test('the full Byrne–Fischer review uses isolated Mobile Maia evidence, including earlier complete iterations', async () => {
+  const reference = JSON.parse(
+    readFileSync(new URL('./fixtures/noSweat/stockfish18-fast.json', import.meta.url), 'utf8'),
+  ).runs.find((g: any) => g.name === 'byrne-fischer-1956');
+  const nodes = reference.positions.map((fen: string, ply: number) => ({
+    ply,
+    fen,
+    uci: reference.moves[ply - 1],
+    // Native chart evaluations are independent and must not be overwritten.
+    eval: { cp: 42, pvs: [] },
+  })) as TreeNodeBase[];
+  const calls: { fen: string; session?: symbol }[] = [];
+  const classifier = new FullGameClassifier({
+    classify: async input => classify(input),
+    search: async (fen, _signal, _depth, _time, session) => {
+      calls.push({ fen, session });
+      const snapshots = new SearchSnapshots(
+        new Set(legalUcis(fen)),
+        Math.min(2, legalUcis(fen).length),
+        position(fen).turn === 'white',
+      );
+      reference.scores[reference.positions.indexOf(fen)].raw.forEach((line: string) => snapshots.add(line));
+      return snapshots.completed
+        ? { current: snapshots.completed, previous: snapshots.previous }
+        : nativeReview({ fen } as TreeNodeBase)!;
+    },
+  });
+  const results = await classifier.run(
+    nodes,
+    new AbortController().signal,
+    () => true,
+    () => {},
+  );
+  assert.deepEqual(
+    [...results].filter(([, symbol]) => symbol === '!!').map(([ply]) => ply),
+    [22, 34, 38],
+  );
+  assert.notEqual(results.get(23), '!!', '12.Qa3 must never receive the sacrificed knight’s award');
+  assert.deepEqual(
+    calls.slice(0, nodes.length).map(c => c.fen),
+    reference.positions,
+  );
+  assert.ok(calls[0].session && calls.slice(0, nodes.length).every(c => c.session === calls[0].session));
+  assert.ok(calls.length <= nodes.length + 6, 'Mobile Maia bounds additional confirmation to six searches');
+  assert.ok(nodes.every(n => n.eval?.cp === 42 && n.eval.pvs.length === 0));
+});
 function node(index: number): TreeNodeBase {
   const snapshots = new SearchSnapshots(
     new Set(legalUcis(game.positions[index])),
@@ -61,8 +108,12 @@ test('native complete two-PV data produces the independently confirmed Opera bri
     () => {},
   );
   assert.equal(result.get(19), '!!');
-  assert.equal(calls.length, 2);
-  assert.ok(calls.every(c => c.depth >= 14 && c.time === 1000));
+  assert.deepEqual(calls, [
+    { depth: 12, time: 500 },
+    { depth: 12, time: 500 },
+    { depth: 14, time: 500 },
+    { depth: 14, time: 500 },
+  ]);
   assert.equal(qualityGlyph(result.get(19)!)?.source, reviewSource);
 });
 test('a stronger-window veto withholds a standout; cancellation prevents publication', async () => {
@@ -90,7 +141,8 @@ test('a stronger-window veto withholds a standout; cancellation prevents publica
       return classify(input);
     },
     search: async () => {
-      throw new Error('must not search after cancellation');
+      assert.equal(aborted.signal.aborted, false, 'must not search after cancellation');
+      return nativeReview(nodes[0])!;
     },
   });
   await assert.rejects(
@@ -103,16 +155,14 @@ test('a stronger-window veto withholds a standout; cancellation prevents publica
     /Cancelled/,
   );
 });
-test('imported annotations are protected and missing/duplicate roots are not classified', async () => {
+test('imported annotations are protected and incomplete native chart roots never substitute for isolated evidence', async () => {
   let classified = 0;
   const classifier = new FullGameClassifier({
     classify: async input => {
       classified++;
       return classify(input);
     },
-    search: async () => {
-      throw new Error('no search expected');
-    },
+    search: async fen => nativeReview([node(18), node(19)].find(n => n.fen === fen)!)!,
   });
   const imported = { ...node(19), glyphs: [{ id: 5, symbol: '!?', name: 'Imported' }] };
   assert.equal(
@@ -137,10 +187,10 @@ test('imported annotations are protected and missing/duplicate roots are not cla
         () => true,
         () => {},
       )
-    ).size,
-    0,
+    ).get(19),
+    '!!',
   );
-  assert.equal(classified, 0);
+  assert.ok(classified > 0);
 });
 test('summary counts the actual moving side, including games from a nonzero initial ply', () => {
   const nodes = [

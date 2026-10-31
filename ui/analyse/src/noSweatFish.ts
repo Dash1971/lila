@@ -25,6 +25,7 @@ const info: BrowserEngineInfo = {
 };
 class ReviewProtocol extends Protocol {
   private output?: (command: string) => void;
+  private session?: symbol;
   private task?: {
     fen: string;
     moves: string[];
@@ -40,8 +41,8 @@ class ReviewProtocol extends Protocol {
   private booted!: () => void;
   private bootFailure!: (e: Error) => void;
   readonly boot: Promise<void>;
-  constructor() {
-    super(info);
+  constructor(engineInfo: BrowserEngineInfo) {
+    super(engineInfo);
     this.boot = new Promise((resolve, reject) => {
       this.booted = resolve;
       this.bootFailure = reject;
@@ -103,6 +104,7 @@ class ReviewProtocol extends Protocol {
     depth: number,
     time: number,
     signal: AbortSignal,
+    session?: symbol,
   ): Promise<Review> {
     let deadline: ReturnType<typeof setTimeout> | undefined;
     try {
@@ -150,8 +152,11 @@ class ReviewProtocol extends Protocol {
         },
         { once: true },
       );
-      this.output?.('ucinewgame');
-      this.output?.('setoption name Clear Hash');
+      if (!session || session !== this.session) {
+        this.output?.('ucinewgame');
+        this.output?.('setoption name Clear Hash');
+      }
+      this.session = session;
       this.output?.('setoption name MultiPV value ' + Math.min(2, legal.size));
       this.output?.('isready');
     });
@@ -174,17 +179,27 @@ export class ReviewFish {
   private engine?: StockfishWebEngine;
   private tail: Promise<unknown> = Promise.resolve();
   private generation = 0;
-  constructor(private readonly status: (s: string) => void) {}
-  search(fen: string, moves: string[], signal: AbortSignal, depth = 14, time = 1200): Promise<Review> {
+  constructor(
+    private readonly status: (s: string) => void,
+    private readonly engineInfo: BrowserEngineInfo = info,
+  ) {}
+  search(
+    fen: string,
+    moves: string[],
+    signal: AbortSignal,
+    depth = 14,
+    time = 1200,
+    session?: symbol,
+  ): Promise<Review> {
     const generation = this.generation;
     const job = this.tail
       .catch(() => {})
       .then(async () => {
         if (signal.aborted || generation !== this.generation) throw new Error('Cancelled');
         if (!this.protocol) {
-          const protocol = (this.protocol = new ReviewProtocol());
+          const protocol = (this.protocol = new ReviewProtocol(this.engineInfo));
           this.engine = new OwnedReviewEngine(
-            { ...info, assets: { ...info.assets } },
+            { ...this.engineInfo, assets: { ...this.engineInfo.assets } },
             s => {
               if (s?.error) protocol.fail(new Error(s.error));
               else if (s?.download) this.status('Loading Stockfish review…');
@@ -192,7 +207,7 @@ export class ReviewFish {
             protocol,
           );
         }
-        return this.protocol.search(fen, moves, depth, time, signal);
+        return this.protocol.search(fen, moves, depth, time, signal, session);
       });
     this.tail = job;
     return job;

@@ -62,6 +62,45 @@ describe('Mute Chess native analysis extensions', () => {
           game.name + ' ply ' + i,
         );
   });
+  for (const file of [
+    'stockfish18-fast.json',
+    'stockfish18-balanced-thorough.json',
+    'stockfish-light-fast.json',
+    'stockfish-light-balanced-thorough.json',
+  ]) {
+    test(`${file}: every Mobile Maia mode retains exact complete PVs and independent EC labels`, () => {
+      for (const game of fixture(file).runs) {
+        const reviews = game.positions.map((fen: string, i: number) => {
+          const parser = new SearchSnapshots(
+            new Set(legalUcis(fen)),
+            Math.min(2, legalUcis(fen).length),
+            position(fen).turn === 'white',
+          );
+          game.scores[i].raw.forEach((line: string) => parser.add(line));
+          if (parser.completed) {
+            assert.deepEqual(
+              parser.completed.lines.map(line => [line.cp || 0, line.mate ?? null, line.moves]),
+              game.scores[i].lines.map((line: any) => [line.cp, line.mate ?? null, line.moves]),
+              `${game.name} ${game.quality} ply ${i}`,
+            );
+            return parser.completed;
+          }
+          return { depth: 99, lines: [{ ...terminalScore(fen), moves: [] }] };
+        });
+        for (let i = 1; i < game.positions.length; i++) {
+          const symbol = annotation(
+            i > 1 ? reviews[i - 2].lines[0] : undefined,
+            reviews[i - 1],
+            reviews[i].lines[0],
+            position(game.positions[i - 1]).turn,
+            game.moves[i - 1],
+            !position(game.positions[i]).isEnd() && game.material[i - 1] > -game.material[i] + 100,
+          );
+          assert.equal(symbol, game.annotations[i - 1], `${game.name} ${game.quality} ply ${i}`);
+        }
+      }
+    });
+  }
   test('history tensor bytes match all independent native Maia fixtures', () => {
     for (const f of fixture('maia-5m.json')) {
       const tokens = encodeHistory(f.historyFens, f.history);
@@ -140,5 +179,43 @@ describe('Mute Chess native analysis extensions', () => {
     assert.equal(classify(input).symbol, '!');
     assert.equal(accuracy({ mate: 1 }, { mate: 1 }, 'white'), 100);
     assert.deepEqual(terminalScore('7k/6Q1/5K2/8/8/8/8/8 b - - 0 1'), { mate: 1 });
+  });
+  test('every mode rejects wrong-quality, shallow, contradictory and unstable-predecessor standout evidence', () => {
+    for (const depth of [12, 14, 16]) {
+      const snapshot = (cp: number, move: string, second?: number) => ({
+        depth,
+        lines: [{ cp, moves: [move] }, ...(second === undefined ? [] : [{ cp: second, moves: ['d7d5'] }])],
+      });
+      const prior = snapshot(0, 'e2e4');
+      const before = snapshot(-300, 'e7e5', 10);
+      const next = snapshot(-300, 'g1f3');
+      const quality = String(depth);
+      const reviews: Review[] = [
+        { current: prior, previous: snapshot(-300, 'e2e4'), quality },
+        { current: before, previous: before, quality },
+        { current: next, previous: next, quality },
+      ];
+      const positions = [start, after(start, 'e2e4'), after(after(start, 'e2e4'), 'e7e5')];
+      const input = { positions, reviews, move: 'e7e5' };
+      assert.equal(classify(input).provisional, '!');
+      assert.equal(classify(input).withheld, true, 'Good also depends on the predecessor');
+      reviews[0].previous = prior;
+      assert.equal(classify(input).symbol, '!');
+      reviews[2].quality = 'other';
+      assert.equal(classify(input).withheld, true);
+      reviews[2].quality = quality;
+      const confirmation = reviews.map(r => ({ ...r }));
+      confirmation[1] = { ...confirmation[1], current: { ...before, depth: depth - 1 } };
+      assert.equal(classify({ ...input, confirmation }).withheld, true);
+      confirmation[1] = { ...reviews[1], quality: 'other' };
+      assert.equal(classify({ ...input, confirmation }).withheld, true);
+      confirmation[1] = reviews[1];
+      confirmation[2] = { ...reviews[2], current: snapshot(300, 'g1f3') };
+      assert.equal(
+        classify({ ...input, confirmation }).withheld,
+        true,
+        'explicit whole-window counterevidence vetoes iterative stability',
+      );
+    }
   });
 });

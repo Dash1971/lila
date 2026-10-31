@@ -5,6 +5,7 @@ import { pubsub } from 'lib/pubsub';
 import { bind, confirm, hl, onInsert, type VNode } from 'lib/view';
 
 import type AnalyseCtrl from './ctrl';
+import { boardPgn, downloadBoardPgn } from './noSweatPgn';
 
 // The free board uses the same local review, chart and summary as game replay.
 // Only the under-board shell differs: editable FEN/PGN replaces game exports.
@@ -17,6 +18,7 @@ export class BoardReview {
   private dirty = false;
   private failed = false;
   private button?: HTMLButtonElement;
+  private copyStatus = '';
 
   constructor(private readonly ctrl: AnalyseCtrl) {}
 
@@ -45,7 +47,7 @@ export class BoardReview {
       [
         hl('div.analyse__underboard__menu', { attrs: { role: 'tablist' } }, [
           tab('computer-analysis', i18n.site.computerAnalysis),
-          tab('fen-pgn', i18n.study.shareAndExport),
+          tab('fen-pgn', 'Import & export'),
         ]),
         hl('div.analyse__underboard__panels', [
           hl('div.computer-analysis', {
@@ -63,10 +65,49 @@ export class BoardReview {
               },
             },
           }),
-          hl('div.fen-pgn', { class: { active: this.selected === 'fen-pgn' } }, [inputs]),
+          hl('div.fen-pgn', { class: { active: this.selected === 'fen-pgn' } }, [
+            hl('div.nosweat-board-transfer', [
+              hl('div.nosweat-board-export', [
+                hl(
+                  'button.button.button-thin',
+                  { attrs: { type: 'button' }, hook: bind('click', () => void this.copy('pgn')) },
+                  'Copy PGN',
+                ),
+                hl(
+                  'button.button.button-thin',
+                  { attrs: { type: 'button' }, hook: bind('click', () => downloadBoardPgn(this.ctrl)) },
+                  'Download PGN',
+                ),
+                hl(
+                  'button.button.button-thin',
+                  { attrs: { type: 'button' }, hook: bind('click', () => void this.copy('fen')) },
+                  'Copy FEN',
+                ),
+              ]),
+              hl(
+                'p',
+                'PGN includes the current moves, variations, comments, move judgments, and evaluations.',
+              ),
+              hl('p', { attrs: { role: 'status', 'aria-live': 'polite' } }, this.copyStatus),
+              hl('h3', 'Import or edit'),
+              hl('p', 'Paste PGN or FEN below to replace the board. Press Enter to import.'),
+              inputs,
+            ]),
+          ]),
         ]),
       ],
     );
+  }
+
+  private async copy(kind: 'pgn' | 'fen'): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(kind === 'pgn' ? boardPgn(this.ctrl) : this.ctrl.node.fen);
+      this.copyStatus = `${kind.toUpperCase()} copied.`;
+    } catch {
+      this.copyStatus =
+        'Clipboard access is unavailable. Download the PGN or select and copy the text below.';
+    }
+    this.ctrl.redraw();
   }
 
   private readonly start = () => {

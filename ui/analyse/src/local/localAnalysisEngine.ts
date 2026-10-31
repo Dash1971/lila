@@ -105,27 +105,26 @@ export class LocalAnalysisEngine {
 
   async verifyBrilliants(
     result: LocalAnalysisResult,
-    progress: (done: number, total: number) => void,
+    progress: (done: number, total: number, phase?: string) => void,
   ): Promise<boolean> {
     const nodes = mainlineNodeList(result.localUpdate.tree);
     const key = mainlineKey(nodes);
-    const current = () =>
-      this.ctrl.isCevalAllowed() && !document.hidden && key === mainlineKey(this.ctrl.mainline);
+    const current = () => this.ctrl.isCevalAllowed() && key === mainlineKey(this.ctrl.mainline);
     const abort = (this.brilliantAbort = new AbortController());
-    const fish = new ReviewFish(() => {});
+    const selected = this.ctrl.ceval.engines.getEngine({ id: result.localUpdate.analysis?.engine?.id });
+    if (!selected || selected.tech === 'EXTERNAL') throw new Error('Classification engine unavailable');
+    const fish = new ReviewFish(() => {}, selected);
     const classifier = new ClassifierClient(
       () => new Worker(site.asset.url(site.asset.jsModule('analyse.nosweatWorker')), { type: 'module' }),
     );
-    const cancel = () => {
-      if (document.hidden) abort.abort();
-    };
-    document.addEventListener('visibilitychange', cancel);
+    // The native review is allowed to run in the background. Its classifications
+    // must finish too; hiding a tab must not turn a partial result into "Done".
     const shutdown = () => abort.abort();
     window.addEventListener('pagehide', shutdown);
     this.busy = true;
     try {
       const verifier = new FullGameClassifier({
-        search: (fen, signal, depth, time) => fish.search(fen, [], signal, depth, time),
+        search: (fen, signal, depth, time, session) => fish.search(fen, [], signal, depth, time, session),
         classify: (input, signal) => classifier.classify(input, signal),
       });
       const candidates = nodes.map(n =>
@@ -150,7 +149,6 @@ export class LocalAnalysisEngine {
       this.busy = false;
       classifier.release();
       fish.destroy();
-      document.removeEventListener('visibilitychange', cancel);
       window.removeEventListener('pagehide', shutdown);
     }
   }

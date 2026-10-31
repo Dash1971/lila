@@ -49,6 +49,7 @@ export interface AnalyseData {
   moretimeable: boolean;
   analysis?: AnalysisMeta;
   userAnalysis: boolean;
+  noSweatPgnHeaders?: [string, string][];
   forecast?: ForecastData;
   sidelines?: TreeNode[][];
   treeParts: TreeNodeBase[];

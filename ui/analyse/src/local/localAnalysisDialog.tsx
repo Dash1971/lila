@@ -194,14 +194,17 @@ export class LocalAnalysisDialog {
       let brillianceUnavailable = false;
       if (this.ctrl.noSweat) {
         try {
-          const verified = await engine.verifyBrilliants(result, (done, total) => {
-            this.status = `Classifying moves: ${done} / ${total}`;
-            this.chart?.updateData(this.ctrl.data, engine.nodes);
-            redraw();
-          });
+          const verified = await engine.verifyBrilliants(
+            result,
+            (done, total, phase = 'Classifying moves') => {
+              this.status = `${phase}: ${done} / ${total}`;
+              this.chart?.updateData(this.ctrl.data, engine.nodes);
+              redraw();
+            },
+          );
           if (!verified) {
             this.engine = undefined;
-            this.status = i18n.site.done;
+            this.status = 'Move classification interrupted; run Analyze game again to complete it.';
             redraw();
             return;
           }
@@ -211,7 +214,7 @@ export class LocalAnalysisDialog {
         } catch (error) {
           if (String(error).includes('Cancelled')) {
             this.engine = undefined;
-            this.status = i18n.site.done;
+            this.status = 'Move classification interrupted; run Analyze game again to complete it.';
             redraw();
             return;
           }

@@ -4,11 +4,13 @@ import { makeFen } from 'chessops/fen';
 import { makeVariant, parsePgn, startingPosition, type ChildNode, type PgnNodeData } from 'chessops/pgn';
 import { makeSanAndPlay, parseSan } from 'chessops/san';
 
+import { randomId } from 'lib/algo';
 import type { Player } from 'lib/game';
 import { completeNode } from 'lib/tree/node';
 import type { TreeNode } from 'lib/tree/types';
 
 import type { AnalyseData, Game } from './interfaces';
+import { moveClasses } from './noSweatFullReview';
 
 const readNode = (
   variant: VariantKey,
@@ -16,6 +18,7 @@ const readNode = (
   pos: Position,
   ply: Ply,
   withChildren = true,
+  preserveAnnotations = false,
 ): TreeNode => {
   const move = parseSan(pos, node.data.san);
   if (!move) throw new Error(`Can't play ${node.data.san} at move ${Math.ceil(ply / 2)}, ply ${ply}`);
@@ -24,7 +27,18 @@ const readNode = (
     san: makeSanAndPlay(pos, move),
     fen: makeFen(pos.toSetup()),
     uci: makeUci(move),
-    children: withChildren ? node.children.map(child => readNode(variant, child, pos.clone(), ply + 1)) : [],
+    glyphs: preserveAnnotations
+      ? node.data.nags?.map(id => {
+          const known = moveClasses.find(c => c.id === id);
+          return { id, symbol: known?.symbol ?? `$${id}`, name: known?.name ?? 'PGN annotation' };
+        })
+      : undefined,
+    comments: preserveAnnotations
+      ? node.data.comments?.map(text => ({ id: randomId().slice(0, 4), by: 'PGN', text }))
+      : undefined,
+    children: withChildren
+      ? node.children.map(child => readNode(variant, child, pos.clone(), ply + 1, true, preserveAnnotations))
+      : [],
   });
 };
 
@@ -54,8 +68,10 @@ export default function (pgn: string, standardOnly = false): Partial<AnalyseData
   while (tree.children.length) {
     const [mainline, ...variations] = tree.children;
     const ply = initialPly + index + 1;
-    sidelines.push(variations.map(variation => readNode(variant, variation, pos.clone(), ply)));
-    treeParts.push(readNode(variant, mainline, pos, ply, false));
+    sidelines.push(
+      variations.map(variation => readNode(variant, variation, pos.clone(), ply, true, standardOnly)),
+    );
+    treeParts.push(readNode(variant, mainline, pos, ply, false, standardOnly));
     tree = mainline;
     index += 1;
   }
@@ -81,6 +97,7 @@ export default function (pgn: string, standardOnly = false): Partial<AnalyseData
     treeParts,
     sidelines,
     userAnalysis: true,
+    ...(standardOnly && { noSweatPgnHeaders: [...game.headers] }),
   };
 }
 
