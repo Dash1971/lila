@@ -183,16 +183,10 @@ export function renderInputs(ctrl: AnalyseCtrl, importing = false): VNode | unde
         },
         hook: {
           ...onInsert<HTMLInputElement>(el => {
-            el.value = defined(ctrl.fenInput) ? ctrl.fenInput : importing ? '' : ctrl.node.fen;
+            el.value = defined(ctrl.fenInput) ? ctrl.fenInput : ctrl.node.fen;
             el.addEventListener('change', () => {
-              if (!importing && el.value !== ctrl.node.fen && el.reportValidity())
-                ctrl.changeFen(el.value.trim());
+              if (el.value !== ctrl.node.fen && el.reportValidity()) ctrl.changeFen(el.value.trim());
             });
-            if (importing)
-              el.addEventListener('keydown', event => {
-                if (event.key === 'Enter' && el.value.trim() && el.reportValidity())
-                  ctrl.changeFen(el.value.trim());
-              });
             el.addEventListener('input', () => {
               ctrl.fenInput = el.value;
               el.setCustomValidity(parseFen(el.value.trim()).isOk ? '' : 'Invalid FEN');
@@ -201,24 +195,12 @@ export function renderInputs(ctrl: AnalyseCtrl, importing = false): VNode | unde
           postpatch: (_, vnode) => {
             const el = vnode.elm as HTMLInputElement;
             if (!defined(ctrl.fenInput)) {
-              el.value = importing ? '' : ctrl.node.fen;
+              el.value = ctrl.node.fen;
               el.setCustomValidity('');
             } else if (el.value !== ctrl.fenInput) el.value = ctrl.fenInput;
           },
         },
       }),
-      importing &&
-        hl(
-          'button.button.text',
-          {
-            attrs: { type: 'button', 'data-icon': licon.PlayTriangle },
-            hook: bind('click', event => {
-              const input = (event.currentTarget as HTMLElement).parentElement!.querySelector('input')!;
-              if (input.value.trim() && input.reportValidity()) ctrl.changeFen(input.value.trim());
-            }),
-          },
-          'Import FEN',
-        ),
     ]),
     hl('div.pgn', [
       hl('div.pair', [
@@ -265,7 +247,7 @@ export function renderInputs(ctrl: AnalyseCtrl, importing = false): VNode | unde
         }),
         !isMobile() &&
           hl(
-            importing ? 'button.button.text' : 'button.button.button-thin.bottom-item.bottom-action.text',
+            'button.button.button-thin.bottom-item.bottom-action.text',
             {
               attrs: { ...dataIcon(licon.PlayTriangle), ...(importing && { type: 'button' }) },
               hook: bind('click', event => {

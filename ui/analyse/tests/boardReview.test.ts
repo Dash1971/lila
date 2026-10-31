@@ -213,6 +213,13 @@ test('separate native Import and Export tabs preserve drafts and export only the
   input.value = '1. d4 d5';
   input.dispatchEvent(new window.Event('input'));
   const fenInput = root.querySelector<HTMLInputElement>('[aria-label="FEN to import"]')!;
+  assert.equal(fenInput.value, fen, 'FEN starts with the current native position');
+  assert.equal(root.querySelectorAll('.import button').length, 1, 'only native PGN action remains');
+  assert.ok(root.querySelector('.import .pgn .button-thin.bottom-item.bottom-action'));
+  fenInput.value = 'invalid';
+  fenInput.dispatchEvent(new window.Event('input'));
+  fenInput.dispatchEvent(new window.Event('change'));
+  assert.equal(changeFen.mock.callCount(), 0, 'invalid FEN must not navigate');
   fenInput.value = child.fen;
   fenInput.dispatchEvent(new window.Event('input'));
   fenInput.dispatchEvent(new window.Event('change'));
@@ -233,16 +240,14 @@ test('separate native Import and Export tabs preserve drafts and export only the
   assert.ok(downloadedPgn.includes('e4'));
   assert.equal(downloadedPgn.includes('d4'), false);
   assert.equal(changePgn.mock.callCount(), 0);
-  assert.equal(changeFen.mock.callCount(), 0);
+  assert.equal(changeFen.mock.callCount(), 1);
+  assert.deepEqual(changeFen.mock.calls[0].arguments, [child.fen]);
   tab('Import').click();
   assert.equal(root.querySelector('[aria-label="PGN to import"]'), input);
   assert.equal(input.value, '1. d4 d5');
   root.querySelector<HTMLButtonElement>('.import .pgn button')!.click();
   assert.deepEqual(changePgn.mock.calls[0].arguments, ['1. d4 d5', true]);
-  Array.from(root.querySelectorAll<HTMLButtonElement>('.import button'))
-    .find(el => el.textContent === 'Import FEN')!
-    .click();
-  assert.deepEqual(changeFen.mock.calls[0].arguments, [child.fen]);
+  assert.equal(changeFen.mock.callCount(), 1, 'tab switches must not re-import the draft');
   patch(vnode, hl('div'));
   root.remove();
   ctrl.pgnInput = ctrl.fenInput = undefined;
