@@ -30,3 +30,60 @@ class NoSweatStudyPlanTest extends munit.FunSuite:
     assertEquals(plan.maximumConcurrency, 22)
     assertEquals(plan.workers, 2)
     assertEquals(List(0, 2000, 2999, 3000).map(plan.capacity), List.fill(4)(22))
+
+  test("the new rating establishment has a separate 3000-game budget and fixed resource plan"):
+    val plan = NoSweatStudyPlan.find("rating-establishment-v1").get
+    assertEquals(plan.maximumAdmitted, 3000)
+    assertEquals(plan.maximumConcurrency, 22)
+    assertEquals(plan.workers, 2)
+    assertEquals(List(0, 2000, 2999, 3000).map(plan.capacity), List.fill(4)(22))
+    val start = NoSweatStudyPlan.establishmentStart
+    assert(plan.establishmentAdmission(start, start, 0))
+    assert(plan.establishmentAdmission(start, start, 2999))
+    assert(!plan.establishmentAdmission(start, start, 3000))
+    assert(!plan.establishmentAdmission(start, start, -1))
+
+  test("the overnight scope cannot reopen old public runs or use another private fixture"):
+    val plan = NoSweatStudyPlan.find("rating-establishment-v1").get
+    val start = NoSweatStudyPlan.establishmentStart
+    assert(plan.establishmentScope("r20261031n163", true, start))
+    assert(plan.establishmentScope("q20261031n163", false, start))
+    assert(!plan.establishmentScope("r20261031p137", true, start))
+    assert(!plan.establishmentScope("r20261031n163", false, start))
+    assert(!plan.establishmentScope("q20261031n163", true, start))
+    assert(!plan.establishmentScope("q20261031p137", false, start))
+
+  test("overnight preparation consumes the fixed eight-hour window without extending deadlines"):
+    val plan = NoSweatStudyPlan.find("rating-establishment-v1").get
+    val start = NoSweatStudyPlan.establishmentStart
+    val admissions = NoSweatStudyPlan.establishmentAdmissionEnd
+    val deadline = NoSweatStudyPlan.establishmentDeadline
+    assertEquals(deadline - start, 8L * 60 * 60000)
+    assertEquals(deadline - admissions, 30L * 60000)
+    assert(!plan.establishmentScope("r20261031n163", true, start - 1))
+    assert(!plan.establishmentScope("r20261031n163", true, admissions))
+    assert(plan.establishmentScope("r20261031n163", true, start + 60 * 60000))
+    assert(!plan.establishmentAdmission(start - 1, start, 0))
+    assert(plan.establishmentAdmission(admissions - 1, start, 2999))
+    assert(!plan.establishmentAdmission(admissions, start, 0))
+    assert(!plan.establishmentAdmission(deadline, start, 0))
+
+  test("earlier profiles cannot use the overnight scope or its admission hook"):
+    for key <- List(
+        "pilot-10-v1",
+        "ramp-22-v1",
+        "calibration-200-v1",
+        "strength-predictor-v1",
+        "strength-validation-continuation-v1"
+      )
+    do
+      val plan = NoSweatStudyPlan.find(key).get
+      assert(!plan.ratingEstablishment)
+      assert(!plan.establishmentScope("r20261031n163", true, NoSweatStudyPlan.establishmentStart))
+      assert(
+        !plan.establishmentAdmission(
+          NoSweatStudyPlan.establishmentStart,
+          NoSweatStudyPlan.establishmentStart,
+          0
+        )
+      )

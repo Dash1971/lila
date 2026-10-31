@@ -37,13 +37,19 @@ final class NoSweatStudy(env: Env)(using ec: Executor):
     "Invalid dated validation continuation scope"
   )
   private lazy val started = config.get[Long]("nosweat.study.startedEpochMillis")
+  require(
+    !requested || !plan.ratingEstablishment || plan.establishmentScope(run, publicRatings, started),
+    "Invalid dated rating establishment scope"
+  )
   private lazy val admissionEnd =
-    if continuation then java.time.Instant.parse("2026-10-31T12:30:00Z").toEpochMilli
+    if plan.ratingEstablishment then NoSweatStudyPlan.establishmentAdmissionEnd
+    else if continuation then java.time.Instant.parse("2026-10-31T12:30:00Z").toEpochMilli
     else if plan.key == "strength-predictor-v1" then
       java.time.Instant.parse("2026-10-31T10:04:39Z").toEpochMilli
     else started + 75L * 60000
   private lazy val deadline =
-    if continuation then java.time.Instant.parse("2026-10-31T13:00:00Z").toEpochMilli
+    if plan.ratingEstablishment then NoSweatStudyPlan.establishmentDeadline
+    else if continuation then java.time.Instant.parse("2026-10-31T13:00:00Z").toEpochMilli
     else if plan.key == "strength-predictor-v1" then
       java.time.Instant.parse("2026-10-31T10:34:39Z").toEpochMilli
     else started + 90L * 60000
@@ -222,6 +228,11 @@ final class NoSweatStudy(env: Env)(using ec: Executor):
       _ <- env.noSweat.ready
       docs <- documents
       _ = check(!continuation || docs.size >= continuationAdmitted, 409, "Continuation predecessor missing")
+      _ = check(
+        !plan.ratingEstablishment || plan.establishmentAdmission(now, started, docs.size),
+        409,
+        "Rating establishment admissions closed"
+      )
       publicGames <- env.noSweat.current()
       busy = docs
         .filter(active)
