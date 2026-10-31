@@ -27,12 +27,25 @@ final class NoSweatStudy(env: Env)(using ec: Executor):
       config.getOptional[String]("nosweat.study.profile").getOrElse("pilot-10-v1")
     )
     .getOrElse(throw IllegalArgumentException("Unknown study profile"))
+  private val continuation = plan.key == "strength-validation-continuation-v1"
+  private val continuationAdmitted =
+    config.getOptional[Int]("nosweat.study.continuationAdmitted").getOrElse(0)
+  require(
+    !continuation ||
+      (continuationAdmitted >= 2000 && continuationAdmitted < 3000 &&
+        (!publicRatings || run == "r20261031p137")),
+    "Invalid dated validation continuation scope"
+  )
   private lazy val started = config.get[Long]("nosweat.study.startedEpochMillis")
   private lazy val admissionEnd =
-    if plan.key == "strength-predictor-v1" then java.time.Instant.parse("2026-10-31T10:04:39Z").toEpochMilli
+    if continuation then java.time.Instant.parse("2026-10-31T12:30:00Z").toEpochMilli
+    else if plan.key == "strength-predictor-v1" then
+      java.time.Instant.parse("2026-10-31T10:04:39Z").toEpochMilli
     else started + 75L * 60000
   private lazy val deadline =
-    if plan.key == "strength-predictor-v1" then java.time.Instant.parse("2026-10-31T10:34:39Z").toEpochMilli
+    if continuation then java.time.Instant.parse("2026-10-31T13:00:00Z").toEpochMilli
+    else if plan.key == "strength-predictor-v1" then
+      java.time.Instant.parse("2026-10-31T10:34:39Z").toEpochMilli
     else started + 90L * 60000
   private val closed = AtomicBoolean(false)
   private val polled = AtomicBoolean(false)
@@ -208,6 +221,7 @@ final class NoSweatStudy(env: Env)(using ec: Executor):
     for
       _ <- env.noSweat.ready
       docs <- documents
+      _ = check(!continuation || docs.size >= continuationAdmitted, 409, "Continuation predecessor missing")
       publicGames <- env.noSweat.current()
       busy = docs
         .filter(active)

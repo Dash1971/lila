@@ -23,3 +23,10 @@ class NoSweatStudyPlanTest extends munit.FunSuite:
     assertEquals(plan.maximumConcurrency, 22)
     assertEquals(plan.workers, 2)
     assertEquals(List(0, 1, 99, 100, 199, 200).map(plan.capacity), List.fill(6)(22))
+
+  test("the dated validation continuation retains one aggregate 3000-game budget"):
+    val plan = NoSweatStudyPlan.find("strength-validation-continuation-v1").get
+    assertEquals(plan.maximumAdmitted, 3000)
+    assertEquals(plan.maximumConcurrency, 22)
+    assertEquals(plan.workers, 2)
+    assertEquals(List(0, 2000, 2999, 3000).map(plan.capacity), List.fill(4)(22))
