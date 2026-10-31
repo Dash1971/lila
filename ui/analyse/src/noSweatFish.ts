@@ -105,6 +105,7 @@ class ReviewProtocol extends Protocol {
     time: number,
     signal: AbortSignal,
     session?: symbol,
+    multiPv = 2,
   ): Promise<Review> {
     let deadline: ReturnType<typeof setTimeout> | undefined;
     try {
@@ -121,6 +122,10 @@ class ReviewProtocol extends Protocol {
     const terminal = terminalScore(fen);
     if (terminal) return { current: { depth: 99, lines: [{ ...terminal, moves: [] }] }, terminal: true };
     const legal = new Set(moves.length ? moves : legalUcis(fen));
+    const count = Math.min(
+      legal.size,
+      Number.isFinite(multiPv) ? Math.max(1, Math.min(3, Math.floor(multiPv))) : 2,
+    );
     return new Promise((resolve, reject) => {
       if (this.task) {
         reject(new Error('Review queue busy'));
@@ -135,7 +140,7 @@ class ReviewProtocol extends Protocol {
         reject,
         signal,
         started: false,
-        snapshots: new SearchSnapshots(legal, Math.min(2, legal.size), position(fen).turn === 'white'),
+        snapshots: new SearchSnapshots(legal, count, position(fen).turn === 'white'),
         timer: setTimeout(() => this.fail(new Error('Stockfish review timed out')), time + 15000),
       });
       signal.addEventListener(
@@ -157,7 +162,7 @@ class ReviewProtocol extends Protocol {
         this.output?.('setoption name Clear Hash');
       }
       this.session = session;
-      this.output?.('setoption name MultiPV value ' + Math.min(2, legal.size));
+      this.output?.('setoption name MultiPV value ' + count);
       this.output?.('isready');
     });
   }
@@ -190,6 +195,7 @@ export class ReviewFish {
     depth = 14,
     time = 1200,
     session?: symbol,
+    multiPv = 2,
   ): Promise<Review> {
     const generation = this.generation;
     const job = this.tail
@@ -207,7 +213,7 @@ export class ReviewFish {
             protocol,
           );
         }
-        return this.protocol.search(fen, moves, depth, time, signal, session);
+        return this.protocol.search(fen, moves, depth, time, signal, session, multiPv);
       });
     this.tail = job;
     return job;

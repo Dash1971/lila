@@ -44,6 +44,9 @@ cg-board square.nosweat-premove-dest { background:rgb(20 30 85 / .28); }
 .nosweat-review-graph a:focus circle { stroke:var(--c-primary); stroke-width:3; }
 .nosweat-computed-glyph { font-weight:bold; margin-left:.12em; }
 .nosweat-computed-glyph.brilliant { color:#15aabf; }
+/* Chessground 10.5 paints this badge inline; match Mobile Maia without changing its geometry. */
+.analyse { --c-brilliant:#15aabf; }
+.analyse .cg-custom-svgs circle[fill="#168226"] { fill:#15aabf; }
 .nosweat-computed-glyph.good { color:#12b886; }
 .nosweat-computed-glyph.interesting { color:#82c91e; }
 .nosweat-computed-glyph.dubious { color:#fab005; }
@@ -91,10 +94,15 @@ cg-board square.nosweat-premove-dest { background:rgb(20 30 85 / .28); }
 .nosweat-rating-explorer { background:var(--c-bg-box); padding:8px 10px; border-radius:5px; margin-top:8px; height:190px; display:grid; grid-template-rows:25px minmax(0,1fr); }
 .nosweat-rating-heading { display:flex; align-items:baseline; gap:10px; min-width:0; }
 .nosweat-rating-heading h3 { margin:0; font-size:13px; white-space:nowrap; }
-.nosweat-chart-legend { display:flex; align-items:center; justify-content:start; gap:7px; min-width:0; }
-.nosweat-chart-legend .fbt { padding:0; font-size:12px; text-transform:none; }
-.nosweat-rating-chart { min-width:0; min-height:0; }
+.nosweat-chart-legend { display:flex; align-items:center; justify-content:start; gap:7px; min-width:0; flex:1; overflow-x:auto; overflow-y:hidden; padding:2px; scrollbar-width:thin; }
+.nosweat-chart-legend .fbt { flex:0 0 auto; padding:0; font-size:12px; text-transform:none; }
+.nosweat-rating-chart { min-width:0; min-height:0; position:relative; }
 .nosweat-rating-chart svg { width:100%; height:100%; display:block; }
+.nosweat-rating-tooltip { position:absolute; top:5px; right:36px; min-width:118px; padding:7px 9px; background:var(--c-bg-box); border:1px solid var(--c-border); border-radius:4px; box-shadow:0 3px 12px #0006; font-size:11px; font-variant-numeric:tabular-nums; z-index:3; pointer-events:none; }
+.nosweat-rating-tooltip[hidden] { display:none; }
+.nosweat-rating-tooltip strong { display:block; margin-bottom:3px; color:var(--c-font); }
+.nosweat-rating-tooltip-row { display:flex; justify-content:space-between; gap:16px; line-height:17px; white-space:nowrap; }
+.nosweat-chart-legend button:focus-visible { outline:2px solid currentColor; outline-offset:1px; }
 .nosweat-maia-feedback { height:22px; padding:2px 3px; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .nosweat-return { margin:0; padding:0; font-size:11px; }
 .nosweat-rating-dialog { width:min(24em,90vw); padding:1.5em; }
@@ -107,8 +115,10 @@ cg-board square.nosweat-premove-dest { background:rgb(20 30 85 / .28); }
 .nosweat-summary th:nth-child(2) { width:50%; }
 .nosweat-summary-player { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .nosweat-summary-player a { display:block; min-width:0; overflow:hidden; text-overflow:ellipsis; }
-.nosweat-summary td { padding:.2em .15em; text-align:center; }
+.nosweat-summary td { padding:.3em .15em; text-align:center; line-height:1.5; }
 .nosweat-summary td:nth-child(2) { white-space:nowrap; font-size:.95em; }
+.nosweat-summary-label { display:inline-grid; grid-template-columns:1.8em minmax(0,1fr); align-items:baseline; column-gap:.65em; width:10em; max-width:100%; text-align:left; }
+.nosweat-summary-symbol { text-align:center; font-weight:bold; }
 .nosweat-summary td button { min-width:2em; padding:.15em; }
 .nosweat-summary .accuracy td { border-top:1px solid var(--c-border); padding-top:.5em; font-weight:bold; }
 .nosweat-summary > .button { margin-top:.7em; font-size:.85em; }

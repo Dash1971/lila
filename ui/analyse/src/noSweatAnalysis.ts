@@ -18,7 +18,14 @@ import { ReviewFish, type Review } from './noSweatFish';
 import { gameReviewQualities, gameReviewQuality } from './noSweatFullReview';
 import { OpeningLabel } from './noSweatOpening';
 import { readEnginePreferences, type EnginePreferences } from './noSweatPreferences';
-import { ratingSamples as samples, ratingChart, ratingLegend } from './noSweatRatingChart';
+import {
+  ratingSamples as samples,
+  chartMoves,
+  ratingChart,
+  ratingLegend,
+  type RatingChartOptions,
+} from './noSweatRatingChart';
+import { ratingChartQualities } from './noSweatRatingChartQuality';
 
 interface MaiaClient {
   predict(input: {
@@ -66,11 +73,13 @@ export class NoSweatAnalysis {
   fishArrows = true;
   ratingTable = true;
   private ratingContext = '';
+  private chartHover?: { fen: string; uci: Uci };
+  private chartNotation = { fen: '', moves: new Map<string, string>() };
   private ratingKey(): string {
     return JSON.stringify([
       this.model,
       this.config?.models[this.model].sha256,
-      this.opponentElo,
+      'matched-rating-sweep-v2',
       this.history,
       this.history ? this.historyFens().slice(-8) : this.historyFens().slice(-1),
       this.ctrl.path,
@@ -207,6 +216,7 @@ export class NoSweatAnalysis {
       this.history ? fens.slice(-8) : fens.slice(-1),
     ]);
   private cancel(): void {
+    this.hoverChartMove();
     this.generation++;
     this.abort.abort();
     this.abort = new AbortController();
@@ -391,11 +401,17 @@ export class NoSweatAnalysis {
     this.ctrl.playUci(uci);
     this.ctrl.redraw();
   };
-  private async review(fen: string, generation: number, moves: string[] = [], time = 1200): Promise<Review> {
-    const key = JSON.stringify(['sf19-candidate-depth12-v1', fen, moves, time]);
+  private async review(
+    fen: string,
+    generation: number,
+    moves: string[] = [],
+    time = 1200,
+    multiPv = 2,
+  ): Promise<Review> {
+    const key = JSON.stringify(['sf19-candidate-depth12-v2', fen, moves, time, multiPv]);
     const cached = this.reviewCache.get(key);
     if (cached) return cached;
-    const result = await this.fish.search(fen, moves, this.abort.signal, 12, time);
+    const result = await this.fish.search(fen, moves, this.abort.signal, 12, time, undefined, multiPv);
     if (!this.valid(generation)) throw new Error('Cancelled');
     this.reviewCache.set(key, result);
     if (this.reviewCache.size > 400) this.reviewCache.delete(this.reviewCache.keys().next().value!);
@@ -407,7 +423,13 @@ export class NoSweatAnalysis {
         [
           ...this.candidates.slice(0, this.expanded[0] ? undefined : 4),
           ...this.secondaryCandidates.slice(0, this.expanded[1] ? undefined : 4),
-        ].map(c => c.uci),
+        ]
+          .map(c => c.uci)
+          .concat(
+            this.ratingTable
+              ? chartMoves(this.byRating, this.chartPrimaryCandidates(), this.chartStockfishMoves())
+              : [],
+          ),
       ),
     ];
   }
@@ -418,7 +440,9 @@ export class NoSweatAnalysis {
     (async () => {
       const fen = this.ctrl.node.fen;
       if (!this.qualityRoot) {
-        const root = await this.review(fen, generation, [], 500);
+        // Chart candidates include the actual third SF root. Other ReviewFish
+        // callers and the native full-game/classifier engines keep two PVs.
+        const root = await this.review(fen, generation, [], 500, this.ratingTable ? 3 : 2);
         if (!this.valid(generation)) return;
         if (root.current.depth < 8) return;
         this.qualityRoot = root;
@@ -453,6 +477,13 @@ export class NoSweatAnalysis {
           this.qualityBusy = false;
           if (this.status === 'Loading Stockfish review…') this.status = '';
           this.ctrl.redraw();
+          // The last rating sample can arrive between queue completion and this
+          // continuation. Drain that new leader without retrying shallow roots.
+          if (
+            this.qualityRoot &&
+            this.visibleCandidates().some(move => !this.scores.has(move) && !this.qualityFailed.has(move))
+          )
+            this.colorCandidates();
         }
       });
   }
@@ -467,6 +498,62 @@ export class NoSweatAnalysis {
     );
     return candidateQuality(best, this.scores.get(uci)?.score, white);
   }
+
+  private chartStockfishMoves(): string[] {
+    if (!this.enabled || !this.analysisAllowed() || this.ctrl.threatMode()) return [];
+    const lines = this.qualityRoot?.current.lines ?? this.ctrl.node.ceval?.pvs ?? [];
+    return [...new Set(lines.slice(0, 3).flatMap(line => this.normalUci(line.moves[0]) ?? []))];
+  }
+
+  private chartPrimaryCandidates(): Candidate[] {
+    return this.byRating.get(this.selfElo) ?? (this.selfElo === this.opponentElo ? this.candidates : []);
+  }
+
+  private chartSan(uci: string, fen = this.ctrl.node.fen): string {
+    if (this.chartNotation.fen !== fen) this.chartNotation = { fen, moves: new Map() };
+    const cached = this.chartNotation.moves.get(uci);
+    if (cached) return cached;
+    const value = san(fen, uci);
+    this.chartNotation.moves.set(uci, value);
+    return value;
+  }
+
+  private readonly hoverChartMove = (uci?: string): void => {
+    if (uci) {
+      if (!this.enabled || !this.analysisAllowed() || this.ctrl.threatMode()) return;
+      this.chartHover = { fen: this.ctrl.node.fen, uci };
+      this.ctrl.ceval.hovering(this.chartHover);
+      this.ctrl.setAutoShapes();
+    } else if (this.chartHover) {
+      const active = this.ctrl.ceval.hovering();
+      if (active === this.chartHover) {
+        this.ctrl.ceval.hovering(null);
+        this.ctrl.setAutoShapes();
+      }
+      this.chartHover = undefined;
+    }
+  };
+
+  private chartOptions(): RatingChartOptions {
+    const fen = this.ctrl.node.fen;
+    const qualities = ratingChartQualities(
+      new Map([...this.scores].flatMap(([uci, result]) => (result ? [[uci, result.score] as const] : []))),
+      position(fen).turn === 'white',
+    );
+    return {
+      primary: this.chartPrimaryCandidates(),
+      stockfish: this.chartStockfishMoves(),
+      color: uci => qualities.get(uci)?.color ?? 'var(--c-font-dim)',
+      describe: (uci, rating, probability) => {
+        const quality = qualities.get(uci);
+        return `${this.chartSan(uci, fen)} · Maia ${rating} · ${(probability * 100).toFixed(1)}% · ${quality ? qualityLabels[quality.quality] + ' (Stockfish estimate)' : 'Stockfish quality not yet available'}`;
+      },
+      hover: uci => {
+        if (this.ctrl.node.fen === fen) this.hoverChartMove(uci);
+      },
+    };
+  }
+
   sampleRatings = (): void => {
     if (this.compareBusy || !this.enabled || !this.analysisAllowed()) return;
     const context = this.ratingKey();
@@ -484,9 +571,12 @@ export class NoSweatAnalysis {
         if (this.byRating.has(rating)) continue;
         this.status = 'Loading rating chart…';
         this.ctrl.redraw();
-        const result = await this.predict(fens, rating, generation);
+        // Maia's rating chart conditions BOTH players at the sampled rating.
+        // The independently configurable card inputs are not changed by a sweep.
+        const result = await this.predict(fens, rating, generation, rating);
         if (!this.valid(generation)) return;
         this.byRating.set(rating, result.candidates);
+        this.colorCandidates();
         this.ctrl.redraw();
       }
       if (!this.valid(generation)) return;
@@ -669,8 +759,9 @@ export class NoSweatAnalysis {
           hl('h3', 'Moves by Rating'),
           ratingLegend(
             this.byRating,
-            uci => san(this.ctrl.node.fen, uci),
+            uci => this.chartSan(uci),
             uci => this.preview(uci),
+            this.chartOptions(),
           ),
         ]),
         this.renderRatingChart(),
@@ -712,10 +803,11 @@ export class NoSweatAnalysis {
   private renderRatingChart(): VNode {
     return ratingChart(
       this.byRating,
-      uci => san(this.ctrl.node.fen, uci),
-      rating => this.chooseRating(rating, false, true),
+      uci => this.chartSan(uci),
+      rating => this.chooseRating(rating),
       uci => this.preview(uci),
       () => this.sideRedraw?.(),
+      this.chartOptions(),
     );
   }
 }

@@ -117,7 +117,14 @@ const doRender = (ctrl: AnalyseCtrl): VNode => {
               );
             return h('tr', [
               count('white'),
-              h('td', { attrs: { style: 'color:' + category.color } }, category.symbol + ' ' + category.name),
+              h(
+                'td',
+                { attrs: { style: 'color:' + category.color } },
+                h('span.nosweat-summary-label', [
+                  h('span.nosweat-summary-symbol', { attrs: { 'aria-hidden': 'true' } }, category.symbol),
+                  h('span', category.name),
+                ]),
+              ),
               count('black'),
             ]);
           }),
