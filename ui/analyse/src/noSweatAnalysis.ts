@@ -55,6 +55,7 @@ export class NoSweatAnalysis {
   expectedScore?: number;
   secondaryExpectedScore?: number;
   private sideRedraw?: () => void;
+  private sideHost?: HTMLElement;
   private opening?: OpeningLabel;
   mountOpening(element: HTMLElement): void {
     this.opening?.destroy();
@@ -356,6 +357,11 @@ export class NoSweatAnalysis {
     this.positionChanged(true);
   }
   mountSide(element: HTMLElement): void {
+    if (element === this.sideHost) {
+      this.sideRedraw?.();
+      return;
+    }
+    this.sideHost = element;
     const root = document.createElement('div');
     element.prepend(root);
     const patch = init([classModule, attributesModule]);

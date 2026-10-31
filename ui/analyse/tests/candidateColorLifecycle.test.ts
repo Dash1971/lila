@@ -42,3 +42,51 @@ test('turning analysis off invalidates an in-flight candidate color result', asy
   assert.equal((model as any).moveQuality('e2e4'), undefined);
   model.release();
 });
+
+test('reusing the native sidebar after an import keeps one current Maia panel', async t => {
+  const resizeObserver = Object.getOwnPropertyDescriptor(globalThis, 'ResizeObserver');
+  Object.defineProperty(globalThis, 'ResizeObserver', {
+    configurable: true,
+    value: class {
+      observe() {}
+      disconnect() {}
+    },
+  });
+  t.after(() => {
+    if (resizeObserver) Object.defineProperty(globalThis, 'ResizeObserver', resizeObserver);
+    else Reflect.deleteProperty(globalThis, 'ResizeObserver');
+  });
+  const ctrl = {
+    cevalEnabled: () => false,
+    ceval: { storedPv: () => {} },
+    opts: {},
+    node: { fen, children: [] },
+    nodeList: [{ fen }],
+    path: '',
+    isCevalAllowed: () => true,
+    setAutoShapes: () => {},
+    redraw: () => {},
+    threatMode: () => false,
+  } as unknown as AnalyseCtrl;
+  const model = new NoSweatAnalysis(ctrl);
+  await Promise.resolve();
+  const side = document.createElement('aside');
+  const native = document.createElement('div');
+  native.textContent = 'Native sidebar';
+  side.append(native);
+  document.body.append(side);
+  model.mountSide(side);
+  const panel = side.querySelector('[aria-label="Maia analysis"]');
+  assert.ok(panel);
+  side.remove();
+  document.body.append(side);
+  model.selfElo = 1700;
+  model.mountSide(side);
+  model.redrawSide();
+  assert.equal(side.querySelectorAll('[aria-label="Maia analysis"]').length, 1);
+  assert.equal(side.querySelector('[aria-label="Maia analysis"]'), panel);
+  assert.ok(side.querySelector('[aria-label="Change primary Maia rating, 1700"]'));
+  assert.equal(native.parentElement, side);
+  model.release();
+  side.remove();
+});
