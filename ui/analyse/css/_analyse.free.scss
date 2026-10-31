@@ -6,6 +6,11 @@
 
 $label-width: 5ch;
 
+.analyse__underboard__panels > .import {
+  padding: 1em;
+  overflow-y: auto;
+}
+
 .copyables {
   .pair {
     @extend %flex-center;

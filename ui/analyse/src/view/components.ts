@@ -157,7 +157,7 @@ export const renderBoard = ({ ctrl, study, playerBars, playerStrips }: ViewConte
 
 export const renderUnderboard = ({ ctrl, deps, study }: ViewContext): VNode =>
   ctrl.synthetic && ctrl.noSweat && !study && !ctrl.isEmbed
-    ? ctrl.noSweat.boardReview.view(renderInputs(ctrl))
+    ? ctrl.noSweat.boardReview.view(renderInputs(ctrl, true))
     : hl(
         'div.analyse__underboard',
         {
@@ -169,20 +169,30 @@ export const renderUnderboard = ({ ctrl, deps, study }: ViewContext): VNode =>
         study ? deps?.studyView.underboard(ctrl) : [renderInputs(ctrl)],
       );
 
-export function renderInputs(ctrl: AnalyseCtrl): VNode | undefined {
+export function renderInputs(ctrl: AnalyseCtrl, importing = false): VNode | undefined {
   if (ctrl.ongoing || !ctrl.data.userAnalysis) return undefined;
   if (ctrl.redirecting) return spinner();
   return hl('div.copyables', [
     hl('div.pair', [
       hl('label.name', 'FEN'),
       hl('input.copyable', {
-        attrs: { spellcheck: 'false', enterkeyhint: 'done' },
+        attrs: {
+          spellcheck: 'false',
+          enterkeyhint: 'done',
+          ...(importing && { 'aria-label': 'FEN to import', placeholder: 'FEN' }),
+        },
         hook: {
           ...onInsert<HTMLInputElement>(el => {
-            el.value = defined(ctrl.fenInput) ? ctrl.fenInput : ctrl.node.fen;
+            el.value = defined(ctrl.fenInput) ? ctrl.fenInput : importing ? '' : ctrl.node.fen;
             el.addEventListener('change', () => {
-              if (el.value !== ctrl.node.fen && el.reportValidity()) ctrl.changeFen(el.value.trim());
+              if (!importing && el.value !== ctrl.node.fen && el.reportValidity())
+                ctrl.changeFen(el.value.trim());
             });
+            if (importing)
+              el.addEventListener('keydown', event => {
+                if (event.key === 'Enter' && el.value.trim() && el.reportValidity())
+                  ctrl.changeFen(el.value.trim());
+              });
             el.addEventListener('input', () => {
               ctrl.fenInput = el.value;
               el.setCustomValidity(parseFen(el.value.trim()).isOk ? '' : 'Invalid FEN');
@@ -191,24 +201,48 @@ export function renderInputs(ctrl: AnalyseCtrl): VNode | undefined {
           postpatch: (_, vnode) => {
             const el = vnode.elm as HTMLInputElement;
             if (!defined(ctrl.fenInput)) {
-              el.value = ctrl.node.fen;
+              el.value = importing ? '' : ctrl.node.fen;
               el.setCustomValidity('');
             } else if (el.value !== ctrl.fenInput) el.value = ctrl.fenInput;
           },
         },
       }),
+      importing &&
+        hl(
+          'button.button.text',
+          {
+            attrs: { type: 'button', 'data-icon': licon.PlayTriangle },
+            hook: bind('click', event => {
+              const input = (event.currentTarget as HTMLElement).parentElement!.querySelector('input')!;
+              if (input.value.trim() && input.reportValidity()) ctrl.changeFen(input.value.trim());
+            }),
+          },
+          'Import FEN',
+        ),
     ]),
     hl('div.pgn', [
       hl('div.pair', [
         hl('label.name', 'PGN'),
         hl('textarea.copyable', {
-          attrs: { spellcheck: 'false' },
+          attrs: {
+            spellcheck: 'false',
+            ...(importing && {
+              'aria-label': 'PGN to import',
+              placeholder: String(i18n.site.pasteThePgnStringHere),
+            }),
+          },
           class: { 'is-error': !!ctrl.pgnError },
           hook: {
             ...onInsert<HTMLTextAreaElement>(el => {
-              el.value = defined(ctrl.pgnInput) ? ctrl.pgnInput : pgnExport.renderFullTxt(ctrl);
+              el.value = defined(ctrl.pgnInput)
+                ? ctrl.pgnInput
+                : importing
+                  ? ''
+                  : pgnExport.renderFullTxt(ctrl);
               const changePgnIfDifferent = () =>
-                el.value !== pgnExport.renderFullTxt(ctrl) && ctrl.changePgn(el.value, true);
+                (!importing || el.value.trim()) &&
+                (importing || el.value !== pgnExport.renderFullTxt(ctrl)) &&
+                ctrl.changePgn(el.value, true);
 
               el.addEventListener('input', () => (ctrl.pgnInput = el.value));
 
@@ -223,18 +257,23 @@ export function renderInputs(ctrl: AnalyseCtrl): VNode | undefined {
             postpatch: (_, vnode) => {
               (vnode.elm as HTMLTextAreaElement).value = defined(ctrl.pgnInput)
                 ? ctrl.pgnInput
-                : pgnExport.renderFullTxt(ctrl);
+                : importing
+                  ? ''
+                  : pgnExport.renderFullTxt(ctrl);
             },
           },
         }),
         !isMobile() &&
           hl(
-            'button.button.button-thin.bottom-item.bottom-action.text',
+            importing ? 'button.button.text' : 'button.button.button-thin.bottom-item.bottom-action.text',
             {
-              attrs: dataIcon(licon.PlayTriangle),
-              hook: bind('click', _ => {
-                const pgn = $('.copyables .pgn textarea').val() as string;
-                if (pgn !== pgnExport.renderFullTxt(ctrl)) ctrl.changePgn(pgn, true);
+              attrs: { ...dataIcon(licon.PlayTriangle), ...(importing && { type: 'button' }) },
+              hook: bind('click', event => {
+                const pgn = importing
+                  ? (event.currentTarget as HTMLElement).parentElement!.querySelector('textarea')!.value
+                  : ($('.copyables .pgn textarea').val() as string);
+                if ((!importing || pgn.trim()) && (importing || pgn !== pgnExport.renderFullTxt(ctrl)))
+                  ctrl.changePgn(pgn, true);
               }),
             },
             i18n.site.importPgn,

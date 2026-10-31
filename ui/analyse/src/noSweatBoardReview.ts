@@ -8,7 +8,7 @@ import type AnalyseCtrl from './ctrl';
 import { boardPgn, downloadBoardPgn } from './noSweatPgn';
 
 // The free board uses the same local review, chart and summary as game replay.
-// Only the under-board shell differs: editable FEN/PGN replaces game exports.
+// The unsaved board separates editable imports from native-styled local exports.
 export class BoardReview {
   private selected = 'computer-analysis';
   private panel?: HTMLElement;
@@ -18,7 +18,9 @@ export class BoardReview {
   private dirty = false;
   private failed = false;
   private button?: HTMLButtonElement;
-  private copyStatus = '';
+  private copied?: 'pgn' | 'fen';
+  private copyError = '';
+  private copyTimer?: ReturnType<typeof setTimeout>;
 
   constructor(private readonly ctrl: AnalyseCtrl) {}
 
@@ -42,12 +44,16 @@ export class BoardReview {
     return hl(
       'div.analyse__underboard',
       {
-        hook: onInsert(elm => this.ctrl.noSweat?.mountOpening(elm)),
+        hook: {
+          ...onInsert(elm => this.ctrl.noSweat?.mountOpening(elm)),
+          destroy: () => clearTimeout(this.copyTimer),
+        },
       },
       [
         hl('div.analyse__underboard__menu', { attrs: { role: 'tablist' } }, [
           tab('computer-analysis', i18n.site.computerAnalysis),
-          tab('fen-pgn', 'Import & export'),
+          tab('import', 'Import'),
+          tab('export', 'Export'),
         ]),
         hl('div.analyse__underboard__panels', [
           hl('div.computer-analysis', {
@@ -65,47 +71,74 @@ export class BoardReview {
               },
             },
           }),
-          hl('div.fen-pgn', { class: { active: this.selected === 'fen-pgn' } }, [
-            hl('div.nosweat-board-transfer', [
-              hl('div.nosweat-board-export', [
-                hl(
-                  'button.button.button-thin',
-                  { attrs: { type: 'button' }, hook: bind('click', () => void this.copy('pgn')) },
-                  'Copy PGN',
-                ),
-                hl(
-                  'button.button.button-thin',
-                  { attrs: { type: 'button' }, hook: bind('click', () => downloadBoardPgn(this.ctrl)) },
-                  'Download PGN',
-                ),
-                hl(
-                  'button.button.button-thin',
-                  { attrs: { type: 'button' }, hook: bind('click', () => void this.copy('fen')) },
-                  'Copy FEN',
-                ),
-              ]),
-              hl(
-                'p',
-                'PGN includes the current moves, variations, comments, move judgments, and evaluations.',
-              ),
-              hl('p', { attrs: { role: 'status', 'aria-live': 'polite' } }, this.copyStatus),
-              hl('h3', 'Import or edit'),
-              hl('p', 'Paste PGN or FEN below to replace the board. Press Enter to import.'),
-              inputs,
-            ]),
-          ]),
+          hl('div.import', { class: { active: this.selected === 'import' } }, [inputs]),
+          hl(
+            'div.fen-pgn',
+            { class: { active: this.selected === 'export' } },
+            this.selected === 'export' ? this.exportView() : [],
+          ),
         ]),
       ],
     );
   }
 
+  private exportView(): VNode[] {
+    const copyButton = (kind: 'pgn' | 'fen') =>
+      hl('button.copy-me__button.button', {
+        class: { 'button-metal': this.copied !== kind },
+        attrs: {
+          type: 'button',
+          title: `Copy ${kind.toUpperCase()}`,
+          'aria-label': this.copied === kind ? `${kind.toUpperCase()} copied` : `Copy ${kind.toUpperCase()}`,
+          'data-icon': this.copied === kind ? licon.Checkmark : licon.Clipboard,
+        },
+        hook: bind('click', event => {
+          event.stopPropagation();
+          void this.copy(kind);
+        }),
+      });
+    return [
+      hl('div', [
+        hl('strong', 'FEN'),
+        hl('div.copy-me.analyse__underboard__fen', [
+          hl('input.copy-me__target', {
+            attrs: { readonly: true, spellcheck: 'false', 'aria-label': 'FEN export' },
+            props: { value: this.ctrl.node.fen },
+          }),
+          copyButton('fen'),
+        ]),
+      ]),
+      hl('div', [
+        hl('strong', 'PGN'),
+        hl('div.copy-me', [
+          hl(
+            'button.copy-me__target.text',
+            {
+              attrs: { type: 'button', 'data-icon': licon.Download },
+              hook: bind('click', () => downloadBoardPgn(this.ctrl)),
+            },
+            'Download PGN',
+          ),
+          copyButton('pgn'),
+        ]),
+      ]),
+      ...(this.copyError ? [hl('p', { attrs: { role: 'status' } }, this.copyError)] : []),
+      hl('div.pgn', { attrs: { 'aria-label': 'PGN export', tabindex: 0 } }, boardPgn(this.ctrl)),
+    ];
+  }
+
   private async copy(kind: 'pgn' | 'fen'): Promise<void> {
     try {
       await navigator.clipboard.writeText(kind === 'pgn' ? boardPgn(this.ctrl) : this.ctrl.node.fen);
-      this.copyStatus = `${kind.toUpperCase()} copied.`;
+      this.copied = kind;
+      this.copyError = '';
+      clearTimeout(this.copyTimer);
+      this.copyTimer = setTimeout(() => {
+        this.copied = undefined;
+        this.ctrl.redraw();
+      }, 1000);
     } catch {
-      this.copyStatus =
-        'Clipboard access is unavailable. Download the PGN or select and copy the text below.';
+      this.copyError = 'Copy is unavailable. Select the FEN or PGN text, or download the PGN.';
     }
     this.ctrl.redraw();
   }

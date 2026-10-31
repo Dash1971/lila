@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { mock, test } from 'node:test';
-import { attributesModule, classModule, init } from 'snabbdom';
+import { attributesModule, classModule, propsModule, init } from 'snabbdom';
 
 import { pubsub } from 'lib/pubsub';
 import { hl } from 'lib/view';
@@ -9,6 +9,7 @@ import type AnalyseCtrl from '../src/ctrl';
 import { IdbTree } from '../src/idbTree';
 import { LocalAnalysisEngine, type LocalAnalysisResult } from '../src/local/localAnalysisEngine';
 import { BoardReview } from '../src/noSweatBoardReview';
+import { after } from '../src/noSweatCore';
 import { FullGameClassifier } from '../src/noSweatFullReview';
 
 const fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -169,4 +170,89 @@ test('board uses native review entry point and chart, preserving editable inputs
   assert.equal(input.value, '1. e4 e5');
   patch(vnode, hl('div'));
   root.remove();
+});
+
+test('separate native Import and Export tabs preserve drafts and export only the actual board', async t => {
+  const { renderInputs } = await import('../src/view/components');
+  const child = { id: 'ab', ply: 1, fen: after(fen, 'e2e4'), san: 'e4', uci: 'e2e4', children: [] };
+  const tree = { id: '', ply: 0, fen, children: [child] };
+  const changePgn = mock.fn();
+  const changeFen = mock.fn();
+  const ctrl = {
+    noSweat: { mountOpening() {} },
+    data: { userAnalysis: true, game: { id: 'synthetic', variant: { key: 'standard' } } },
+    tree: { root: tree },
+    node: tree,
+    mainline: [tree, child],
+    settings: { set() {} },
+    canAnalyseMainline: () => true,
+    changePgn,
+    changeFen,
+  } as unknown as AnalyseCtrl;
+  const board = new BoardReview(ctrl);
+  const host = document.createElement('div');
+  document.body.append(host);
+  const patch = init([attributesModule, classModule, propsModule]);
+  let vnode = patch(host, board.view(renderInputs(ctrl, true)));
+  ctrl.redraw = () => {
+    vnode = patch(vnode, board.view(renderInputs(ctrl, true)));
+  };
+  const root = vnode.elm as HTMLElement;
+  const tab = (name: string) =>
+    Array.from(root.querySelectorAll<HTMLButtonElement>('[role="tab"]')).find(el => el.textContent === name)!;
+  assert.equal(root.querySelectorAll('[role="tab"]').length, 3);
+  assert.deepEqual(
+    Array.from(root.querySelectorAll('[role="tab"]'))
+      .slice(1)
+      .map(el => el.textContent),
+    ['Import', 'Export'],
+  );
+  tab('Import').click();
+  const input = root.querySelector<HTMLTextAreaElement>('[aria-label="PGN to import"]')!;
+  assert.equal(input.value, '');
+  input.value = '1. d4 d5';
+  input.dispatchEvent(new window.Event('input'));
+  const fenInput = root.querySelector<HTMLInputElement>('[aria-label="FEN to import"]')!;
+  fenInput.value = child.fen;
+  fenInput.dispatchEvent(new window.Event('input'));
+  fenInput.dispatchEvent(new window.Event('change'));
+  tab('Export').click();
+  const output = root.querySelector('.fen-pgn.active')!;
+  assert.equal(output.querySelector('textarea'), null);
+  assert.ok(output.querySelector('.pgn')!.textContent.includes('e4'));
+  assert.equal(output.querySelector('.pgn')!.textContent.includes('d4'), false);
+  assert.equal(output.querySelector<HTMLInputElement>('input')!.readOnly, true);
+  assert.equal(output.querySelector<HTMLInputElement>('input')!.value, fen);
+  assert.ok(output.querySelector('.copy-me__button.button-metal'));
+  let downloaded = '';
+  t.mock.method(window.HTMLAnchorElement.prototype, 'click', function (this: HTMLAnchorElement) {
+    downloaded = this.href;
+  });
+  output.querySelector<HTMLButtonElement>('button.copy-me__target')!.click();
+  const downloadedPgn = await (await fetch(downloaded)).text();
+  assert.ok(downloadedPgn.includes('e4'));
+  assert.equal(downloadedPgn.includes('d4'), false);
+  assert.equal(changePgn.mock.callCount(), 0);
+  assert.equal(changeFen.mock.callCount(), 0);
+  tab('Import').click();
+  assert.equal(root.querySelector('[aria-label="PGN to import"]'), input);
+  assert.equal(input.value, '1. d4 d5');
+  root.querySelector<HTMLButtonElement>('.import .pgn button')!.click();
+  assert.deepEqual(changePgn.mock.calls[0].arguments, ['1. d4 d5', true]);
+  Array.from(root.querySelectorAll<HTMLButtonElement>('.import button'))
+    .find(el => el.textContent === 'Import FEN')!
+    .click();
+  assert.deepEqual(changeFen.mock.calls[0].arguments, [child.fen]);
+  patch(vnode, hl('div'));
+  root.remove();
+  ctrl.pgnInput = ctrl.fenInput = undefined;
+  const nativeHost = document.createElement('div');
+  document.body.append(nativeHost);
+  const native = patch(nativeHost, renderInputs(ctrl)!);
+  const nativeRoot = native.elm as HTMLElement;
+  assert.equal(nativeRoot.querySelector('input')!.value, fen);
+  assert.ok(nativeRoot.querySelector('textarea')!.value.includes('e4'));
+  assert.ok(nativeRoot.querySelector('.bottom-action'), 'the upstream input UI retains its native behavior');
+  patch(native, hl('div'));
+  nativeRoot.remove();
 });
