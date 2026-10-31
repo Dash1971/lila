@@ -28,8 +28,12 @@ final class NoSweatStudy(env: Env)(using ec: Executor):
     )
     .getOrElse(throw IllegalArgumentException("Unknown study profile"))
   private lazy val started = config.get[Long]("nosweat.study.startedEpochMillis")
-  private lazy val admissionEnd = started + 75L * 60000
-  private lazy val deadline = started + 90L * 60000
+  private lazy val admissionEnd =
+    if plan.key == "strength-predictor-v1" then java.time.Instant.parse("2026-10-31T10:04:39Z").toEpochMilli
+    else started + 75L * 60000
+  private lazy val deadline =
+    if plan.key == "strength-predictor-v1" then java.time.Instant.parse("2026-10-31T10:34:39Z").toEpochMilli
+    else started + 90L * 60000
   private val closed = AtomicBoolean(false)
   private val polled = AtomicBoolean(false)
   private val lastPoll = AtomicLong(System.currentTimeMillis())

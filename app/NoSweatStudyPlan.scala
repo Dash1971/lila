@@ -15,6 +15,7 @@ object NoSweatStudyPlan:
   private val plans = List(
     NoSweatStudyPlan("pilot-10-v1", List(0 -> 1, 5 -> 2, 10 -> 5, 20 -> 10), 1),
     NoSweatStudyPlan("ramp-22-v1", List(0 -> 10, 10 -> 15, 25 -> 20, 40 -> 22), 2),
-    NoSweatStudyPlan("calibration-200-v1", List(0 -> 22), 2, 200)
+    NoSweatStudyPlan("calibration-200-v1", List(0 -> 22), 2, 200),
+    NoSweatStudyPlan("strength-predictor-v1", List(0 -> 10, 10 -> 15, 25 -> 22), 2, 3000)
   )
   def find(key: String): Option[NoSweatStudyPlan] = plans.find(_.key == key)
