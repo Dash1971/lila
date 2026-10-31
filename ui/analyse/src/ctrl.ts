@@ -196,7 +196,11 @@ export default class AnalyseCtrl implements CevalHandler {
         ? new makeStudy(opts.study, this, (opts.tagTypes || '').split(','), opts.practice, opts.relay)
         : undefined;
 
-    if (!opts.practice && this.isCevalAllowed() && this.data.game.variant.key === 'standard')
+    if (
+      !opts.practice &&
+      this.isCevalAllowed() &&
+      ['standard', 'fromPosition'].includes(this.data.game.variant.key)
+    )
       this.noSweat = new NoSweatAnalysis(this);
 
     if (location.hash === '#practice' || this.study?.data.chapter.practice) this.togglePractice();
