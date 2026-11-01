@@ -293,3 +293,40 @@ final class UserApi(userRepo: UserRepo, perfsRepo: UserPerfsRepo, cacheApi: Cach
           user <- doc.getAsOpt[User]("user")
           perfs = perfsRepo.aggregate.readFrom(doc, user)
         yield UserWithPerfs(user, perfs)
+
+  // A read-only directory of current site ratings, including managed players.
+  // Competitive ranking eligibility and Glicko writes remain native.
+  object currentPlayers:
+    val speeds = PerfType.standardWithUltra
+
+    def apply(pk: PerfKey): Fu[List[lila.core.user.LightPerf]] =
+      if speeds.contains(pk) then cache.get(pk) else fuccess(Nil)
+
+    private val cache = cacheApi[PerfKey, List[lila.core.user.LightPerf]](speeds.size, "user.currentPlayers"):
+      _.expireAfterWrite(1.minute).buildAsyncFuture(fetch)
+
+    private def fetch(pk: PerfKey): Fu[List[lila.core.user.LightPerf]] =
+      import lila.rating.Perf.perfHandler
+      perfsRepo.coll
+        .aggregateList(Int.MaxValue, _.sec): framework =>
+          import framework.*
+          import lila.user.BSONFields as F
+          Match(bdoc(s"$pk.gl.r".exists(true))) -> List(
+            PipelineOperator(lookup.simple(userRepo.coll, "user", "_id", "_id")),
+            UnwindField("user"),
+            Match(
+              bdoc(
+                s"user.${F.enabled}" -> true,
+                s"user.${F.marks}".nin(List(UserMark.engine, UserMark.boost, UserMark.rankban))
+              )
+            ),
+            Project(bdoc(pk.value -> true, "user" -> true))
+          )
+        .map: docs =>
+          docs
+            .flatMap: doc =>
+              for
+                user <- doc.getAsOpt[User]("user")
+                perf <- doc.getAsOpt[lila.core.perf.Perf](pk.value)
+              yield lila.core.user.LightPerf(user.light, pk, perf.intRating, perf.progress)
+            .sortBy(p => (-p.rating.value, p.user.id.value))

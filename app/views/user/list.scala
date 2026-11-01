@@ -9,6 +9,7 @@ object list:
 
   private lazy val ui = lila.user.ui.UserList(helpers, bits)
   export ui.top
+  export ui.current
 
   def apply(
       tourneyWinners: List[lila.tournament.Winner],

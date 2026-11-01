@@ -6,7 +6,7 @@ import lila.rating.PerfType
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
-final class UserBits(helpers: Helpers):
+final class UserBits(helpers: Helpers, focused: Boolean = false):
   import helpers.*
 
   def communityMenu(active: String)(using Translate) =
@@ -18,19 +18,23 @@ final class UserBits(helpers: Helpers):
       )(
         trans.site.ratingStats()
       ),
-      a(cls := active.active("tournament"), href := routes.Tournament.leaderboard)(
-        trans.arena.tournamentWinners()
-      ),
-      a(cls := active.active("shield"), href := routes.Tournament.shields)(
-        trans.arena.tournamentShields()
-      ),
-      div(cls := "sep"),
-      a(cls := active.active("bots"), href := routes.PlayApi.botOnline)(
-        trans.site.onlineBots()
-      ),
-      div(cls := "sep"),
-      a(cls := active.active("fide"), href := addQueryParam(routes.Fide.index().url, "community", "1"))(
-        trans.broadcast.fidePlayers()
+      (!focused).option(
+        frag(
+          a(cls := active.active("tournament"), href := routes.Tournament.leaderboard)(
+            trans.arena.tournamentWinners()
+          ),
+          a(cls := active.active("shield"), href := routes.Tournament.shields)(
+            trans.arena.tournamentShields()
+          ),
+          div(cls := "sep"),
+          a(cls := active.active("bots"), href := routes.PlayApi.botOnline)(
+            trans.site.onlineBots()
+          ),
+          div(cls := "sep"),
+          a(cls := active.active("fide"), href := addQueryParam(routes.Fide.index().url, "community", "1"))(
+            trans.broadcast.fidePlayers()
+          )
+        )
       )
     )
 

@@ -10,7 +10,7 @@ import lila.rating.PerfType
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
-final class PerfStatUi(helpers: Helpers)(communityMenu: Context ?=> Frag):
+final class PerfStatUi(helpers: Helpers, focused: Boolean = false)(communityMenu: Context ?=> Frag):
   import helpers.{ *, given }
   import trans.perfStat as tps
 
@@ -373,7 +373,10 @@ final class PerfStatUi(helpers: Helpers)(communityMenu: Context ?=> Frag):
       me: Option[UserWithPerfs]
   ) =
     val myVisiblePerfs = me.map(_.perfs).ifTrue(ctx.pref.showRatings)
-    Page(trans.site.weeklyPerfTypeRatingDistribution.txt(perfType.trans))
+    val distributionTitle =
+      if focused then s"${perfType.trans} rating distribution"
+      else trans.site.weeklyPerfTypeRatingDistribution.txt(perfType.trans)
+    Page(distributionTitle)
       .css("user.rating.stats")
       .flag(_.fullScreen)
       .js(
@@ -392,11 +395,13 @@ final class PerfStatUi(helpers: Helpers)(communityMenu: Context ?=> Frag):
           div(cls := "rating-stats page-menu__content box box-pad")(
             boxTop(
               h1(
-                trans.site.weeklyPerfTypeRatingDistribution(
+                (if focused then (selector: Frag) => frag(selector, " rating distribution")
+                 else (selector: Frag) => trans.site.weeklyPerfTypeRatingDistribution(selector)) (
                   lila.ui.bits.mselect(
                     "variant-stats",
                     span(perfType.trans),
-                    lila.rating.PerfType.leaderboardable
+                    (if focused then lila.rating.PerfType.standardWithUltra
+                     else lila.rating.PerfType.leaderboardable)
                       .map(PerfType(_))
                       .map: pt =>
                         a(
@@ -409,36 +414,42 @@ final class PerfStatUi(helpers: Helpers)(communityMenu: Context ?=> Frag):
               )
             ),
             div(cls := "desc", dataIcon := perfType.icon)(
-              myVisiblePerfs
-                .flatMap(_(perfType).glicko.establishedIntRating)
-                .map: rating =>
-                  val (under, sum) = lila.perfStat.percentileOf(data, rating)
-                  div(
-                    trans.site.nbPerfTypePlayersThisWeek(strong(sum.localize), perfType.trans),
-                    br,
-                    trans.site.yourPerfTypeRatingIsRating(perfType.trans, strong(rating)),
-                    br,
-                    trans.site.youAreBetterThanPercentOfPerfTypePlayers(
-                      strong((under * 100.0 / sum).round, "%"),
-                      perfType.trans
-                    )
-                  )
-                .getOrElse:
-                  div(
-                    trans.site.nbPerfTypePlayersThisWeek
-                      .plural(data.sum, strong(data.sum.localize), perfType.trans),
-                    ctx.pref.showRatings.option(
-                      frag(
-                        br,
-                        trans.site.youDoNotHaveAnEstablishedPerfTypeRating(perfType.trans)
+              if focused then
+                frag(
+                  p(strong(data.sum.localize), s" players with a current ${perfType.trans} rating."),
+                  p("Includes starting ratings until games are played.")
+                )
+              else
+                myVisiblePerfs
+                  .flatMap(_(perfType).glicko.establishedIntRating)
+                  .map: rating =>
+                    val (under, sum) = lila.perfStat.percentileOf(data, rating)
+                    div(
+                      trans.site.nbPerfTypePlayersThisWeek(strong(sum.localize), perfType.trans),
+                      br,
+                      trans.site.yourPerfTypeRatingIsRating(perfType.trans, strong(rating)),
+                      br,
+                      trans.site.youAreBetterThanPercentOfPerfTypePlayers(
+                        strong((if sum == 0 then 0L else (under * 100.0 / sum).round), "%"),
+                        perfType.trans
                       )
                     )
-                  )
+                  .getOrElse:
+                    div(
+                      trans.site.nbPerfTypePlayersThisWeek
+                        .plural(data.sum, strong(data.sum.localize), perfType.trans),
+                      ctx.pref.showRatings.option(
+                        frag(
+                          br,
+                          trans.site.youDoNotHaveAnEstablishedPerfTypeRating(perfType.trans)
+                        )
+                      )
+                    )
             ),
             div(id := "rating_distribution")(
               canvas(
                 id := "rating_distribution_chart",
-                ariaTitle(trans.site.weeklyPerfTypeRatingDistribution.txt(perfType.trans))
+                ariaTitle(distributionTitle)
               )(spinner)
             )
           )

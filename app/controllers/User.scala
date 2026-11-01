@@ -254,22 +254,34 @@ final class User(
       yield pag
 
   def list = Open:
-    env.user.cached.top10.get {}.flatMap { leaderboards =>
-      negotiate(
-        html = for
-          nbAllTime <- env.user.cached.top10NbGame.get {}
-          tourneyWinners <- env.tournament.winners.all.map(_.top)
-          topOnline <- env.user.cached.getTop50Online
-          _ <- lightUserApi.preloadMany(tourneyWinners.map(_.userId))
-          page <- renderPage:
-            views.user.list(tourneyWinners, topOnline, leaderboards, nbAllTime)
-        yield Ok(page),
-        json = // lichobile only
-          given OWrites[LightPerf] = OWrites(env.user.jsonView.lightPerfIsOnline)
-          import lila.user.JsonView.leaderboardsWrites
-          JsonOk(leaderboards).publicCache(1.minute)
-      )
-    }
+    if env.noSweat.enabled then
+      env.user.api.currentPlayers.speeds
+        .parallel(pk => env.user.api.currentPlayers(pk).map(pk -> _))
+        .flatMap: boards =>
+          val online = boards
+            .find(_._1 == PerfKey.blitz)
+            .toList
+            .flatMap(_._2)
+            .filter(p => env.socket.isOnline.exec(p.user.id))
+            .take(50)
+          Ok.page(views.user.list.current(online, boards.map((pk, rows) => pk -> rows.take(10))))
+    else
+      env.user.cached.top10.get {}.flatMap { leaderboards =>
+        negotiate(
+          html = for
+            nbAllTime <- env.user.cached.top10NbGame.get {}
+            tourneyWinners <- env.tournament.winners.all.map(_.top)
+            topOnline <- env.user.cached.getTop50Online
+            _ <- lightUserApi.preloadMany(tourneyWinners.map(_.userId))
+            page <- renderPage:
+              views.user.list(tourneyWinners, topOnline, leaderboards, nbAllTime)
+          yield Ok(page),
+          json = // lichobile only
+            given OWrites[LightPerf] = OWrites(env.user.jsonView.lightPerfIsOnline)
+            import lila.user.JsonView.leaderboardsWrites
+            JsonOk(leaderboards).publicCache(1.minute)
+        )
+      }
 
   def apiList = Anon:
     env.user.cached.top10.get {}.map { leaderboards =>
@@ -279,11 +291,26 @@ final class User(
     }
 
   def top(perfKey: PerfKey, page: Int) = Open:
-    Reasonable(page, Max(20)):
-      env.user.cached
-        .topPerfPager(perfKey, page)
-        .flatMap: pager =>
-          Ok.page(views.user.list.top(perfKey, pager))
+    if env.noSweat.enabled then
+      Reasonable(page, Max(1000)):
+        Found(perfKey.some.filter(env.user.api.currentPlayers.speeds.contains)): pk =>
+          env.user.api
+            .currentPlayers(pk)
+            .flatMap: rows =>
+              val perPage = MaxPerPage(100)
+              val pager = Paginator.fromResults(
+                rows.slice((page - 1) * perPage.value, page * perPage.value),
+                rows.size,
+                page,
+                perPage
+              )
+              Ok.page(views.user.list.top(pk, pager))
+    else
+      Reasonable(page, Max(20)):
+        env.user.cached
+          .topPerfPager(perfKey, page)
+          .flatMap: pager =>
+            Ok.page(views.user.list.top(perfKey, pager))
 
   def topNbApi(nb: Int, perfKey: PerfKey) = Anon:
     if nb == 1 && perfKey == PerfKey.standard then
@@ -628,9 +655,20 @@ final class User(
             yield Ok(result)
 
   def ratingDistribution(perfKey: PerfKey, username: Option[UserStr] = None) = Open:
-    Found(perfKey.some.filter(lila.rating.PerfType.isLeaderboardable)): perfKey =>
-      env.perfStat.api
-        .weeklyRatingDistribution(perfKey)
+    Found(
+      perfKey.some.filter(pk =>
+        if env.noSweat.enabled then env.user.api.currentPlayers.speeds.contains(pk)
+        else lila.rating.PerfType.isLeaderboardable(pk)
+      )
+    ): perfKey =>
+      val distribution =
+        if env.noSweat.enabled then
+          env.user.api
+            .currentPlayers(perfKey)
+            .map: rows =>
+              lila.user.NoSweatPlayerRatings.distribution(rows.map(_.rating.value))
+        else env.perfStat.api.weeklyRatingDistribution(perfKey)
+      distribution
         .flatMap: data =>
           WithMyPerfs:
             username match

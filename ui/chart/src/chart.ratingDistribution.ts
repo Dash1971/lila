@@ -27,7 +27,7 @@ export async function initModule(data: DistributionData): Promise<void> {
     const ratings: number[] = [];
     for (let i = 0; i < data.freq.length; i++) {
       ratings.push(ratingAt(i));
-      cumul.push(arraySum(data.freq.slice(0, i)) / sum);
+      cumul.push(sum ? arraySum(data.freq.slice(0, i)) / sum : 0);
     }
     const gradient = this.getContext('2d')?.createLinearGradient(0, 0, 0, 400);
     gradient?.addColorStop(0, 'rgb(119 152 191 / 1)');

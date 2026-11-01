@@ -8,7 +8,7 @@ import lila.perfStat.PerfStatData
 import lila.rating.UserPerfsExt.best8Perfs
 import lila.user.Profile.flagInfo
 
-val bits = lila.user.ui.UserBits(helpers)
+val bits = lila.user.ui.UserBits(helpers, env.noSweat.enabled)
 val noteUi = lila.user.ui.NoteUi(helpers)
 val download = lila.user.ui.UserGamesDownload(helpers)
 
@@ -41,7 +41,8 @@ def mini(
   val nameFrag = realName.map(frag(_))
   show.ui.mini(u, playing, blocked, ping, rel, crosstable, flag, nameFrag, perfs, userMarks)
 
-val perfStat = lila.perfStat.PerfStatUi(helpers)(views.user.bits.communityMenu("ratings"))
+val perfStat =
+  lila.perfStat.PerfStatUi(helpers, env.noSweat.enabled)(views.user.bits.communityMenu("ratings"))
 def perfStatPage(data: PerfStatData, ratingChart: Option[SafeJsonStr])(using Context) =
   perfStat.page(
     data,

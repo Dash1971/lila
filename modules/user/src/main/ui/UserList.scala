@@ -12,6 +12,27 @@ import lila.ui.ScalatagsTemplate.{ *, given }
 final class UserList(helpers: Helpers, bits: UserBits):
   import helpers.{ *, given }
 
+  def current(online: List[LightPerf], boards: List[(PerfKey, List[LightPerf])])(using ctx: Context) =
+    Page(trans.site.players.txt())
+      .css("user.list")
+      .flag(_.fullScreen):
+        main(cls := "page-menu")(
+          bits.communityMenu("leaderboard"),
+          div(cls := "community page-menu__content box box-pad")(
+            st.section(cls := "community__online")(
+              h2(trans.site.onlinePlayers()),
+              ol(cls := "user-top")(
+                online.map(p => li(lightUserLink(p.user), ctx.pref.showRatings.option(p.rating)))
+              )
+            ),
+            div(cls := "community__leaders")(
+              h2(trans.site.leaderboard()),
+              p("Current player ratings, including starting ratings until games are played."),
+              div(cls := "leaderboards")(boards.map((pk, rows) => userTopPerf(rows, pk)))
+            )
+          )
+        )
+
   def page(
       online: List[UserWithPerfs],
       leaderboards: lila.rating.UserPerfs.Leaderboards,
