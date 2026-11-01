@@ -10,7 +10,6 @@ type ButtonInfo = { gameType: GameType | 'dev' | 'bots'; label: string; disabled
 
 export default function table(ctrl: LobbyController) {
   const { data, opts } = ctrl;
-  if (opts.noSweat) return hl('div.lobby__table', [renderSetupModal(ctrl)]);
   const hasOngoingRealTimeGame = ctrl.hasOngoingRealTimeGame(true);
   const hookDisabled =
     opts.playban || opts.hasUnreadLichessMessage || ctrl.me?.isBot || hasOngoingRealTimeGame;
@@ -48,7 +47,8 @@ export default function table(ctrl: LobbyController) {
     });
 
   return hl('div.lobby__table', [
-    hl('div.lobby__start', [site.blindMode && hl('h2', i18n.site.play), lobbyButtons.map(makeLobbyButton)]),
+    !opts.noSweat &&
+      hl('div.lobby__start', [site.blindMode && hl('h2', i18n.site.play), lobbyButtons.map(makeLobbyButton)]),
     renderSetupModal(ctrl),
     site.blindMode
       ? undefined

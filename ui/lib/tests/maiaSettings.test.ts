@@ -98,3 +98,28 @@ test('legacy mismatched opponent inputs always normalize to the selected Maia ra
   assert.equal(prefs.opponentElo, 1800);
   assert.equal(prefs.secondMaiaElo, 2600);
 });
+
+test('account engine settings use native sections and radio choices with the shared browser preferences', () => {
+  localStorage.clear();
+  const updates: boolean[] = [];
+  const view = engineSettingsView(
+    { ...defaultEnginePreferences, secondMaiaElo: 2600 },
+    next => updates.push(next.secondMaiaEnabled),
+    true,
+  );
+  assert.equal(view.className, 'nosweat-engine-settings-page');
+  assert.ok(view.querySelectorAll('section > h2').length > 5);
+  assert.equal(view.querySelector('dialog'), null);
+  const no = view.querySelector<HTMLInputElement>('[data-engine-pref="secondMaiaEnabled"][value="0"]')!;
+  no.checked = true;
+  change(no);
+  assert.equal(loadEnginePreferences().secondMaiaEnabled, false);
+  assert.equal(loadEnginePreferences().secondMaiaElo, 2600);
+  assert.equal(view.querySelector<HTMLElement>('[data-maia-setting="secondMaiaElo"]')!.hidden, true);
+  const primary = view.querySelector<HTMLSelectElement>('[data-engine-pref="selfElo"]')!;
+  primary.value = '1800';
+  change(primary);
+  assert.equal(loadEnginePreferences().selfElo, 1800);
+  assert.equal(loadEnginePreferences().opponentElo, 1800);
+  assert.deepEqual(updates, [false, false]);
+});

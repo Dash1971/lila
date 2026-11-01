@@ -24,6 +24,8 @@ final class Pref(env: Env) extends LilaController(env):
 
   def form(categSlug: String) = Auth { ctx ?=> me ?=>
     lila.pref.PrefCateg(categSlug) match
+      case None if categSlug == "engine-analysis" && env.noSweat.enabled =>
+        Ok.page(views.account.pref.engineAnalysis(me))
       case None if categSlug == "notification" =>
         Ok.async:
           env.notifyM.api.prefs

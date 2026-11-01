@@ -233,6 +233,17 @@ final class AccountPref(helpers: Helpers, helper: PrefHelper, bits: AccountUi):
         )
       )
 
+  def engineAnalysis(u: User)(using Context) =
+    AccountPage(s"Engine Analysis - ${u.username}", "engine-analysis"):
+      div(cls := "box box-pad")(
+        h1(cls := "box__top")("Engine Analysis"),
+        form(cls := "nosweat-engine-preferences")(
+          div(id := "nosweat-engine-settings-page"),
+          p(cls := "help")("Settings are saved automatically in this browser."),
+          p(cls := "saved text none", dataIcon := Icon.Checkmark)(trp.yourPreferencesHaveBeenSaved())
+        )
+      )
+
   object notification:
 
     def apply(form: Form[?])(using Context) =

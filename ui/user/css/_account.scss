@@ -325,3 +325,16 @@
     white-space: pre-wrap;
   }
 }
+
+.nosweat-engine-settings-page {
+  select {
+    max-width: 100%;
+  }
+  input[type='color'] {
+    width: 4rem;
+    height: 3rem;
+    padding: 3px;
+    appearance: auto;
+    cursor: pointer;
+  }
+}

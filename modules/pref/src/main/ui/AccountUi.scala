@@ -88,9 +88,8 @@ final class AccountUi(helpers: Helpers):
             .exists(_.nostrKey.isDefined)
             .option(
               a(
-                cls := "nosweat-engine-settings-link",
-                href := "#engine-analysis",
-                attr("aria-haspopup") := "dialog"
+                activeCls("engine-analysis"),
+                href := routes.Pref.form("engine-analysis")
               )("Engine Analysis")
             ),
           a(activeCls("notification"), href := routes.Pref.form("notification"))(

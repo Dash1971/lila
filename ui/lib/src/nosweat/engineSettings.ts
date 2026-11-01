@@ -41,6 +41,7 @@ export function showMaiaRating(rating: number, choose: (rating: number) => void)
 export function engineSettingsView(
   initial: EnginePreferences,
   changed: (prefs: EnginePreferences) => void,
+  accountPage = false,
 ): HTMLElement {
   let prefs = initial;
   const select = (key: keyof EnginePreferences, name: string, options: [string, string][]) =>
@@ -53,7 +54,44 @@ export function engineSettingsView(
   const toggle = (key: 'history' | 'maiaArrows' | 'fishArrows' | 'secondMaiaEnabled', name: string) =>
     `<span class="setting"><span>${name}</span><span class="form-check__input"><input id="maia-${key}" type="checkbox" aria-label="${name}" data-engine-pref="${key}" ${prefs[key] ? 'checked' : ''}><label class="form-check__label" for="maia-${key}"></label></span></span>`;
   const ratings: [string, string][] = maiaRatings.map(n => [String(n), String(n)]);
-  const view = frag<HTMLElement>(`<div class="nosweat-maia-settings-view">
+  const section = (name: string, control: string, attrs = '') =>
+    `<section ${attrs}><h2>${name}</h2>${control}</section>`;
+  const accountSelect = (key: keyof EnginePreferences, name: string, options: [string, string][]) =>
+    section(
+      name,
+      `<select data-engine-pref="${key}" aria-label="${name}">${options.map(([value, text]) => `<option value="${value}" ${String(prefs[key]) === value ? 'selected' : ''}>${text}</option>`).join('')}</select>`,
+      `data-maia-setting="${key}"`,
+    );
+  const accountToggle = (key: 'history' | 'maiaArrows' | 'fishArrows' | 'secondMaiaEnabled', name: string) =>
+    section(
+      name,
+      `<group class="radio">${[true, false].map(value => `<div><input id="maia-${key}-${value}" type="radio" name="maia-${key}" value="${value ? 1 : 0}" data-engine-pref="${key}" ${prefs[key] === value ? 'checked' : ''}><label for="maia-${key}-${value}">${value ? 'Yes' : 'No'}</label></div>`).join('')}</group>`,
+    );
+  const arrowName = {
+    maia: 'Primary Maia',
+    maiaSecond: 'Second Maia',
+    stockfish: 'Stockfish best move',
+    stockfishSecond: 'Stockfish second move',
+  };
+  const accountMarkup = () => `<div class="nosweat-engine-settings-page">
+    ${accountToggle('secondMaiaEnabled', 'Enable a second Maia for analysis')}
+    ${accountSelect('selfElo', 'Primary Maia rating', ratings)}
+    ${accountSelect('secondMaiaElo', 'Second Maia rating', ratings)}
+    ${accountSelect('model', 'Maia model', [
+      ['5m', 'Maia3 5M · light'],
+      ['79m', 'Maia3 79M'],
+    ])}
+    ${accountToggle('history', 'Use move history')}
+    ${accountToggle('maiaArrows', 'Show Maia arrows')}
+    ${accountToggle('fishArrows', 'Show Stockfish arrows')}
+    ${(Object.keys(engineColors) as (keyof EngineColors)[]).map(key => section(`${arrowName[key]} arrow color`, `<input type="color" data-arrow-color="${key}" value="${prefs.arrowColors[key]}" aria-label="${arrowName[key]} arrow color">`, key === 'maiaSecond' ? 'data-second-maia' : '')).join('')}
+    <section><button type="button" class="button button-empty nosweat-reset-arrow-colors">Reset arrow colors</button></section>
+    ${section('Computer analysis', `<group class="radio">${gameReviewQualities.map(q => `<div><input id="maia-quality-${q.name}" type="radio" name="nosweat-review-quality" value="${q.name}" ${q.name === gameReviewQuality(storage.get('nosweat.gameReview.quality')).name ? 'checked' : ''}><label for="maia-quality-${q.name}">${q.name}</label></div>`).join('')}</group><p class="help">Fast: depth 12, up to 0.5 seconds per position. Balanced: depth 14, up to 1 second. Thorough: depth 16, up to 1.5 seconds. Applies to your next computer analysis.</p>`)}
+  </div>`;
+  const view = frag<HTMLElement>(
+    accountPage
+      ? accountMarkup()
+      : `<div class="nosweat-maia-settings-view">
     <fieldset><legend>Analysis engines</legend>
       ${toggle('secondMaiaEnabled', 'Enable a second Maia for analysis')}
       <p>Compare two ratings, or turn this off to show more moves from one Maia. Puzzle review shows one row when this is off.</p>
@@ -87,7 +125,8 @@ export function engineSettingsView(
       <div class="nosweat-review-quality">${gameReviewQualities.map(q => `<label><input type="radio" name="nosweat-review-quality" value="${q.name}" ${q.name === gameReviewQuality(storage.get('nosweat.gameReview.quality')).name ? 'checked' : ''}><span>${q.name}</span></label>`).join('')}</div>
       <p>Choose faster review or deeper analysis. Applies the next time you analyze a game or line.</p><details><summary>About analysis quality</summary><p>Fast: depth 12, up to 0.5 seconds per position.<br>Balanced: depth 14, up to 1 second per position.<br>Thorough: depth 16, up to 1.5 seconds per position.</p></details>
     </fieldset>
-  </div>`);
+  </div>`,
+  );
   const secondary = view.querySelector<HTMLElement>('[data-maia-setting="secondMaiaElo"]')!;
   const updateSecondary = () => {
     secondary.hidden = !prefs.secondMaiaEnabled;
@@ -100,7 +139,9 @@ export function engineSettingsView(
       const key = input.dataset.enginePref as keyof EnginePreferences;
       const value =
         input.tagName === 'INPUT'
-          ? (input as HTMLInputElement).checked
+          ? (input as HTMLInputElement).type === 'radio'
+            ? input.value === '1'
+            : (input as HTMLInputElement).checked
           : key === 'selfElo' || key === 'secondMaiaElo'
             ? Number(input.value)
             : input.value;
@@ -129,7 +170,10 @@ export function engineSettingsView(
     changed(prefs);
   };
   view.querySelectorAll<HTMLInputElement>('input[name="nosweat-review-quality"]').forEach(input => {
-    input.onchange = () => storage.set('nosweat.gameReview.quality', gameReviewQuality(input.value).name);
+    input.onchange = () => {
+      storage.set('nosweat.gameReview.quality', gameReviewQuality(input.value).name);
+      changed(prefs);
+    };
   });
   return view;
 }

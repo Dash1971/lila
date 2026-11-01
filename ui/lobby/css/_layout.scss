@@ -181,3 +181,17 @@
     grid-area: timeline;
   }
 }
+
+main.lobby.mutechess-play {
+  grid-template-areas: 'app' 'table' 'about';
+
+  .lobby__counters {
+    grid-area: table;
+    display: flex;
+    position: static;
+    flex-flow: row wrap;
+    justify-content: center;
+    gap: 0 2em;
+    margin: 1em 0;
+  }
+}
