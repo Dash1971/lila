@@ -252,7 +252,7 @@ final class UserRepo(c: Coll)(using Executor) extends lila.core.user.UserRepo(c)
     ) ++ bdoc("nostr" -> pubkey, "len" -> name.value.length)
     coll.insert.one(doc).flatMap(_ => byNostr(pubkey))
 
-  def createNoSweatBot(name: UserName): Fu[Option[User]] =
+  def createNoSweatBot(name: UserName, catalogIdentity: Option[String] = None): Fu[Option[User]] =
     val doc = newUser(
       name,
       HashedPassword(Array.emptyByteArray),
@@ -263,7 +263,7 @@ final class UserRepo(c: Coll)(using Executor) extends lila.core.user.UserRepo(c)
       KidMode.No
     ) ++
       bdoc("len" -> name.value.length, "title" -> PlayerTitle.BOT, "noSweatBot" -> true)
-    coll.insert.one(doc).flatMap(_ => byId(name.id))
+    coll.insert.one(NoSweatBotIdentity.mark(doc, catalogIdentity)).flatMap(_ => byId(name.id))
   def existsSec[U: UserIdOf](u: U): Fu[Boolean] = coll.secondary.exists(bid(u.id))
 
   def filterExists(ids: Set[UserId]): Fu[List[UserId]] =
@@ -631,3 +631,8 @@ final class UserRepo(c: Coll)(using Executor) extends lila.core.user.UserRepo(c)
     } ++ {
       kid.yes.so(bdoc(F.kid -> kid))
     }
+
+/** The catalog owner marker must commit atomically with the new managed account. */
+private[user] object NoSweatBotIdentity:
+  def mark(doc: Bdoc, catalogIdentity: Option[String]): Bdoc =
+    doc ++ catalogIdentity.fold(BSONDocument.empty)(identity => bdoc("noSweatCatalogIdentity" -> identity))

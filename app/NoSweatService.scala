@@ -34,11 +34,18 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
     "noSweatAdmission",
     lila.mon.asyncActorMonitor.full
   )
-  lazy val roster: List[JsObject] = Json
-    .parse(
-      Files.readString(env.getFile.exec("public/nosweat-roster.json").toPath)
-    )
-    .as[List[JsObject]]
+  lazy val roster: List[JsObject] = NoSweatBotCatalog.validate(
+    Json
+      .parse(
+        Files.readString(env.getFile.exec("public/nosweat-roster.json").toPath)
+      )
+      .as[List[JsObject]]
+  )
+  private lazy val botAliases =
+    val path = env.getFile.exec("public/nosweat-bot-aliases.json").toPath
+    val values = if Files.exists(path) then Json.parse(Files.readString(path)).as[Map[String, String]]
+    else Map.empty[String, String]
+    NoSweatBotCatalog.aliases(values, roster)
   private def botId(bot: JsObject): UserId = UserId((bot \ "username").as[String].toLowerCase)
   private lazy val botsById = roster.map(bot => botId(bot) -> bot).toMap
   private lazy val botIds = botsById.keySet
@@ -213,7 +220,9 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
     val name = UserName((bot \ "username").as[String])
     for
       existing <- env.user.repo.byId(name.id)
-      loaded <- existing.fold(env.user.repo.createNoSweatBot(name))(u => fuccess(u.some))
+      loaded <- existing.fold(env.user.repo.createNoSweatBot(name, NoSweatBotCatalog.initialIdentity(bot)))(
+        u => fuccess(u.some)
+      )
       user = loaded.getOrElse(throw NoSweatError(503, "Could not provision bot"))
       doc <- env.user.repo.withColl(_.byId[Bdoc](name.id))
       _ = requireThat(
@@ -221,22 +230,19 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
         503,
         "A roster name is occupied by an account outside the club roster"
       )
+      _ = requireThat(
+        NoSweatBotCatalog
+          .reusable(bot, existing.isDefined, doc.flatMap(_.getAsOpt[String]("noSweatCatalogIdentity"))),
+        503,
+        "A catalog identity is occupied by an account from another initialization"
+      )
       _ <-
         if doc.exists(_.getAsOpt[String]("noSweatSeedVersion").isDefined) then funit
         else
-          List(("blitz", PerfKey.blitz), ("rapid", PerfKey.rapid))
-            .foldLeft(funit): (prev, entry) =>
+          List(PerfKey.blitz, PerfKey.rapid)
+            .foldLeft(funit): (prev, key) =>
               prev.flatMap: _ =>
-                val prior = (bot \ "ratings" \ entry._1)
-                val perf = lila.rating.Perf.default.copy(
-                  glicko = new chess.rating.glicko.Glicko(
-                    (prior \ "initial_rating").as[Double],
-                    (prior \ "initial_rd").as[Double],
-                    0.09
-                  ),
-                  latest = nowInstant.some
-                )
-                env.user.perfsRepo.setPerf(user.id, entry._2, perf)
+                env.user.perfsRepo.setPerf(user.id, key, NoSweatBotCatalog.seededPerf(bot, key))
             .flatMap(_ =>
               env.user.repo.withColl(
                 _.update.one(bid(name.id), set("noSweatSeedVersion" -> "roster-priors-v1")).void
@@ -248,27 +254,32 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
           List(PerfKey.ultraBullet, PerfKey.bullet, PerfKey.classical, PerfKey.correspondence)
             .foldLeft(funit): (prev, key) =>
               prev.flatMap: _ =>
-                val prior =
-                  (bot \ "ratings" \ (if key == PerfKey.classical || key == PerfKey.correspondence then
-                                        "rapid"
-                                      else "blitz"))
-                val perf = lila.rating.Perf.default.copy(
-                  glicko = new chess.rating.glicko.Glicko(
-                    (prior \ "initial_rating").as[Double],
-                    (prior \ "initial_rd").as[Double],
-                    0.09
-                  ),
-                  latest = nowInstant.some
-                )
-                env.user.perfsRepo.setPerf(user.id, key, perf)
+                env.user.perfsRepo.setPerf(user.id, key, NoSweatBotCatalog.seededPerf(bot, key))
             .flatMap(_ =>
               env.user.repo.withColl(
                 _.update.one(bid(name.id), set("noSweatPoolSeedVersion" -> "pool-priors-v1")).void
               )
             )
+      _ <- NoSweatBotCatalog
+        .publicName(bot, botAliases)
+        .fold(funit): alias =>
+          if NoSweatBotCatalog.aliasEligible(user.profile.flatMap(_.displayName), name.value, alias) then
+            env.user.repo.withColl:
+              _.update
+                .one(
+                  bid(name.id) ++ bdoc("noSweatBot" -> true) ++ or(
+                    bdoc(s"${UserFields.profile}.displayName".exists(false)),
+                    bdoc(s"${UserFields.profile}.displayName" -> name.value),
+                    bdoc(s"${UserFields.profile}.displayName" -> alias)
+                  ),
+                  set(s"${UserFields.profile}.displayName" -> alias)
+                )
+                .void
+          else funit
     yield env.user.lightUserApi.invalidate(user.id)
 
   private def initialize(): Funit =
+    val _ = botAliases
     roster
       .grouped(16)
       .foldLeft(funit)((previous, batch) => previous.flatMap(_ => batch.toList.traverse(provisionBot).void))

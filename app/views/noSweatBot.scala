@@ -15,6 +15,10 @@ object noSweatBot:
       table(
         tbody(
           tr(th("Model"), td("Maia3 79M")),
+          (bot \ "rating_assignment")
+            .asOpt[JsObject]
+            .map: _ =>
+              tr(th("Rating basis"), td("Research-seeded")),
           tr(
             th("Conditioning"),
             td(s"${(bot \ "conditioning_self").as[Int]} / ${(bot \ "conditioning_opponent").as[Int]}")
