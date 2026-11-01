@@ -20,9 +20,10 @@ object noSweatBot:
             .map: _ =>
               tr(th("Rating basis"), td("Research-seeded")),
           tr(
-            th("Conditioning"),
-            td(s"${(bot \ "conditioning_self").as[Int]} / ${(bot \ "conditioning_opponent").as[Int]}")
+            th("Maia rating input"),
+            td((bot \ "conditioning_self").as[Int].toString)
           ),
+          tr(th("Opponent rating input"), td("Your rating for this time control (600–2600)")),
           tr(th("Temperature"), td((bot \ "temperature_after_opening").as[Double].toString)),
           tr(th("Top-p"), td((bot \ "top_p_after_opening").as[Double].toString)),
           tr(th("Move history"), td(if history then "On" else "Off")),
@@ -32,7 +33,7 @@ object noSweatBot:
         )
       ),
       p(
-        "These settings stay fixed across games. Conditioning is a model input, not a measured playing rating."
+        "Bot settings stay fixed. The opponent input uses your rating at game start; anonymous play matches the bot's Maia input. Conditioning is a model input, not a measured playing rating."
       ),
       a(href := "https://github.com/Dash1971/mute-chess/blob/main/docs/bot-population.md")(
         "Policy and rating methodology"

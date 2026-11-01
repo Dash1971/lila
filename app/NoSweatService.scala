@@ -551,7 +551,10 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
             opponent <- poolOpponent(perfKey, rating, busy)
             bot = botsById(opponent.user.id)
             slug = (bot \ "id").as[String]
-            frozen <- adapter("/freeze", Json.obj("bot" -> slug))
+            frozen <- adapter(
+              "/freeze",
+              Json.obj("bot" -> slug) ++ human.fold(Json.obj())(_ => Json.obj("opponentRating" -> rating))
+            )
             policy = frozen.as[JsObject] ++ Json.obj("rated" -> rated)
             requestedColor = (data \ "color").asOpt[String].getOrElse("random")
             _ = requireThat(Set("random", "white", "black").contains(requestedColor), 400, "Invalid color")
