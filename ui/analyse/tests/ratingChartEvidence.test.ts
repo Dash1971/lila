@@ -118,7 +118,7 @@ test('Maia candidate screening publishes only complete all-legal iterations and 
   assert.ok(engine.commands.includes('go depth 10'));
   moves.slice(0, -1).forEach((move, i) => engine.protocol.received(line(i + 1, move, 9)));
   assert.deepEqual(updates, []);
-  engine.protocol.received(line(moves.length, moves.at(-1)!, 9));
+  engine.protocol.received(line(moves.length, moves.at(-1), 9));
   assert.deepEqual(updates, [38]);
   engine.protocol.received(line(1, moves[0], 10));
   engine.protocol.received('bestmove ' + moves[0]);
