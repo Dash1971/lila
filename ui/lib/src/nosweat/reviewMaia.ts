@@ -116,6 +116,6 @@ export async function loadBrowserMaia(model: '5m' | '79m'): Promise<MaiaInferenc
   const config = { ...(await response.json()), browserModel: model };
   return new module.MaiaClient({
     config: async () => config,
-    worker: () => new Worker('/assets/nosweat/analysis/maia-worker.js?v=analysis1', { type: 'module' }),
+    worker: () => new Worker('/assets/nosweat/analysis/maia-worker.js?v=analysis2', { type: 'module' }),
   });
 }

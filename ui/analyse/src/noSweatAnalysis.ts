@@ -265,7 +265,7 @@ export class NoSweatAnalysis {
     const config = { ...this.config!, browserModel: this.model };
     this.client = new module.MaiaClient({
       config: async () => config,
-      worker: () => new Worker('/assets/nosweat/analysis/maia-worker.js?v=analysis1', { type: 'module' }),
+      worker: () => new Worker('/assets/nosweat/analysis/maia-worker.js?v=analysis2', { type: 'module' }),
     });
     return this.client!;
   }
