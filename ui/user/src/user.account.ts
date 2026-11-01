@@ -2,11 +2,20 @@ import flairPickerLoader from 'bits/flairPicker';
 import { createSelectSearch } from 'bits/selectSearch';
 
 import { licon } from 'lib/licon';
+import { loadEnginePreferences, showEngineSettings } from 'lib/nosweat/engineSettings';
 import { storage } from 'lib/storage';
 import { addPasswordVisibilityToggleListener, confirm } from 'lib/view';
 import * as xhr from 'lib/xhr';
 
 site.load.then(() => {
+  document
+    .querySelector<HTMLAnchorElement>('.nosweat-engine-settings-link')
+    ?.addEventListener('click', async event => {
+      event.preventDefault();
+      await site.asset.loadCssPath('bits.engineSettings');
+      showEngineSettings(loadEnginePreferences(), () => {});
+    });
+
   $('.emoji-details').each(function (this: HTMLElement) {
     flairPickerLoader(this);
   });

@@ -239,3 +239,27 @@ test('a rating leader arriving at quality-queue completion is still evaluated', 
   assert.notEqual((model as any).chartOptions().color('b2b3'), 'var(--c-font-dim)');
   model.release();
 });
+
+test('analysis card inference ignores a legacy opponent mismatch for both channels', async t => {
+  const { model } = chartModel();
+  await Promise.resolve();
+  model.enabled = true;
+  model.selfElo = 1600;
+  model.opponentElo = 600;
+  const inputs: [number, number][] = [];
+  t.mock.method(model as any, 'prepare', async () => ({
+    predict: async (input: { selfElo: number; opponentElo: number }) => {
+      inputs.push([input.selfElo, input.opponentElo]);
+      return { move_logits: new Float32Array(4352), value_logits: new Float32Array([0, 0, 0]) };
+    },
+    snapshot: () => ({ phase: 'ready' }),
+  }));
+  const generation = (model as any).generation;
+  await (model as any).predict([fen], 1600, generation);
+  await (model as any).predict([fen], 2600, generation);
+  assert.deepEqual(inputs, [
+    [1600, 1600],
+    [2600, 2600],
+  ]);
+  model.release();
+});

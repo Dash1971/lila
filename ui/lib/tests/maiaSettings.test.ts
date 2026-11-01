@@ -43,6 +43,7 @@ test('shared Maia settings default to two engines and retain the second rating a
 
 test('primary rating selection matches opponent input while the second rating remains independent', () => {
   const view = engineSettingsView({ ...defaultEnginePreferences }, () => {});
+  assert.equal(view.querySelector('[data-engine-pref="opponentElo"]'), null);
   const primary = view.querySelector<HTMLSelectElement>('[data-engine-pref="selfElo"]')!;
   primary.value = '1800';
   change(primary);
@@ -85,4 +86,15 @@ test('computer-analysis quality shares the existing setting and Mobile Maia choi
   radios[2].checked = true;
   change(radios[2]);
   assert.equal(localStorage.getItem('nosweat.gameReview.quality'), 'Thorough');
+});
+
+test('legacy mismatched opponent inputs always normalize to the selected Maia rating', () => {
+  localStorage.setItem(
+    'nosweat.enginePreferences.v2',
+    JSON.stringify({ selfElo: 1800, opponentElo: 600, secondMaiaElo: 2600 }),
+  );
+  const prefs = loadEnginePreferences();
+  assert.equal(prefs.selfElo, 1800);
+  assert.equal(prefs.opponentElo, 1800);
+  assert.equal(prefs.secondMaiaElo, 2600);
 });

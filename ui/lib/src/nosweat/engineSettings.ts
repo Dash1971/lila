@@ -65,7 +65,6 @@ export function engineSettingsView(
         ['5m', 'Maia3 5M · light'],
         ['79m', 'Maia3 79M'],
       ])}
-      ${select('opponentElo', 'Primary opponent input', ratings)}
       ${toggle('history', 'Use move history')}
       <small>Maia downloads 36 MB for 5M or 331 MB for 79M on first use. Ratings are model inputs, not calibrated Elo. Settings are saved in this browser.</small>
     </fieldset></details>
@@ -102,15 +101,10 @@ export function engineSettingsView(
       const value =
         input.tagName === 'INPUT'
           ? (input as HTMLInputElement).checked
-          : key === 'selfElo' || key === 'opponentElo' || key === 'secondMaiaElo'
+          : key === 'selfElo' || key === 'secondMaiaElo'
             ? Number(input.value)
             : input.value;
-      // A primary rating selection matches both inputs, just like the card's rating picker.
-      const opponent = key === 'selfElo' ? { opponentElo: value } : {};
-      prefs = readEnginePreferences(JSON.stringify({ ...prefs, ...opponent, [key]: value }));
-      view.querySelector<HTMLSelectElement>('[data-engine-pref="opponentElo"]')!.value = String(
-        prefs.opponentElo,
-      );
+      prefs = readEnginePreferences(JSON.stringify({ ...prefs, [key]: value }));
       updateSecondary();
       saveEnginePreferences(prefs);
       changed(prefs);

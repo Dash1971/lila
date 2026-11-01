@@ -142,3 +142,28 @@ test('arrow color and visibility changes preserve completed policy without new i
   assert.deepEqual(engine.secondary, []);
   engine.cancel();
 });
+
+test('each puzzle Maia conditions both rating inputs at its own selected rating', async () => {
+  const inputs: [number, number][] = [];
+  const engine = new ReviewMaia(
+    async () => ({
+      predict: async input => {
+        inputs.push([input.selfElo, input.opponentElo]);
+        return new Float32Array(4352);
+      },
+      release: () => {},
+    }),
+    () => {},
+  );
+  engine.set({
+    ...context,
+    preferences: { ...context.preferences, selfElo: 1600, opponentElo: 600, secondMaiaElo: 2600 },
+  });
+  await tick();
+  await tick();
+  assert.deepEqual(inputs, [
+    [1600, 1600],
+    [2600, 2600],
+  ]);
+  engine.cancel();
+});

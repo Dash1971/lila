@@ -39,7 +39,7 @@ export class ReviewMaia {
           preferences: {
             model: context.preferences.model,
             selfElo: context.preferences.selfElo,
-            opponentElo: context.preferences.opponentElo,
+            opponentElo: context.preferences.selfElo,
             secondMaiaEnabled: context.preferences.secondMaiaEnabled,
             secondMaiaElo: context.preferences.secondMaiaElo,
             history: context.preferences.history,
@@ -80,7 +80,7 @@ export class ReviewMaia {
               await this.client!.predict({
                 tokens,
                 selfElo,
-                opponentElo: prefs.opponentElo,
+                opponentElo: selfElo,
                 includeValue: false,
               }),
             );

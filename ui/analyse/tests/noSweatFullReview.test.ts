@@ -153,7 +153,7 @@ describe('Native analysis extensions', () => {
       {
         model: '79m',
         selfElo: 2600,
-        opponentElo: 600,
+        opponentElo: 2600,
         secondMaiaEnabled: true,
         secondMaiaElo: 2400,
         history: false,

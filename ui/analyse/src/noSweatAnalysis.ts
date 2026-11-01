@@ -136,7 +136,7 @@ export class NoSweatAnalysis {
     return {
       model: this.model === '79m' ? '79m' : '5m',
       selfElo: this.selfElo,
-      opponentElo: this.opponentElo,
+      opponentElo: this.selfElo,
       secondMaiaEnabled: this.secondMaiaEnabled,
       secondMaiaElo: this.secondMaiaElo,
       history: this.history,
@@ -156,7 +156,7 @@ export class NoSweatAnalysis {
   }
   private applyEnginePreferences(next: EnginePreferences): void {
     const inferenceChanged = (
-      ['model', 'selfElo', 'opponentElo', 'secondMaiaEnabled', 'secondMaiaElo', 'history'] as const
+      ['model', 'selfElo', 'secondMaiaEnabled', 'secondMaiaElo', 'history'] as const
     ).some(key => this[key] !== next[key]);
     if (next.model !== this.model) this.release();
     Object.assign(this, next);
@@ -184,17 +184,13 @@ export class NoSweatAnalysis {
     this.analysisAllowed() &&
     !document.hidden;
   private readonly historyFens = (): string[] => this.ctrl.nodeList.map(n => n.fen);
-  private readonly key = (
-    fens = this.historyFens(),
-    rating = this.selfElo,
-    opponent = this.opponentElo,
-  ): string =>
+  private readonly key = (fens = this.historyFens(), rating = this.selfElo): string =>
     JSON.stringify([
       'maia3-policy-v1',
       this.model,
       this.config?.models[this.model].sha256,
       rating,
-      opponent,
+      rating,
       this.history,
       this.history ? fens.slice(-8) : fens.slice(-1),
     ]);
@@ -273,19 +269,14 @@ export class NoSweatAnalysis {
     });
     return this.client!;
   }
-  private predict(
-    fens: string[],
-    rating: number,
-    generation: number,
-    opponent = this.opponentElo,
-  ): Promise<Prediction> {
+  private predict(fens: string[], rating: number, generation: number): Promise<Prediction> {
     const task = this.maiaTail
       .catch(() => {})
       .then(async () => {
         if (!this.valid(generation)) throw new Error('Cancelled');
         const client = await this.prepare();
         if (!this.valid(generation)) throw new Error('Cancelled');
-        const key = this.key(fens, rating, opponent);
+        const key = this.key(fens, rating);
         const cached = this.cache.get(key);
         if (cached) return cached;
         this.progress = setInterval(() => {
@@ -298,7 +289,7 @@ export class NoSweatAnalysis {
           const logits = await client.predict({
             tokens: encodeHistory(fens, this.history),
             selfElo: rating,
-            opponentElo: opponent,
+            opponentElo: rating,
             includeValue: true,
           });
           if (!this.valid(generation)) throw new Error('Cancelled');
@@ -323,9 +314,7 @@ export class NoSweatAnalysis {
     const fens = this.historyFens();
     const results = await Promise.allSettled([
       this.predict(fens, this.selfElo, generation),
-      ...(this.secondMaiaEnabled
-        ? [this.predict(fens, this.secondMaiaElo, generation, this.secondMaiaElo)]
-        : []),
+      ...(this.secondMaiaEnabled ? [this.predict(fens, this.secondMaiaElo, generation)] : []),
     ]);
     if (!this.valid(generation)) return;
     this.candidates = results[0].status === 'fulfilled' ? results[0].value.candidates : [];
@@ -489,7 +478,7 @@ export class NoSweatAnalysis {
   }
 
   private chartPrimaryCandidates(): Candidate[] {
-    return this.byRating.get(this.selfElo) ?? (this.selfElo === this.opponentElo ? this.candidates : []);
+    return this.byRating.get(this.selfElo) ?? this.candidates;
   }
 
   private chartSan(uci: string, fen = this.ctrl.node.fen): string {
@@ -556,7 +545,7 @@ export class NoSweatAnalysis {
         this.ctrl.redraw();
         // Maia's rating chart conditions BOTH players at the sampled rating.
         // The independently configurable card inputs are not changed by a sweep.
-        const result = await this.predict(fens, rating, generation, rating);
+        const result = await this.predict(fens, rating, generation);
         if (!this.valid(generation)) return;
         this.byRating.set(rating, result.candidates);
         this.colorCandidates();
@@ -777,11 +766,11 @@ export class NoSweatAnalysis {
       ]),
     ]);
   }
-  private chooseRating(rating: number, secondary = false, keepOpponent = false): void {
+  private chooseRating(rating: number, secondary = false): void {
     if (secondary) this.secondMaiaElo = rating;
     else {
       this.selfElo = rating;
-      if (!keepOpponent) this.opponentElo = rating;
+      this.opponentElo = rating;
     }
     saveEnginePreferences(this.enginePreferences());
     this.positionChanged(true);

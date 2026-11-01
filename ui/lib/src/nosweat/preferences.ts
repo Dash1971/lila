@@ -3,6 +3,7 @@ import { engineColors, type EngineColors } from './arrows';
 export interface EnginePreferences {
   model: '5m' | '79m';
   selfElo: number;
+  // Retained for old saved preferences; always normalized to the primary rating.
   opponentElo: number;
   secondMaiaEnabled: boolean;
   secondMaiaElo: number;
@@ -41,7 +42,7 @@ export function readEnginePreferences(raw: string | null): EnginePreferences {
   return {
     model: input.model === '79m' ? '79m' : '5m',
     selfElo: rating(input.selfElo),
-    opponentElo: rating(input.opponentElo),
+    opponentElo: rating(input.selfElo),
     secondMaiaEnabled: typeof input.secondMaiaEnabled === 'boolean' ? input.secondMaiaEnabled : true,
     secondMaiaElo: rating(input.secondMaiaElo, 2400),
     history: boolean('history'),

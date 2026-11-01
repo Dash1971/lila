@@ -84,6 +84,15 @@ final class AccountUi(helpers: Helpers):
             a(activeCls(categ.slug), href := routes.Pref.form(categ.slug))(
               categName(categ)
             ),
+          ctx.me
+            .exists(_.nostrKey.isDefined)
+            .option(
+              a(
+                cls := "nosweat-engine-settings-link",
+                href := "#engine-analysis",
+                attr("aria-haspopup") := "dialog"
+              )("Engine Analysis")
+            ),
           a(activeCls("notification"), href := routes.Pref.form("notification"))(
             trans.site.notifications()
           ),
