@@ -158,7 +158,10 @@ export default class LobbyController {
         if (this.poolMember) this.poolIn();
         else if (this.tab === 'real_time' && !this.data.hooks.length) this.socket.realTimeIn();
       }, 10 * 1000);
-      this.joinPoolFromLocationHash();
+      // Maia pairing redraws immediately; the native lobby VNodes are only
+      // initialized after this constructor returns.
+      if (opts.noSweat) queueMicrotask(this.joinPoolFromLocationHash);
+      else this.joinPoolFromLocationHash();
     }
 
     pubsub.on('socket.open', () => {
