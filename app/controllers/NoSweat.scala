@@ -216,6 +216,16 @@ final class NoSweat(env: Env) extends LilaController(env):
         .move(id, (json \ "ply").as[Int], (json \ "move").as[String])
         .map(_ => Ok(Json.obj("ok" -> true)))
 
+  def activityStatus = Anon:
+    handle:
+      internal
+      club.activityStatus.map(Ok(_))
+
+  def activityPause = AnonBodyOf(parse.tolerantText(4096)): body =>
+    handle:
+      internal
+      club.pauseActivity((Json.parse(body) \ "paused").as[Boolean]).map(Ok(_))
+
   def games = Anon:
     handle:
       internal

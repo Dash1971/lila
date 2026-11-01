@@ -18,6 +18,8 @@ GET   /club/internal/study/ratings     controllers.NoSweat.experimentRatings
 POST  /club/internal/study             controllers.NoSweat.experimentCreate
 POST  /club/internal/study/stop        controllers.NoSweat.experimentStop
 POST  /club/internal/study/:id/move    controllers.NoSweat.experimentMove(id: GameId)
+GET   /club/internal/activity          controllers.NoSweat.activityStatus
+POST  /club/internal/activity          controllers.NoSweat.activityPause
 GET   /club/internal/games             controllers.NoSweat.games
 POST  /club/internal/:id/move           controllers.NoSweat.move(id: GameId)
 POST  /club/internal/:id/failure        controllers.NoSweat.failure(id: GameId)

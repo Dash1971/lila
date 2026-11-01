@@ -13,7 +13,7 @@ import lila.rating.UserPerfsExt.dubiousPuzzle
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
-final class ActivityUi(helpers: Helpers)(
+final class ActivityUi(helpers: Helpers, focused: Boolean = false)(
     tournamentIdToName: lila.core.id.TourId => Translate ?=> ClientName ?=> String
 ):
   import helpers.{ *, given }
@@ -352,7 +352,8 @@ final class ActivityUi(helpers: Helpers)(
   private def renderSignup(using Context) =
     entryTag(
       iconTag(Icon.StarOutline),
-      div(trans.activity.signedUp())
+      if focused then div(trans.activity.signedUp.txt().replace("lichess.org", "mutechess.org"))
+      else div(trans.activity.signedUp())
     )
 
   val entryTag = div(cls := "entry")

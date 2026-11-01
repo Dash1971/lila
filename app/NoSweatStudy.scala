@@ -126,7 +126,8 @@ final class NoSweatStudy(env: Env)(using ec: Executor):
     plan.capacity(docs.count(_.getAsOpt[String]("state").contains("finished")))
 
   def capacity: Fu[Int] =
-    if !enabled || closed.get() || System.currentTimeMillis() >= deadline then fuccess(2)
+    if !enabled || closed.get() || System.currentTimeMillis() >= deadline then
+      fuccess(env.noSweat.normalCapacity)
     else documents.map(docs => stage(docs).max(2))
 
   def busy: Fu[(Int, Set[UserId])] =

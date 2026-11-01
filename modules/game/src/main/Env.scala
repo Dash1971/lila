@@ -92,7 +92,22 @@ final class Env(
           seats && game.variant.standard && game.sourceIs(_.Pool) &&
           doc.getAsOpt[String]("state").contains("reserved") &&
           doc.getAsOpt[Boolean]("rated").contains(game.rated.yes)
-        if allowed then funit else fufail("Game has no human-versus-Maia pool reservation")
+        val automatic = appConfig.getOptional[Boolean]("nosweat.activity.enabled").getOrElse(false) &&
+          reservation.exists: doc =>
+            doc.getAsOpt[Boolean]("automatic").contains(true) &&
+              doc.getAsOpt[String]("state").contains("reserved") &&
+              doc.getAsOpt[Boolean]("rated").contains(true) && game.rated.yes &&
+              game.variant.standard && game.sourceIs(_.Pool) && game.userIds.distinct.size == 2 &&
+              doc.getAsOpt[UserId]("white") == game.whitePlayer.userId &&
+              doc.getAsOpt[UserId]("black") == game.blackPlayer.userId
+        if automatic then
+          userApi
+            .byIds(game.userIds)
+            .flatMap: users =>
+              if users.size == 2 && users.forall(u => u.isBot && u.enabled.yes) then funit
+              else fufail("Automatic games require two enabled BOT accounts")
+        else if allowed then funit
+        else fufail("Game has no Maia pool reservation")
 
   val gameRepo = GameRepo(db(config.gameColl), admitNoSweat)
 
