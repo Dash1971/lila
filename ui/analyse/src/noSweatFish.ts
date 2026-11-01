@@ -1,5 +1,6 @@
 import type { BrowserEngineInfo } from 'lib/ceval';
-// Use Lila's native Stockfish loader/assets with a separate bounded review queue.
+// Native Stockfish loader; candidate stages follow Maia frontend 325b85c3 (GPL-3.0).
+// The existing watchdog remains a Mute resource bound, not Maia's depth policy.
 import { StockfishWebEngine } from 'lib/ceval/engines/stockfishWebEngine';
 import { Protocol } from 'lib/ceval/protocol';
 
@@ -11,6 +12,11 @@ export interface Review {
   previous?: Snapshot;
   terminal?: boolean;
   quality?: string;
+}
+export interface CandidateSearchOptions {
+  allRoots?: boolean;
+  maxMultiPv?: 4;
+  onUpdate?: (review: Review) => void;
 }
 const info: BrowserEngineInfo = {
   id: 'nosweat-review-sf19-small',
@@ -36,6 +42,7 @@ class ReviewProtocol extends Protocol {
     reject: (e: Error) => void;
     signal: AbortSignal;
     started: boolean;
+    onUpdate?: (review: Review) => void;
     timer: ReturnType<typeof setTimeout>;
   };
   private booted!: () => void;
@@ -73,12 +80,19 @@ class ReviewProtocol extends Protocol {
         t.started = true;
         this.output?.('position fen ' + t.fen);
         this.output?.(
-          `go depth ${t.depth} movetime ${t.time}` +
+          `go depth ${t.depth}` +
+            (t.time > 0 ? ` movetime ${t.time}` : '') +
             (t.moves.length ? ' searchmoves ' + t.moves.join(' ') : ''),
         );
       }
-    } else if (text.startsWith('info ')) this.task?.snapshots.add(text);
-    else if (text.startsWith('bestmove')) {
+    } else if (text.startsWith('info ')) {
+      const task = this.task;
+      if (!task) return;
+      const previous = task.snapshots.completed;
+      task.snapshots.add(text);
+      if (task.snapshots.completed && previous !== task.snapshots.completed && !task.signal.aborted)
+        task.onUpdate?.({ current: task.snapshots.completed, previous: task.snapshots.previous });
+    } else if (text.startsWith('bestmove')) {
       const t = this.task;
       if (!t) return;
       clearTimeout(t.timer);
@@ -106,6 +120,7 @@ class ReviewProtocol extends Protocol {
     signal: AbortSignal,
     session?: symbol,
     multiPv = 2,
+    options?: CandidateSearchOptions,
   ): Promise<Review> {
     let deadline: ReturnType<typeof setTimeout> | undefined;
     try {
@@ -124,7 +139,11 @@ class ReviewProtocol extends Protocol {
     const legal = new Set(moves.length ? moves : legalUcis(fen));
     const count = Math.min(
       legal.size,
-      Number.isFinite(multiPv) ? Math.max(1, Math.min(3, Math.floor(multiPv))) : 2,
+      options?.allRoots && !moves.length
+        ? 256
+        : Number.isFinite(multiPv)
+          ? Math.max(1, Math.min(options?.maxMultiPv ?? 3, Math.floor(multiPv)))
+          : 2,
     );
     return new Promise((resolve, reject) => {
       if (this.task) {
@@ -140,6 +159,7 @@ class ReviewProtocol extends Protocol {
         reject,
         signal,
         started: false,
+        onUpdate: options?.onUpdate,
         snapshots: new SearchSnapshots(legal, count, position(fen).turn === 'white'),
         timer: setTimeout(() => this.fail(new Error('Stockfish review timed out')), time + 15000),
       });
@@ -196,6 +216,7 @@ export class ReviewFish {
     time = 1200,
     session?: symbol,
     multiPv = 2,
+    options?: CandidateSearchOptions,
   ): Promise<Review> {
     const generation = this.generation;
     const job = this.tail
@@ -213,7 +234,15 @@ export class ReviewFish {
             protocol,
           );
         }
-        return this.protocol.search(fen, moves, depth, time, signal, session, multiPv);
+        try {
+          return await this.protocol.search(fen, moves, depth, time, signal, session, multiPv, options);
+        } catch (error) {
+          // A depth-only phase can hit the watchdog. Discard that worker before
+          // another search so its late info/bestmove cannot enter a new task.
+          const cleanCancellation = signal.aborted && error instanceof Error && error.message === 'Cancelled';
+          if (!cleanCancellation && generation === this.generation) this.destroy();
+          throw error;
+        }
       });
     this.tail = job;
     return job;

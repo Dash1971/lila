@@ -48,7 +48,7 @@ test('chart shade caps and exact ties are deterministic, independent of input or
   );
 });
 
-test('chart quality and CP tie ordering retain the mover perspective for Black', () => {
+test('chart quality uses mover perspective while tied shades use Maia raw White CP ordering', () => {
   const white = new Map<string, EvalScore>([
     ['best', { cp: 0 }],
     ['good', { cp: -30 }],
@@ -64,7 +64,7 @@ test('chart quality and CP tie ordering retain the mover perspective for Black',
     ]),
     false,
   );
-  assert.deepEqual([...ties.keys()], ['more', 'less']);
+  assert.deepEqual([...ties.keys()], ['less', 'more']);
 });
 
 test('mate evidence remains valid while unknown or malformed evidence stays unmapped', () => {

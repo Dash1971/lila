@@ -1,16 +1,35 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { candidateQuality, qualityFromLoss, blunderRanks } from '../src/noSweatCandidateQuality';
+import {
+  candidateQuality,
+  qualityFromLoss,
+  blunderRanks,
+  stockfishWinrate,
+} from '../src/noSweatCandidateQuality';
 
 test('Maia-platform boundaries use five and ten percentage points of SF winrate loss', () => {
   assert.equal(qualityFromLoss(0.05), 'good');
+  assert.equal(qualityFromLoss(0.05 + 1e-12), 'ok');
   assert.equal(qualityFromLoss(0.05001), 'ok');
   assert.equal(qualityFromLoss(0.1), 'ok');
+  assert.equal(qualityFromLoss(0.1 + 1e-12), 'blunder');
   assert.equal(qualityFromLoss(0.10001), 'blunder');
   assert.equal(candidateQuality({ cp: 0 }, { cp: 0 }, true), 'good');
   assert.equal(candidateQuality({ cp: 0 }, { cp: -100 }, true), 'ok');
   assert.equal(candidateQuality({ cp: 0 }, { cp: -500 }, true), 'blunder');
+});
+
+test('Maia mate evidence uses empirical CP endpoints, including a losing mate-zero for either mover', () => {
+  const winning = stockfishWinrate({ cp: 10000 }, true);
+  const losing = stockfishWinrate({ cp: -10000 }, true);
+  assert.equal(winning, 0.8518353443061348);
+  assert.equal(losing, 0.16874792794783955);
+  assert.equal(stockfishWinrate({ mate: 2 }, true), winning);
+  assert.equal(stockfishWinrate({ mate: -2 }, false), winning);
+  assert.equal(stockfishWinrate({ mate: 0 }, true), losing);
+  assert.equal(stockfishWinrate({ mate: 0 }, false), losing);
+  assert.equal(stockfishWinrate({ mate: NaN }, true), undefined);
 });
 
 test('blunder shades follow Stockfish loss order, cap at five and ignore missing evidence', () => {

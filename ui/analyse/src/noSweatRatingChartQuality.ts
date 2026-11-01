@@ -1,6 +1,11 @@
-// Maia platform (GPL-3.0), revision a6e52f5c811ee18863cb2f0e81f2433a5b9905de.
+// Maia platform (GPL-3.0), revision 325b85c3b6427f2e8e691e1dcf4ab9d4dbf94ec3.
 // Chart-only adaptation of useAnalysisController/utils.ts and constants/analysis.ts.
-import { qualityFromLoss, stockfishWinrate, type CandidateQuality } from './noSweatCandidateQuality';
+import {
+  candidateWhiteCp,
+  qualityFromLoss,
+  stockfishWinrate,
+  type CandidateQuality,
+} from './noSweatCandidateQuality';
 
 const colors: Record<CandidateQuality, string[]> = {
   good: ['#238b45', '#41ab5d', '#74c476', '#90D289', '#AEDFA4'],
@@ -32,7 +37,7 @@ export function ratingChartQualities(
       .sort(
         (a, b) =>
           b.value - a.value ||
-          (white ? 1 : -1) * ((b.score.cp ?? 0) - (a.score.cp ?? 0)) ||
+          candidateWhiteCp(b.score, white)! - candidateWhiteCp(a.score, white)! ||
           a.uci.localeCompare(b.uci),
       )
       .map(({ uci, value }) => {

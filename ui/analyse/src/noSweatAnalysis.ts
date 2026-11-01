@@ -13,20 +13,20 @@ import { hl, type VNode } from 'lib/view';
 import type AnalyseCtrl from './ctrl';
 import { engineArrows, engineShapes, engineColors, type EngineColors } from './noSweatArrows';
 import { BoardReview } from './noSweatBoardReview';
-import { candidateQuality, qualityLabels, stockfishWinrate, blunderRanks } from './noSweatCandidateQuality';
-import { encodeHistory, policy, san, position, standardUci, type Candidate } from './noSweatCore';
-import { reviewClick } from './noSweatEvents';
-import { ReviewFish, type Review } from './noSweatFish';
+import { candidateWhiteCp, qualityLabels, stockfishWinrate } from './noSweatCandidateQuality';
+import { encodeHistory, legalUcis, policy, san, position, standardUci, type Candidate } from './noSweatCore';
+import { reviewClick, reviewMove } from './noSweatEvents';
+import { ReviewFish, type Review, type CandidateSearchOptions } from './noSweatFish';
+import { withMoveTooltip, type MoveTooltipDetails } from './noSweatMoveTooltip';
 import { OpeningLabel } from './noSweatOpening';
 import { readEnginePreferences, type EnginePreferences } from './noSweatPreferences';
 import {
   ratingSamples as samples,
-  chartMoves,
   ratingChart,
   ratingLegend,
   type RatingChartOptions,
 } from './noSweatRatingChart';
-import { ratingChartQualities } from './noSweatRatingChartQuality';
+import { ratingChartQualities, type RatingChartQuality } from './noSweatRatingChartQuality';
 
 interface MaiaClient {
   predict(input: {
@@ -106,7 +106,9 @@ export class NoSweatAnalysis {
   private compareBusy = false;
   private qualityBusy = false;
   private qualityRoot?: Review;
-  private readonly qualityFailed = new Set<string>();
+  private qualityScreened = false;
+  private qualitySession = Symbol('candidate analysis');
+  private readonly qualityAttempted = new Set<string>();
 
   constructor(readonly ctrl: AnalyseCtrl) {
     this.boardReview = new BoardReview(ctrl);
@@ -225,7 +227,9 @@ export class NoSweatAnalysis {
     this.expectedScore = this.secondaryExpectedScore = undefined;
     this.scores.clear();
     this.qualityRoot = undefined;
-    this.qualityFailed.clear();
+    this.qualityScreened = false;
+    this.qualitySession = Symbol('candidate analysis');
+    this.qualityAttempted.clear();
     const ratingContext = this.ratingKey();
     if (ratingContext !== this.ratingContext) this.byRating.clear();
     this.ratingContext = ratingContext;
@@ -311,6 +315,7 @@ export class NoSweatAnalysis {
   private async refresh(generation: number): Promise<void> {
     this.status = 'Preparing local Maia…';
     this.ctrl.redraw();
+    this.colorCandidates();
     const fens = this.historyFens();
     const results = await Promise.allSettled([
       this.predict(fens, this.selfElo, generation),
@@ -379,100 +384,187 @@ export class NoSweatAnalysis {
     moves: string[] = [],
     time = 1200,
     multiPv = 2,
+    depth = 12,
+    options?: CandidateSearchOptions,
   ): Promise<Review> {
-    const key = JSON.stringify(['sf19-candidate-depth12-v2', fen, moves, time, multiPv]);
+    const key = JSON.stringify([
+      'sf19-maia-root-screen-v3',
+      fen,
+      moves,
+      time,
+      multiPv,
+      depth,
+      !!options?.allRoots,
+    ]);
     const cached = this.reviewCache.get(key);
     if (cached) return cached;
-    const result = await this.fish.search(fen, moves, this.abort.signal, 12, time, undefined, multiPv);
+    const result = await this.fish.search(
+      fen,
+      moves,
+      this.abort.signal,
+      depth,
+      time,
+      this.qualitySession,
+      multiPv,
+      options,
+    );
     if (!this.valid(generation)) throw new Error('Cancelled');
     this.reviewCache.set(key, result);
     if (this.reviewCache.size > 400) this.reviewCache.delete(this.reviewCache.keys().next().value!);
     return result;
   }
-  private visibleCandidates(): string[] {
-    return [
-      ...new Set(
-        [
-          ...this.candidates.slice(0, this.expanded[0] ? undefined : this.leadingMoveCount),
-          ...this.secondaryCandidates.slice(0, this.expanded[1] ? undefined : 4),
-        ]
-          .map(c => c.uci)
-          .concat(
-            this.ratingTable
-              ? chartMoves(this.byRating, this.chartPrimaryCandidates(), this.chartStockfishMoves())
-              : [],
-          ),
-      ),
-    ];
+  private qualityCandidates(): string[] {
+    const selected = new Set<string>();
+    for (const candidates of this.secondMaiaEnabled
+      ? [this.candidates, this.secondaryCandidates]
+      : [this.candidates]) {
+      let covered = 0;
+      for (const candidate of candidates.slice(0, 4)) {
+        selected.add(candidate.uci);
+        covered += candidate.probability;
+        if (covered >= 0.95) break;
+      }
+    }
+    const played = this.normalUci(this.ctrl.node.children[0]?.uci);
+    if (played) selected.add(played);
+    return [...selected];
   }
+
   private colorCandidates(): void {
     const generation = this.generation;
-    if (!this.valid(generation) || this.qualityBusy || !this.visibleCandidates().length) return;
+    if (!this.valid(generation) || this.qualityBusy) return;
+    const targets = () =>
+      this.qualityCandidates().filter(
+        move => (this.scores.get(move)?.depth ?? 0) < 18 && !this.qualityAttempted.has(`18:${move}`),
+      );
+    if (
+      this.qualityAttempted.has('screen') &&
+      (!this.qualityScreened || (this.qualityAttempted.has('root:18') && !targets().length))
+    )
+      return;
     this.qualityBusy = true;
     (async () => {
       const fen = this.ctrl.node.fen;
-      if (!this.qualityRoot) {
-        // Chart candidates include the actual third SF root. Other ReviewFish
-        // callers and the native full-game/classifier engines keep two PVs.
-        const root = await this.review(fen, generation, [], 500, this.ratingTable ? 3 : 2);
-        if (!this.valid(generation)) return;
-        if (root.current.depth < 8) return;
-        this.qualityRoot = root;
-        for (const line of root.current.lines) {
-          const move = this.normalUci(line.moves[0]);
-          if (move) this.scores.set(move, { score: line, depth: root.current.depth });
-        }
-        this.ctrl.redraw();
-      }
-      // Re-read the visible set so opening Others during a search joins this queue.
-      for (;;) {
-        const move = this.visibleCandidates().find(m => !this.scores.has(m) && !this.qualityFailed.has(m));
-        if (!move || !this.valid(generation)) break;
+      const legal = new Set(legalUcis(fen));
+      const search = async (moves: string[], depth: number, multiPv = 1, allRoots = false) => {
+        const publish = (review: Review) => {
+          if (!this.valid(generation)) return;
+          if (allRoots) {
+            const roots = review.current.lines.map(line => this.normalUci(line.moves[0]));
+            if (
+              roots.length !== legal.size ||
+              new Set(roots).size !== legal.size ||
+              roots.some(move => !move || !legal.has(move))
+            )
+              return;
+            this.qualityScreened = true;
+          }
+          if (!this.qualityScreened) return;
+          if (!moves.length) this.qualityRoot = review;
+          for (const line of review.current.lines) {
+            const move = this.normalUci(line.moves[0]);
+            if (move && legal.has(move))
+              this.scores.set(move, {
+                score: line,
+                depth: Math.max(this.scores.get(move)?.depth ?? 0, review.current.depth),
+              });
+          }
+          this.ctrl.redraw();
+        };
         try {
-          const result = await this.review(fen, generation, [move], 300);
-          if (!this.valid(generation)) return;
-          if (result.current.depth >= 8)
-            this.scores.set(move, { score: result.current.lines[0], depth: result.current.depth });
-          else this.qualityFailed.add(move);
+          const result = await this.review(fen, generation, moves, 0, multiPv, depth, {
+            allRoots,
+            maxMultiPv: 4,
+            onUpdate: publish,
+          });
+          publish(result);
         } catch {
-          if (!this.valid(generation)) return;
-          this.qualityFailed.add(move);
+          // A failed or cancelled phase cannot invent missing root evidence.
+          // Completed position-wide iterations remain useful if deepening times out.
         }
-        this.ctrl.redraw();
+      };
+      if (!this.qualityAttempted.has('screen')) {
+        this.qualityAttempted.add('screen');
+        await search([], 10, legal.size, true);
+      }
+      if (!this.valid(generation) || !this.qualityScreened) return;
+      for (const move of this.qualityCandidates()) {
+        if (!this.valid(generation)) return;
+        if ((this.scores.get(move)?.depth ?? 0) >= 14 || this.qualityAttempted.has(`14:${move}`)) continue;
+        this.qualityAttempted.add(`14:${move}`);
+        await search([move], 14);
+      }
+      if (!this.qualityAttempted.has('root:18')) {
+        this.qualityAttempted.add('root:18');
+        await search([], 18, 4);
+      }
+      for (;;) {
+        if (!this.valid(generation)) return;
+        const move = targets()[0];
+        if (!move) break;
+        this.qualityAttempted.add(`18:${move}`);
+        await search([move], 18);
       }
     })()
       .catch(() => {
-        // Color evidence is optional; Maia probabilities remain usable on failure.
+        // Color evidence is optional; policy probabilities remain usable.
       })
       .finally(() => {
         if (this.valid(generation)) {
           this.qualityBusy = false;
           if (this.status === 'Loading Stockfish review…') this.status = '';
           this.ctrl.redraw();
-          // The last rating sample can arrive between queue completion and this
-          // continuation. Drain that new leader without retrying shallow roots.
-          if (
-            this.qualityRoot &&
-            this.visibleCandidates().some(move => !this.scores.has(move) && !this.qualityFailed.has(move))
-          )
-            this.colorCandidates();
+          // Maia can arrive at a phase boundary; its selected candidates still deepen.
+          if (this.qualityScreened && targets().length) this.colorCandidates();
         }
       });
   }
+
+  private candidateQualities(): Map<string, RatingChartQuality> {
+    if (!this.enabled || !this.analysisAllowed() || this.ctrl.threatMode()) return new Map();
+    return ratingChartQualities(
+      new Map([...this.scores].flatMap(([uci, result]) => (result ? [[uci, result.score] as const] : []))),
+      position(this.ctrl.node.fen).turn === 'white',
+    );
+  }
+
   private moveQuality(uci: string) {
     if (!this.enabled || !this.analysisAllowed() || this.ctrl.threatMode()) return undefined;
+    return this.candidateQualities().get(uci)?.quality;
+  }
+
+  private moveTooltip(uci: string, probability: number): MoveTooltipDetails | undefined {
+    if (!this.enabled || !this.analysisAllowed() || this.ctrl.threatMode()) return undefined;
     const white = position(this.ctrl.node.fen).turn === 'white';
-    const scores = [...this.scores.values()].flatMap(s => (s ? [s.score] : []));
-    const value = (s: EvalScore) => stockfishWinrate(s, white) ?? -1;
-    const best = scores.reduce<EvalScore | undefined>(
-      (a, b) => (!a || value(b) > value(a) ? b : a),
-      undefined,
-    );
-    return candidateQuality(best, this.scores.get(uci)?.score, white);
+    const score = this.scores.get(uci)?.score;
+    const cp = score && candidateWhiteCp(score, white);
+    const knownCp = [...this.scores.values()].flatMap(value => {
+      const cp = value && candidateWhiteCp(value.score, white);
+      return cp === undefined ? [] : [cp];
+    });
+    const signed = (cp: number) => `${cp > 0 ? '+' : ''}${(cp / 100).toFixed(2)}`;
+    const mate = score?.mate;
+    return {
+      san: san(this.ctrl.node.fen, uci),
+      color: this.candidateQualities().get(uci)?.color ?? 'var(--c-font-dim)',
+      maiaProbability: probability,
+      stockfishEval:
+        cp === undefined
+          ? undefined
+          : mate === undefined
+            ? signed(cp)
+            : `${(mate === 0 ? !white : mate > 0) ? '+' : '-'}M${Math.abs(mate)}`,
+      stockfishWinrate: score && stockfishWinrate(score, white),
+      stockfishEvalLoss:
+        cp === undefined || !knownCp.length
+          ? undefined
+          : signed(white ? cp - Math.max(...knownCp) : Math.min(...knownCp) - cp),
+    };
   }
 
   private chartStockfishMoves(): string[] {
     if (!this.enabled || !this.analysisAllowed() || this.ctrl.threatMode()) return [];
+    if (this.qualityScreened) return [...this.candidateQualities().keys()].slice(0, 3);
     const lines = this.qualityRoot?.current.lines ?? this.ctrl.node.ceval?.pvs ?? [];
     return [...new Set(lines.slice(0, 3).flatMap(line => this.normalUci(line.moves[0]) ?? []))];
   }
@@ -508,10 +600,7 @@ export class NoSweatAnalysis {
 
   private chartOptions(): RatingChartOptions {
     const fen = this.ctrl.node.fen;
-    const qualities = ratingChartQualities(
-      new Map([...this.scores].flatMap(([uci, result]) => (result ? [[uci, result.score] as const] : []))),
-      position(fen).turn === 'white',
-    );
+    const qualities = this.candidateQualities();
     return {
       primary: this.chartPrimaryCandidates(),
       stockfish: this.chartStockfishMoves(),
@@ -604,10 +693,7 @@ export class NoSweatAnalysis {
     const expanded = this.expanded[Number(secondary)];
     const leading = this.leadingMoveCount;
     const rest = candidates.slice(leading).reduce((sum, c) => sum + c.probability, 0);
-    const grades = blunderRanks(
-      new Map([...this.scores].flatMap(([uci, result]) => (result ? [[uci, result.score] as const] : []))),
-      white,
-    );
+    const qualities = this.candidateQualities();
     const moves: (Candidate | undefined)[] = candidates.slice(0, expanded ? undefined : leading);
     while (moves.length < leading) moves.push(undefined);
     const groups = this.secondMaiaEnabled
@@ -673,16 +759,19 @@ export class NoSweatAnalysis {
                           attrs: {
                             type: 'button',
                             'data-quality': quality ?? 'pending',
-                            'data-blunder-rank': quality === 'blunder' ? (grades.get(c.uci) ?? 0) : false,
-                            title: quality
-                              ? qualityLabels[quality] + ' · Stockfish estimate'
-                              : 'Move quality not yet available',
+                            style: qualities.has(c.uci) ? `color:${qualities.get(c.uci)!.color}` : false,
                             'aria-label':
                               san(this.ctrl.node.fen, c.uci) +
                               ': ' +
                               (quality ? qualityLabels[quality] : 'quality not yet available'),
                           },
-                          hook: reviewClick(() => this.preview(c.uci)),
+                          hook: withMoveTooltip(
+                            reviewMove(
+                              () => this.preview(c.uci),
+                              active => this.hoverChartMove(active ? c.uci : undefined),
+                            ),
+                            () => this.moveTooltip(c.uci, c.probability),
+                          ),
                         },
                         san(this.ctrl.node.fen, c.uci),
                       ),
@@ -705,7 +794,6 @@ export class NoSweatAnalysis {
           },
           hook: reviewClick(() => {
             this.expanded[Number(secondary)] = !expanded;
-            this.colorCandidates();
             this.ctrl.redraw();
           }),
         },

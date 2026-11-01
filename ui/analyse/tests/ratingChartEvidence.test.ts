@@ -27,14 +27,16 @@ mock.module('../../lib/src/ceval/engines/stockfishWebEngine.ts', {
   namedExports: { StockfishWebEngine: FakeEngine },
 });
 const { ReviewFish } = await import('../src/noSweatFish');
+const { legalUcis } = await import('../src/noSweatCore');
 const fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 const start = async (multiPv?: number, moves: string[] = []) => {
   const fish = new ReviewFish(() => {});
-  const result = fish.search(fen, moves, new AbortController().signal, 12, 500, undefined, multiPv);
+  const abort = new AbortController();
+  const result = fish.search(fen, moves, abort.signal, 12, 500, undefined, multiPv);
   await new Promise(resolve => setImmediate(resolve));
   const engine = engines.at(-1)!;
   engine.protocol.received('readyok');
-  return { fish, engine, result };
+  return { fish, engine, result, abort };
 };
 const line = (rank: number, move: string, depth = 12) =>
   `info depth ${depth} multipv ${rank} score cp ${40 - rank * 10} pv ${move}`;
@@ -98,3 +100,53 @@ test('candidate root PV requests stay bounded even with malformed caller values'
     fish.destroy();
   }
 });
+
+test('Maia candidate screening publishes only complete all-legal iterations and keeps them on a partial next depth', async () => {
+  const currentFen = 'r1bnkb1r/pp2pppp/1n6/4P3/2B5/5N2/PP3PPP/RNB1K2R w KQkq - 0 10';
+  const moves = legalUcis(currentFen);
+  assert.equal(moves.length, 38);
+  const fish = new ReviewFish(() => {});
+  const updates: number[] = [];
+  const result = fish.search(currentFen, [], new AbortController().signal, 10, 0, Symbol(), moves.length, {
+    allRoots: true,
+    onUpdate: review => updates.push(review.current.lines.length),
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  const engine = engines.at(-1)!;
+  engine.protocol.received('readyok');
+  assert.ok(engine.commands.includes('setoption name MultiPV value 38'));
+  assert.ok(engine.commands.includes('go depth 10'));
+  moves.slice(0, -1).forEach((move, i) => engine.protocol.received(line(i + 1, move, 9)));
+  assert.deepEqual(updates, []);
+  engine.protocol.received(line(moves.length, moves.at(-1)!, 9));
+  assert.deepEqual(updates, [38]);
+  engine.protocol.received(line(1, moves[0], 10));
+  engine.protocol.received('bestmove ' + moves[0]);
+  const review = await result;
+  assert.equal(review.current.depth, 9);
+  assert.equal(review.current.lines.length, 38);
+  fish.destroy();
+});
+
+for (const aborted of [false, true])
+  test(`a ${aborted ? 'cancelled ' : ''}timed-out search discards its worker before any late output can enter the next search`, async t => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    const first = await start();
+    const rejected = assert.rejects(first.result, /review timed out/);
+    if (aborted) first.abort.abort();
+    t.mock.timers.tick(15501);
+    await rejected;
+    assert.ok(first.engine.commands.includes('quit'));
+    const next = first.fish.search(fen, [], new AbortController().signal, 12, 500);
+    await new Promise(resolve => setImmediate(resolve));
+    const replacement = engines.at(-1)!;
+    assert.notEqual(replacement, first.engine);
+    replacement.protocol.received('readyok');
+    first.engine.protocol.received(line(1, 'a2a3', 99));
+    first.engine.protocol.received('bestmove a2a3');
+    replacement.protocol.received(line(1, 'e2e4'));
+    replacement.protocol.received(line(2, 'd2d4'));
+    replacement.protocol.received('bestmove e2e4');
+    assert.equal((await next).current.lines[0].moves[0], 'e2e4');
+    first.fish.destroy();
+  });

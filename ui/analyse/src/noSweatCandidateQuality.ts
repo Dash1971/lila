@@ -1,4 +1,4 @@
-// Maia platform (GPL-3.0), revision a6e52f5c811ee18863cb2f0e81f2433a5b9905de.
+// Maia platform (GPL-3.0), revision 325b85c3b6427f2e8e691e1dcf4ab9d4dbf94ec3.
 // Source: src/lib/analysis.ts, src/hooks/useAnalysisController/utils.ts and constants/analysis.ts.
 // Empirical CP lookup and 5/10 percentage-point boundaries; never use Maia likelihood.
 const cpLookup: Record<string, number> = {
@@ -207,12 +207,21 @@ const cpLookup: Record<string, number> = {
 
 export type CandidateQuality = 'good' | 'ok' | 'blunder';
 export const qualityFromLoss = (loss: number): CandidateQuality =>
-  loss <= 0.05 + 1e-10 ? 'good' : loss <= 0.1 + 1e-10 ? 'ok' : 'blunder';
+  loss <= 0.05 ? 'good' : loss <= 0.1 ? 'ok' : 'blunder';
+
+// Maia converts mate evidence to CP before its empirical win-rate lookup.
+export const candidateWhiteCp = (score: EvalScore, white: boolean): number | undefined => {
+  if (score.mate !== undefined) {
+    if (!Number.isFinite(score.mate)) return undefined;
+    return score.mate === 0 ? (white ? -10000 : 10000) : score.mate > 0 ? 10000 : -10000;
+  }
+  return score.cp !== undefined && Number.isFinite(score.cp) ? score.cp : undefined;
+};
 
 export const stockfishWinrate = (score: EvalScore, white: boolean): number | undefined => {
-  if (score.mate !== undefined) return score.mate > 0 === white ? 1 : 0;
-  if (score.cp === undefined || !Number.isFinite(score.cp)) return undefined;
-  const cp = Math.max(-10, Math.min(10, (white ? score.cp : -score.cp) / 100));
+  const whiteCp = candidateWhiteCp(score, white);
+  if (whiteCp === undefined) return undefined;
+  const cp = Math.max(-10, Math.min(10, (white ? whiteCp : -whiteCp) / 100));
   return cpLookup[(Math.round(cp * 10) / 10).toFixed(1)];
 };
 
@@ -245,7 +254,7 @@ export function blunderRanks(scores: ReadonlyMap<string, EvalScore>, white: bool
       .sort(
         (a, b) =>
           b.value - a.value ||
-          (white ? 1 : -1) * ((b.score.cp ?? 0) - (a.score.cp ?? 0)) ||
+          candidateWhiteCp(b.score, white)! - candidateWhiteCp(a.score, white)! ||
           a.uci.localeCompare(b.uci),
       )
       .map((s, i) => [s.uci, Math.min(i, 4)]),

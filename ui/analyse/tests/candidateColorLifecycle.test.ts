@@ -2,12 +2,22 @@ import assert from 'node:assert/strict';
 import { mock, test } from 'node:test';
 
 import type AnalyseCtrl from '../src/ctrl';
-import type { Review } from '../src/noSweatFish';
+import { legalUcis } from '../src/noSweatCore';
+import type { Review, CandidateSearchOptions } from '../src/noSweatFish';
 
-const jobs: { signal: AbortSignal; resolve: (r: Review) => void }[] = [];
+const jobs: { signal: AbortSignal; resolve: (r: Review) => void; options?: CandidateSearchOptions }[] = [];
 class FakeFish {
-  search(_fen: string, _moves: string[], signal: AbortSignal) {
-    return new Promise<Review>(resolve => jobs.push({ signal, resolve }));
+  search(
+    _fen: string,
+    _moves: string[],
+    signal: AbortSignal,
+    _depth?: number,
+    _time?: number,
+    _session?: symbol,
+    _multiPv?: number,
+    options?: CandidateSearchOptions,
+  ) {
+    return new Promise<Review>(resolve => jobs.push({ signal, resolve, options }));
   }
   destroy() {}
 }
@@ -60,6 +70,9 @@ test('turning analysis off invalidates an in-flight candidate color result', asy
   assert.equal(jobs.length, 1);
   model.setEnabled(false);
   assert.equal(jobs[0].signal.aborted, true);
+  jobs[0].options?.onUpdate?.({
+    current: { depth: 10, lines: legalUcis(fen).map(move => ({ cp: 0, moves: [move] })) },
+  });
   jobs[0].resolve({ current: { depth: 12, lines: [{ cp: 0, moves: ['e2e4'] }] } });
   await new Promise(resolve => setTimeout(resolve, 0));
   assert.equal(model.scores.size, 0);
@@ -210,33 +223,104 @@ test('late rating inference is discarded when analysis is disabled', async t => 
   model.release();
 });
 
-test('a rating leader arriving at quality-queue completion is still evaluated', async () => {
-  const { ctrl, model } = chartModel();
+test('all legal roots are screened before ranked shading and Others only changes presentation', async t => {
+  const { model } = chartModel();
   await Promise.resolve();
   model.enabled = true;
-  model.candidates = [{ uci: 'a2a3', probability: 1 }];
-  const roots = ['e2e4', 'd2d4', 'g1f3'].map(uci => ({ cp: 0, moves: [uci] }));
-  (model as any).qualityRoot = { current: { depth: 12, lines: roots } };
-  roots.forEach(line => model.scores.set(line.moves[0], { score: line, depth: 12 }));
-  let inject = true;
-  ctrl.redraw = () => {
-    if (inject && model.scores.has('a2a3')) {
-      inject = false;
-      queueMicrotask(() => {
-        model.byRating.set(2600, [{ uci: 'b2b3', probability: 0.5 }]);
-        (model as any).colorCandidates();
-      });
-    }
-  };
-  const start = jobs.length;
+  model.candidates = [
+    { uci: 'e2e4', probability: 0.98 },
+    { uci: 'a2a3', probability: 0.02 },
+  ];
+  const legal = legalUcis(fen);
+  model.secondaryCandidates = [
+    { uci: 'd2d4', probability: 1 },
+    ...legal.filter(uci => uci !== 'd2d4').map(uci => ({ uci, probability: 0 })),
+  ];
+  assert.equal(legal.length, 20);
+  const lines = legal.map((uci, i) => ({ cp: uci === 'e2e4' ? 0 : -500 - i * 10, moves: [uci] }));
+  const calls: { moves: string[]; depth: number; allRoots: boolean }[] = [];
+  t.mock.method(
+    model as any,
+    'review',
+    async (
+      _fen: string,
+      _gen: number,
+      moves: string[],
+      _time: number,
+      multiPv: number,
+      depth: number,
+      options: CandidateSearchOptions,
+    ) => {
+      calls.push({ moves, depth, allRoots: !!options.allRoots });
+      if (options.allRoots) {
+        options.onUpdate?.({ current: { depth: 1, lines: lines.slice(0, -1) } });
+        assert.equal(model.scores.size, 0, 'an incomplete screening cannot publish a partial color pool');
+        options.onUpdate?.({ current: { depth: 2, lines } });
+        assert.equal(model.scores.size, 20);
+      }
+      return {
+        current: {
+          depth,
+          lines: moves.length
+            ? lines.filter(line => moves.includes(line.moves[0]))
+            : options.allRoots
+              ? lines
+              : lines.slice(0, multiPv),
+        },
+      };
+    },
+  );
   (model as any).colorCandidates();
-  jobs[start].resolve({ current: { depth: 12, lines: [{ cp: -500, moves: ['a2a3'] }] } });
   await new Promise(resolve => setTimeout(resolve, 0));
-  assert.equal(jobs.length, start + 2, 'the final sample must wake the completed queue');
-  jobs[start + 1].resolve({ current: { depth: 12, lines: [{ cp: -100, moves: ['b2b3'] }] } });
-  await new Promise(resolve => setTimeout(resolve, 0));
-  assert.equal(model.scores.get('b2b3')?.depth, 12);
-  assert.notEqual((model as any).chartOptions().color('b2b3'), 'var(--c-font-dim)');
+  assert.equal((model as any).qualityBusy, false);
+  assert.deepEqual(calls[0], { moves: [], depth: 10, allRoots: true });
+  assert.ok(calls.some(call => call.depth === 18 && !call.moves.length));
+  assert.equal(model.scores.size, 20);
+  const before = [...(model as any).candidateQualities()];
+  const total = calls.length;
+  const card = (model as any).maiaCard(true);
+  const others = card.children.find((child: any) => child.sel === 'button.nosweat-others');
+  others.elm = document.createElement('button');
+  others.data.hook.insert(others);
+  others.elm.click();
+  await Promise.resolve();
+  assert.equal(calls.length, total, 'expanding Others does not schedule any engine search');
+  assert.deepEqual([...(model as any).candidateQualities()], before);
+  model.byRating.set(600, [{ uci: 'b2b3', probability: 1 }]);
+  (model as any).colorCandidates();
+  await Promise.resolve();
+  assert.equal(calls.length, total, 'a chart leader already has the position-wide screened evidence');
+  model.release();
+});
+
+test('move popup follows Maia White eval, mover winrate and a separate CP-loss baseline', async () => {
+  const { model } = chartModel();
+  await Promise.resolve();
+  model.enabled = true;
+  model.scores.set('e2e4', { score: { cp: 25 }, depth: 18 });
+  model.scores.set('f1b5', { score: { cp: -337 }, depth: 18 });
+  const details = (model as any).moveTooltip('f1b5', 0.125);
+  assert.equal(details.stockfishEval, '-3.37');
+  assert.equal(details.stockfishEvalLoss, '-3.62');
+  assert.equal(details.maiaProbability, 0.125);
+  assert.equal(details.color, (model as any).chartOptions().color('f1b5'));
+  model.release();
+});
+
+test('castling continuations normalize to standard UCI and chart roots follow the current merged ranking', async () => {
+  const { ctrl, model } = chartModel();
+  await Promise.resolve();
+  const currentFen = 'r1bnkb1r/pp2pppp/1n6/4P3/2B5/5N2/PP3PPP/RNB1K2R w KQkq - 0 10';
+  ctrl.node = { fen: currentFen, children: [{ uci: 'e1h1' }] } as any;
+  assert.deepEqual((model as any).qualityCandidates(), ['e1g1']);
+  model.enabled = true;
+  (model as any).qualityScreened = true;
+  (model as any).qualityRoot = { current: { depth: 18, lines: [{ cp: 0, moves: ['c4b3'] }] } };
+  model.scores.set('c4b3', { score: { cp: 0 }, depth: 18 });
+  model.scores.set('c4b5', { score: { cp: 10 }, depth: 18 });
+  model.scores.set('c4e2', { score: { cp: 20 }, depth: 18 });
+  model.scores.set('c4d3', { score: { cp: 30 }, depth: 18 });
+  assert.deepEqual((model as any).chartStockfishMoves(), ['c4d3', 'c4e2', 'c4b5']);
   model.release();
 });
 

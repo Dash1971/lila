@@ -69,7 +69,11 @@ test('one Maia fills both card columns with eight raw moves and Others retains t
   root.querySelector<HTMLButtonElement>('.nosweat-others')!.click();
   vnode = patch(vnode, (model as any).candidateView());
   assert.equal((vnode.elm as HTMLElement).querySelectorAll('.nosweat-policy tbody button').length, 20);
-  assert.equal((model as any).visibleCandidates().length, 20);
+  assert.equal(
+    (model as any).qualityCandidates().length,
+    4,
+    'Others does not enlarge the deepening selection',
+  );
   model.release();
   root.remove();
 });
