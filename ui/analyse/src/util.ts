@@ -53,7 +53,9 @@ export function mergeReviewData(into: TreeNodeLite, from: TreeNodeLite): void {
   const glyphs = new Map(into.glyphs?.filter(g => !g.comp).map(g => [`${g.id}:false`, g]));
   from.glyphs?.forEach(g => {
     if (
-      (g.source === 'mobile-maia-brilliant-v1' || g.source === 'mute-chess-brilliant-v1') &&
+      (g.source === 'mobile-maia-brilliant-v1' ||
+        g.source === 'mute-chess-brilliant-v1' ||
+        g.source === 'mute-chess-brilliant-v2') &&
       [...glyphs.values(), ...(from.glyphs ?? []).filter(other => other !== g)].some(
         other => other.id >= 1 && other.id <= 6,
       )

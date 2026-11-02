@@ -98,7 +98,7 @@ export const isSacrifice = (before: string, after: string, evaluateMaterial = na
   !position(after).isEnd() && evaluateMaterial(before) > -evaluateMaterial(after) + 100;
 
 // Mute-only experiment. Keep annotation()/isSacrifice() above as the EC oracle.
-export const muteBrilliantSource = 'mute-chess-brilliant-v1';
+export const muteBrilliantSource = 'mute-chess-brilliant-v2';
 export const muteBrilliantRules = {
   maxLoss: 5,
   minimumCp: -100,
@@ -137,8 +137,9 @@ export function hasPieceOffer(before: string, after: string): boolean {
   return false;
 }
 
-export const isMuteSacrifice = (before: string, after: string, evaluateMaterial = naiveMaterial): boolean =>
-  hasPieceOffer(before, after) || isSacrifice(before, after, evaluateMaterial);
+// Mute awards require a concrete legal piece offer. The independent EC
+// material probe can mistake foregone gains and quiet tactics for sacrifices.
+export const isMuteSacrifice = hasPieceOffer;
 
 export function muteAnnotation(
   previous: EvalScore | undefined,
@@ -151,13 +152,17 @@ export function muteAnnotation(
 ): Annotation {
   const original = annotation(previous, before, after, color, move, ecSacrifice);
   if (original === '??' || original === '?' || original === '?!') return original;
+  const sacrifice = sacrificeForMove(move);
+  // Both EC labels depend on a sacrifice. Do not retain an Interesting badge
+  // when the same foregone-gain false positive has just failed the Mute test.
+  if ((original === '!!' || original === '!?') && !sacrifice) return '';
   const next = normalized(after, color);
   const loss = winChance(normalized(before.lines[0], color)) - winChance(next);
   if (
     before.lines.length > 1 &&
     loss <= muteBrilliantRules.maxLoss &&
     next >= muteBrilliantRules.minimumCp &&
-    sacrificeForMove(move) &&
+    sacrifice &&
     !before.lines.some(
       line =>
         line.moves[0] !== move &&
@@ -176,7 +181,7 @@ export interface ClassificationInput {
   reviews: Review[];
   move: string;
   confirmation?: Review[];
-  policy?: 'en-croissant' | 'mute-brilliant-v1';
+  policy?: 'en-croissant' | 'mute-brilliant-v2';
 }
 export interface ClassificationResult {
   symbol: Annotation;
@@ -195,17 +200,13 @@ export function classify(input: ClassificationInput, evaluateMaterial = naiveMat
   const previous = n > 2 ? reviews[n - 3] : undefined;
   const color = position(positions[n - 2]).turn;
   const sacrifice = isSacrifice(positions[n - 2], positions[n - 1], evaluateMaterial);
-  const mute = input.policy === 'mute-brilliant-v1';
+  const mute = input.policy === 'mute-brilliant-v2';
   const offers = new Map<string, boolean>();
   const sacrificeForMove = (uci: string): boolean => {
     if (!offers.has(uci))
       offers.set(
         uci,
-        isMuteSacrifice(
-          positions[n - 2],
-          uci === move ? positions[n - 1] : afterMove(positions[n - 2], uci),
-          evaluateMaterial,
-        ),
+        isMuteSacrifice(positions[n - 2], uci === move ? positions[n - 1] : afterMove(positions[n - 2], uci)),
       );
     return offers.get(uci)!;
   };

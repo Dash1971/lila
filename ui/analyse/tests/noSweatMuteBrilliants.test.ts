@@ -8,6 +8,8 @@ import {
   muteAnnotation,
   muteBrilliantSource,
   isMuteSacrifice,
+  isSacrifice,
+  naiveMaterial,
 } from '../src/noSweatClassify';
 import { after as afterMove } from '../src/noSweatCore';
 import type { Review } from '../src/noSweatFish';
@@ -28,8 +30,44 @@ const inputFor = (sample: any, run: any) => {
     { current: before, previous: before, quality: 'test' },
     { current: after, previous: after, quality: 'test' },
   ];
-  return { positions: sample.positions, move: sample.move, reviews, policy: 'mute-brilliant-v1' as const };
+  return { positions: sample.positions, move: sample.move, reviews, policy: 'mute-brilliant-v2' as const };
 };
+
+test('Qf5+ does not sacrifice the optional promotion gain from the previous position', () => {
+  const before = '6r1/p1P3pk/1q1B1b1p/3Q4/8/7P/P4PP1/2R3K1 w - - 9 41';
+  const after = afterMove(before, 'd5f5');
+  assert.equal(naiveMaterial(before), 590, 'the EC root probe includes c8=Q Rxc8 Rxc8');
+  assert.equal(naiveMaterial(after), -180, 'White still holds its original +180 material');
+  assert.equal(isSacrifice(before, after), true, 'retain the independent EC behavior');
+  assert.equal(hasPieceOffer(before, after), false, 'check permits only Kh8 or g6');
+  assert.equal(isMuteSacrifice(before, after), false);
+  const current: Snapshot = {
+    depth: 16,
+    lines: [
+      { cp: 1560, moves: ['d5f5'] },
+      { cp: 1100, moves: ['d5e4'] },
+    ],
+  };
+  const next: Snapshot = { depth: 16, lines: [{ cp: 1560, moves: [] }] };
+  const input = {
+    positions: [before, after],
+    move: 'd5f5',
+    policy: 'mute-brilliant-v2' as const,
+    reviews: [
+      { current, previous: current, quality: 'regression' },
+      { current: next, previous: next, quality: 'regression' },
+    ],
+  };
+  const result = classify(input);
+  assert.equal(result.provisional, '');
+  assert.equal(result.symbol, '', 'do not downgrade the same false sacrifice to Interesting');
+  assert.equal(classify({ ...input, policy: 'en-croissant' }).symbol, '!?');
+
+  const black = '2r3k1/p4pp1/7p/8/3q4/1Q1b1B1P/P1p3PK/6R1 b - - 9 41';
+  const blackAfter = afterMove(black, 'd4f4');
+  assert.equal(isSacrifice(black, blackAfter), true);
+  assert.equal(isMuteSacrifice(black, blackAfter), false, 'same rule from Black’s perspective');
+});
 
 test('five fresh-review examples pass Mute eligibility on both recorded budgets', () => {
   for (const sample of samples.filter((s: any) => s.freshBrilliant))
@@ -38,6 +76,36 @@ test('five fresh-review examples pass Mute eligibility on both recorded budgets'
       assert.equal(result.symbol, '!!', sample.name);
       assert.equal(result.version, muteBrilliantSource);
     }
+});
+
+test('Bf5 is a defended tactic rather than a legal piece offer, while Ndxe5 retains eligibility', () => {
+  const before = 'r5k1/pp2ppbp/1q4p1/4P3/4Q1b1/P2r4/1P4PP/RNB2R1K b - - 1 17';
+  const after = afterMove(before, 'g4f5');
+  assert.equal(isSacrifice(before, after), true, 'the capture-only EC probe misses quiet Rd1+');
+  assert.equal(hasPieceOffer(before, after), false, 'ordinary recaptures defend the offered pieces');
+  assert.equal(isMuteSacrifice(before, after), false);
+  assert.equal(
+    muteAnnotation(
+      undefined,
+      {
+        depth: 16,
+        lines: [
+          { cp: -560, moves: ['g4f5'] },
+          { cp: -540, moves: ['a8d8'] },
+        ],
+      },
+      { cp: -560 },
+      'black',
+      'g4f5',
+      true,
+      () => isMuteSacrifice(before, after),
+    ),
+    '',
+  );
+  const mirror = 'rnb2r1k/1p4pp/p2R4/4q1B1/4p3/1Q4P1/PP2PPBP/R5K1 w - - 1 17';
+  assert.equal(isMuteSacrifice(mirror, afterMove(mirror, 'g5f4')), false);
+  const knight = 'r2r2k1/pp1nppbp/1qn3p1/4P3/5Pb1/P2B1N2/1P4PP/RNB1QR1K b - - 4 14';
+  assert.equal(isMuteSacrifice(knight, afterMove(knight, 'd7e5')), true);
 });
 
 test('an apparent knight offer can qualify when EC sees only a 90-point net material change', () => {

@@ -131,5 +131,5 @@ test('native tree merge preserves imported judgments instead of adding a conflic
   assert.equal(into.glyphs?.[0].id, 2);
   const clean = { ...nodes[1] } as TreeNodeLite;
   mergeReviewData(clean, from);
-  assert.equal(clean.glyphs?.[0].source, 'mute-chess-brilliant-v1');
+  assert.equal(clean.glyphs?.[0].source, 'mute-chess-brilliant-v2');
 });
