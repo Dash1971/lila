@@ -19,16 +19,47 @@ object NostrName:
           words += ((acc >> bits) & 31)
     if bits > 0 then words += ((acc << (5 - bits)) & 31)
     val hrp = "npub"
-    val expanded = hrp.map(_.toInt >> 5) ++ Seq(0) ++ hrp.map(_.toInt & 31)
+    val checksum = polymod(expand(hrp) ++ words ++ Seq.fill(6)(0)) ^ 1
+    hrp + "1" + words.map(alphabet(_)).mkString +
+      (0 until 6).map(i => alphabet((checksum >>> (5 * (5 - i))) & 31)).mkString
+
+  /** Only a full NIP-19 public key is an account identity; never decode private keys or TLV entities. */
+  def pubkeyFromNpub(raw: String): Option[String] =
+    val trimmed = raw.trim
+    val value = if trimmed.regionMatches(true, 0, "nostr:", 0, 6) then trimmed.drop(6) else trimmed
+    if value.length != 63 || (value.exists(_.isLower) && value.exists(_.isUpper)) then None
+    else
+      val encoded = value.toLowerCase(java.util.Locale.ROOT)
+      if !encoded.startsWith("npub1") then None
+      else
+        val words = encoded.drop(5).map(alphabet.indexOf(_))
+        if words.exists(_ < 0) || polymod(expand("npub") ++ words) != 1 then None
+        else
+          val bytes = scala.collection.mutable.ArrayBuffer.empty[Int]
+          var acc = 0
+          var bits = 0
+          words
+            .dropRight(6)
+            .foreach: word =>
+              acc = ((acc << 5) | word) & 0xfff
+              bits += 5
+              while bits >= 8 do
+                bits -= 8
+                bytes += ((acc >> bits) & 255)
+          Option.when(bytes.size == 32 && bits < 5 && (acc & ((1 << bits) - 1)) == 0):
+            bytes.map(byte => f"$byte%02x").mkString
+
+  private def expand(hrp: String): Seq[Int] =
+    hrp.map(_.toInt >> 5) ++ Seq(0) ++ hrp.map(_.toInt & 31)
+
+  private def polymod(values: Seq[Int]): Int =
     var checksum = 1
-    (expanded ++ words ++ Seq.fill(6)(0)).foreach: value =>
+    values.foreach: value =>
       val top = checksum >>> 25
       checksum = ((checksum & 0x1ffffff) << 5) ^ value
       generators.indices.foreach: i =>
         if ((top >>> i) & 1) != 0 then checksum ^= generators(i)
-    checksum ^= 1
-    hrp + "1" + words.map(alphabet(_)).mkString +
-      (0 until 6).map(i => alphabet((checksum >>> (5 * (5 - i))) & 31)).mkString
+    checksum
 
   def display(username: String, chosen: Option[String], key: Option[String]): Option[String] =
     chosen

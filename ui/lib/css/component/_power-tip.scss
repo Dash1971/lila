@@ -58,6 +58,16 @@
       }
     }
 
+    &__npub {
+      display: block;
+      max-width: 100%;
+      margin-top: 0.2em;
+      overflow-wrap: anywhere;
+      color: $c-font-dim;
+      font-family: monospace;
+      font-size: 0.85em;
+    }
+
     &__realname {
       background: $c-bg-zebra;
       padding: 0.1em 0;

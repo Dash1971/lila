@@ -38,6 +38,17 @@ final class NoSweat(env: Env) extends LilaController(env):
   def home = Open:
     fuccess(Redirect("/"))
 
+  def nostrProfile(npub: String) = Open:
+    handle:
+      lila.core.NostrName.pubkeyFromNpub(npub) match
+        case None => fuccess(NotFound)
+        case Some(key) =>
+          env.user.repo
+            .byNostr(key)
+            .map:
+              case Some(user) if user.enabled.yes => Redirect(routes.User.show(user.username))
+              case _ => NotFound
+
   def loginPage = Open:
     handle(Ok.page(views.noSweatLogin()))
 

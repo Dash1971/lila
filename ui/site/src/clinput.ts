@@ -2,6 +2,7 @@ import { load as loadDasher } from 'dasher';
 import debounce from 'debounce-promise';
 
 import { defined, escapeHtml } from 'lib';
+import { isPrivateNostrInput, npubFromInput, publicIdentitySearch } from 'lib/nosweat/identity';
 import { domDialog, alert, enter } from 'lib/view';
 import { complete, type CompleteOpts } from 'lib/view/complete';
 import { checkDebouncedResultAgainstTerm, fetchUsers, renderUserEntry } from 'lib/view/userComplete';
@@ -40,7 +41,7 @@ export function addClinputKeyHandler({ input }: { input: HTMLInputElement }) {
     render: o => (isLink(o) ? o : renderUserEntry(o)),
     populate: r => r.name,
     onSelect: r => execute(r),
-    regex: publicNames ? /^[^\u0000-\u001f\u007f]{2,30}$/u : /^[a-z][\w-]{2,29}$/i,
+    regex: publicNames ? publicIdentitySearch : /^[a-z][\w-]{2,29}$/i,
   };
 
   complete<Entry>(completeOpts);
@@ -62,6 +63,10 @@ function execute(e: string | Entry) {
   if (!e) return;
   if (typeof e !== 'string' && isLink(e)) location.href = e.href;
   else if (isUser(e)) location.href = profileUrl(e.name);
+  else if (document.documentElement.dataset.brand === 'mutechess' && isPrivateNostrInput(e))
+    void alert('This is a private Nostr key. Search with your npub instead.');
+  else if (document.documentElement.dataset.brand === 'mutechess' && npubFromInput(e))
+    location.href = profileUrl(npubFromInput(e)!);
   else if (e.startsWith('/')) command(e.replace(/\//g, ''));
   // 5kr1/p1p2p2/2b2Q2/3q2r1/2p4p/2P4P/P2P1PP1/1R1K3R b - - 1 23
   else if (/^([1-8pnbrqk]+\/){7}.*/i.test(e)) location.href = '/analysis/standard/' + e.replace(/ /g, '_');

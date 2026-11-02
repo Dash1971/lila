@@ -1,3 +1,5 @@
+@import '../../lib/css/component/copy-me';
+
 .user-show__header {
   background: $c-bg-zebra;
   padding: 2em 1.5em 2em 1.5em;
@@ -21,5 +23,33 @@
 
   .line {
     vertical-align: top;
+  }
+}
+
+.user-show__nostr {
+  min-width: 0;
+  padding: 0 1.5em 1.5em;
+  background: $c-bg-zebra;
+
+  label {
+    display: block;
+    margin-bottom: 0.5em;
+    font-weight: bold;
+  }
+
+  .copy-me {
+    width: 100%;
+    max-width: 58em;
+  }
+
+  .copy-me__target {
+    min-width: 0;
+    font-family: monospace;
+  }
+
+  &-link {
+    display: inline-block;
+    margin-top: 0.5em;
+    overflow-wrap: anywhere;
   }
 }

@@ -38,6 +38,15 @@ final class UserShow(helpers: Helpers, bits: UserBits, focused: Boolean = false)
           ,
           ping.map(bits.signalBars)
         ),
+        u.user.nostrKey
+          .filter(_ => focused && u.user.noBot)
+          .flatMap(lila.core.NostrName.npub)
+          .map: npub =>
+            a(
+              cls := "upt__info__npub",
+              href := s"/@/$npub",
+              ariaTitle(s"Public Nostr identity: $npub")
+            )(s"${npub.take(14)}…${npub.takeRight(10)}"),
         realName.map(div(cls := "upt__info__realname")(_)),
         if u.lame && ctx.isnt(u) && !Granter.opt(_.AccountInfo)
         then div(cls := "upt__info__warning")(trans.site.thisAccountViolatedTos())

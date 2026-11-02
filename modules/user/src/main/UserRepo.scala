@@ -276,12 +276,17 @@ final class UserRepo(c: Coll)(using Executor) extends lila.core.user.UserRepo(c)
     userIdsLikeFilter(text, bdoc(F.enabled -> false), max)
 
   def noSweatUserIdsLike(term: String): Fu[List[UserId]] =
-    coll
-      .find(
+    val selector = lila.core.NostrName
+      .pubkeyFromNpub(term)
+      .fold(
         or(
           bdoc(F.id.regex(NoSweatUserSearch.literalPrefix(term.toLowerCase), "i")),
           bdoc(s"${F.profile}.displayName".regex(NoSweatUserSearch.literalPrefix(term), "i"))
-        ) ++ enabledSelect,
+        )
+      )(key => bdoc("nostr" -> key))
+    coll
+      .find(
+        selector ++ enabledSelect,
         bdoc(F.id -> true).some
       )
       .sort(bdoc("len" -> 1))

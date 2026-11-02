@@ -105,6 +105,7 @@ GET   /@/:username/download            controllers.User.download(username: UserS
 GET   /@/:username/blog                controllers.Ublog.index(username: UserStr, page: Int ?= 1)
 GET   /@/:username/blog.atom           controllers.Ublog.userAtom(username: UserStr)
 GET   /@/:username/:filterName         controllers.User.games(username: UserStr, filterName, page: Int ?= 1)
+GET   /@/$npub<[nN][pP][uU][bB]1[A-Za-z0-9]{58}> controllers.NoSweat.nostrProfile(npub: String)
 GET   /@/:username                     controllers.User.show(username: UserStr)
 GET   /player/opponents                controllers.User.opponents
 GET   /player/search/:term             controllers.User.search(term: String)
