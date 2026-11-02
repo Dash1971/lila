@@ -560,6 +560,7 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
           val rated = user.isDefined && mode != "unlimited" && (data \ "rated").asOpt[Boolean].getOrElse(true)
           val busy = games.flatMap(g => occupied(g._1)).toSet ++ studyBusy._2
           for
+            _ <- env.game.noSweatAdmission.check
             human <- user.traverse(u => env.user.api.byIdWithPerf(u.id, perfKey)).map(_.flatten)
             rating = human.fold(1500)(_.perf.intRating.value)
             opponent <- poolOpponent(perfKey, rating, busy)
@@ -625,35 +626,39 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
     )
 
   private def activityPaused: Fu[Boolean] =
-    if !activityEnabled then fuTrue
-    else activityState.byId[Bdoc]("public").map(_.flatMap(_.getAsOpt[Boolean]("paused")).getOrElse(false))
+    env.game.noSweatAdmission.paused
 
   def activityStatus: Fu[JsObject] =
     for
       _ <- ready
       paused <- activityPaused
       games <- current()
+      nativeActive <- env.game.gameRepo.count(q =>
+        q.notFinished ++ bdoc(lila.game.Game.BSONFields.source -> bdoc("$ne" -> Source.Import.id))
+      )
+      poolPending <- records.countSel(bdoc("state" -> bdoc("$in" -> List("reserved", "active"))))
+      studyPending <- env.mongo
+        .mainDb(CollName("nosweat_study_game"))
+        .countSel(bdoc("state" -> bdoc("$in" -> List("reserved", "active"))))
     yield Json.obj(
       "enabled" -> activityEnabled,
-      "scope" -> "maia-pool",
+      "scope" -> "all-games",
       "paused" -> paused,
       "active" -> games.count(g => automatic(g._1)),
       "target" -> lila.bot.PublicBotActivity.target,
-      "totalActive" -> games.size,
+      "totalActive" -> nativeActive,
+      "poolPending" -> poolPending,
+      "studyPending" -> studyPending,
       "capacity" -> normalCapacity,
-      "drained" -> !games.exists(g => automatic(g._1)),
-      "draining" -> (paused && games.exists(g => automatic(g._1)))
+      "drained" -> (nativeActive == 0 && poolPending == 0 && studyPending == 0),
+      "draining" -> (paused && (nativeActive > 0 || poolPending > 0 || studyPending > 0))
     )
 
-  // Pausing closes only future automatic admissions. Existing native clocks,
-  // moves and results continue normally, even across adapter polling cycles.
+  // Close every native start, sharing its insertion barrier. Existing native
+  // clocks, moves and results continue normally, including while draining.
   def pauseActivity(paused: Boolean): Fu[JsObject] = queue:
-    activityState.update
-      .one(
-        bid("public"),
-        set("paused" -> paused),
-        upsert = true
-      )
+    env.game.noSweatAdmission
+      .pause(paused)
       .flatMap(_ => activityStatus)
 
   private def replenishActivity(): Funit =

@@ -109,7 +109,18 @@ final class Env(
         else if allowed then funit
         else fufail("Game has no Maia pool reservation")
 
-  val gameRepo = GameRepo(db(config.gameColl), admitNoSweat)
+  private val noSweatActivity = db(CollName("nosweat_activity"))
+  val noSweatAdmission = new NoSweatGameAdmission(
+    () =>
+      import lila.db.dsl.{ *, given }
+      noSweatActivity.byId[Bdoc]("public").map(_.flatMap(_.getAsOpt[Boolean]("paused")).getOrElse(false))
+    ,
+    paused =>
+      import lila.db.dsl.{ *, given }
+      noSweatActivity.update.one(bid("public"), set("paused" -> paused), upsert = true).void
+  )
+
+  val gameRepo = GameRepo(db(config.gameColl), admitNoSweat, Option.when(noSweatOnly)(noSweatAdmission))
 
   given idGenerator: IdGenerator = wire[IdGenerator]
 

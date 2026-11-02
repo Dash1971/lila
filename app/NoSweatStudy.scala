@@ -227,6 +227,7 @@ final class NoSweatStudy(env: Env)(using ec: Executor):
       )
     for
       _ <- env.noSweat.ready
+      _ <- env.game.noSweatAdmission.check
       docs <- documents
       _ = check(!continuation || docs.size >= continuationAdmitted, 409, "Continuation predecessor missing")
       _ = check(

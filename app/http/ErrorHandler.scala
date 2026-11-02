@@ -20,6 +20,11 @@ final class ErrorHandler(
     extends DefaultHttpErrorHandler(environment, config, router.some)
     with lila.web.ResponseWriter:
 
+  override def onServerError(req: RequestHeader, exception: Throwable): Fu[Result] = exception match
+    case lila.game.NoSweatGameAdmission.Paused =>
+      fuccess(ServiceUnavailable(exception.getMessage).withHeaders("Cache-Control" -> "no-store"))
+    case _ => super.onServerError(req, exception)
+
   override def onProdServerError(req: RequestHeader, exception: UsefulException) =
     Future {
       val actionName = HTTPRequest.actionName(req)

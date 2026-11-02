@@ -10,6 +10,8 @@ final class NoSweat(env: Env) extends LilaController(env):
   private val club = env.noSweat
   private def handle(f: => Fu[Result]): Fu[Result] =
     def error(e: Throwable): Result = e match
+      case lila.game.NoSweatGameAdmission.Paused =>
+        ServiceUnavailable(Json.obj("error" -> e.getMessage)).withHeaders("Cache-Control" -> "no-store")
       case NoSweatError(status, reason, code) =>
         Status(status)(Json.obj("error" -> reason) ++ code.fold(Json.obj())(c => Json.obj("code" -> c)))
           .withHeaders("Cache-Control" -> "no-store")
