@@ -2,7 +2,7 @@
 import type { Chess } from 'chessops/chess';
 import type { NormalMove } from 'chessops/types';
 
-import { legalMoves, position } from './noSweatCore';
+import { after as afterMove, legalMoves, position } from './noSweatCore';
 import type { Review } from './noSweatFish';
 import type { Snapshot } from './noSweatSnapshots';
 
@@ -97,11 +97,86 @@ export function naiveMaterial(fen: string): number {
 export const isSacrifice = (before: string, after: string, evaluateMaterial = naiveMaterial): boolean =>
   !position(after).isEnd() && evaluateMaterial(before) > -evaluateMaterial(after) + 100;
 
+// Mute-only experiment. Keep annotation()/isSacrifice() above as the EC oracle.
+export const muteBrilliantSource = 'mute-chess-brilliant-v1';
+export const muteBrilliantRules = {
+  maxLoss: 5,
+  minimumCp: -100,
+  routineWinCp: 600,
+  minimumMaterialLoss: 100,
+} as const;
+
+// Static exchange on one square, with legal captures and either side free to
+// stop. Quiet tactical compensation is deliberately left to Stockfish.
+function exchangeGain(pos: Chess, target: number): number {
+  let best = 0;
+  for (const move of legalMoves(pos)) {
+    if (move.to !== target || !capturedValue(pos, move)) continue;
+    const gain = capturedValue(pos, move) + (move.promotion ? pieceValue(move.promotion) - 90 : 0);
+    const child = pos.clone();
+    child.play(move);
+    best = Math.max(best, gain - exchangeGain(child, target));
+  }
+  return best;
+}
+
+export function hasPieceOffer(before: string, after: string): boolean {
+  const pos = position(after);
+  if (pos.isEnd()) return false;
+  // Credit material already gained on this move, including promotion. Taking
+  // a free rook while leaving a less valuable piece attacked is not a sacrifice.
+  const credit = Math.max(0, -material(pos) - material(position(before)));
+  for (const [square, piece] of pos.board)
+    if (
+      piece.color !== pos.turn &&
+      piece.role !== 'pawn' &&
+      piece.role !== 'king' &&
+      exchangeGain(pos, square) > credit + muteBrilliantRules.minimumMaterialLoss
+    )
+      return true;
+  return false;
+}
+
+export const isMuteSacrifice = (before: string, after: string, evaluateMaterial = naiveMaterial): boolean =>
+  hasPieceOffer(before, after) || isSacrifice(before, after, evaluateMaterial);
+
+export function muteAnnotation(
+  previous: EvalScore | undefined,
+  before: Snapshot,
+  after: EvalScore,
+  color: Color,
+  move: string,
+  ecSacrifice: boolean,
+  sacrificeForMove: (uci: string) => boolean,
+): Annotation {
+  const original = annotation(previous, before, after, color, move, ecSacrifice);
+  if (original === '??' || original === '?' || original === '?!') return original;
+  const next = normalized(after, color);
+  const loss = winChance(normalized(before.lines[0], color)) - winChance(next);
+  if (
+    before.lines.length > 1 &&
+    loss <= muteBrilliantRules.maxLoss &&
+    next >= muteBrilliantRules.minimumCp &&
+    sacrificeForMove(move) &&
+    !before.lines.some(
+      line =>
+        line.moves[0] !== move &&
+        normalized(line, color) >= muteBrilliantRules.routineWinCp &&
+        !sacrificeForMove(line.moves[0]),
+    )
+  )
+    return '!!';
+  // The soundness/relevance gates apply to old EC brilliants as well. All other
+  // original labels retain their semantics; an EC sacrifice may stay Interesting.
+  return original === '!!' ? (ecSacrifice && next > -200 ? '!?' : '') : original;
+}
+
 export interface ClassificationInput {
   positions: string[];
   reviews: Review[];
   move: string;
   confirmation?: Review[];
+  policy?: 'en-croissant' | 'mute-brilliant-v1';
 }
 export interface ClassificationResult {
   symbol: Annotation;
@@ -120,8 +195,24 @@ export function classify(input: ClassificationInput, evaluateMaterial = naiveMat
   const previous = n > 2 ? reviews[n - 3] : undefined;
   const color = position(positions[n - 2]).turn;
   const sacrifice = isSacrifice(positions[n - 2], positions[n - 1], evaluateMaterial);
+  const mute = input.policy === 'mute-brilliant-v1';
+  const offers = new Map<string, boolean>();
+  const sacrificeForMove = (uci: string): boolean => {
+    if (!offers.has(uci))
+      offers.set(
+        uci,
+        isMuteSacrifice(
+          positions[n - 2],
+          uci === move ? positions[n - 1] : afterMove(positions[n - 2], uci),
+          evaluateMaterial,
+        ),
+      );
+    return offers.get(uci)!;
+  };
   const predicate = (b: Snapshot, a: Snapshot, p?: Snapshot): Annotation =>
-    annotation(p?.lines[0], b, a.lines[0], color, move, sacrifice);
+    mute
+      ? muteAnnotation(p?.lines[0], b, a.lines[0], color, move, sacrifice, sacrificeForMove)
+      : annotation(p?.lines[0], b, a.lines[0], color, move, sacrifice);
   let symbol = predicate(before.current, after.current, previous?.current);
   const provisional = symbol;
   let withheld = false;
@@ -170,6 +261,6 @@ export function classify(input: ClassificationInput, evaluateMaterial = naiveMat
       0,
       normalized(before.current.lines[0], color) - normalized(after.current.lines[0], color),
     ),
-    version: 'ec015-mobilemaia-window-v2',
+    version: mute ? muteBrilliantSource : 'ec015-mobilemaia-window-v2',
   };
 }

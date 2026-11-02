@@ -4,7 +4,7 @@ import { test } from 'node:test';
 
 import type { TreeNodeBase } from 'lib/tree/types';
 
-import { classify } from '../src/noSweatClassify';
+import { classify, muteBrilliantSource } from '../src/noSweatClassify';
 import { legalUcis, position } from '../src/noSweatCore';
 import {
   classificationCounts,
@@ -12,7 +12,6 @@ import {
   gameReviewQuality,
   nativeReview,
   qualityGlyph,
-  reviewSource,
 } from '../src/noSweatFullReview';
 import { SearchSnapshots } from '../src/noSweatSnapshots';
 
@@ -114,7 +113,7 @@ test('native complete two-PV data produces the independently confirmed Opera bri
     { depth: 14, time: 500 },
     { depth: 14, time: 500 },
   ]);
-  assert.equal(qualityGlyph(result.get(19)!)?.source, reviewSource);
+  assert.equal(qualityGlyph(result.get(19)!)?.source, muteBrilliantSource);
 });
 test('a stronger-window veto withholds a standout; cancellation prevents publication', async () => {
   const nodes = [node(18), node(19)];

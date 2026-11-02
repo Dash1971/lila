@@ -1,0 +1,1496 @@
+[
+  {
+    "name": "Juwen KaterynaLagno Rxd5",
+    "game": "119215241095",
+    "ply": 37,
+    "positions": [
+      "3q1rk1/p1r1bpp1/bp1Np2p/2nnP3/6QP/1P3NP1/PB3PB1/3R1RK1 w - - 2 19",
+      "3q1rk1/p1r1bpp1/bp1Np2p/2nRP3/6QP/1P3NP1/PB3PB1/5RK1 b - - 0 19"
+    ],
+    "move": "d1d5",
+    "freshBrilliant": false,
+    "runs": [
+      {
+        "prevprev": {
+          "type": "cp",
+          "value": 89
+        },
+        "prev": {
+          "type": "cp",
+          "value": 80
+        },
+        "next": {
+          "type": "cp",
+          "value": 31
+        },
+        "color": "white",
+        "prevMoves": [
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 80
+              }
+            },
+            "sanMoves": [
+              "f3d4",
+              "a6f1",
+              "d4f5",
+              "g7g6",
+              "g2d5",
+              "g8h7",
+              "f5e7",
+              "d8e7",
+              "d5e4",
+              "c5e4",
+              "d6e4",
+              "f1a6",
+              "e4f6",
+              "h7g7"
+            ]
+          },
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 70
+              }
+            },
+            "sanMoves": [
+              "f1e1",
+              "c5d3",
+              "f3d4",
+              "d3e5",
+              "e1e5",
+              "d5f6",
+              "d6f7",
+              "f6g4",
+              "f7d8",
+              "f8d8",
+              "e5e6",
+              "e7c5",
+              "g2f3",
+              "h6h5",
+              "b3b4",
+              "c5b4",
+              "d4c6",
+              "d8d1",
+              "f3d1",
+              "b4c5",
+              "d1b3",
+              "g8h8",
+              "b2d4",
+              "c5d4",
+              "c6d4"
+            ]
+          }
+        ],
+        "is_sacrifice": true,
+        "move": "d1d5"
+      },
+      {
+        "prevprev": {
+          "type": "cp",
+          "value": 82
+        },
+        "prev": {
+          "type": "cp",
+          "value": 92
+        },
+        "next": {
+          "type": "cp",
+          "value": 0
+        },
+        "color": "white",
+        "prevMoves": [
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 92
+              }
+            },
+            "sanMoves": [
+              "f3d4",
+              "a6f1",
+              "d4f5",
+              "e7g5",
+              "g2f1",
+              "e6f5",
+              "d6f5",
+              "g7g6",
+              "f5d6",
+              "d5e3",
+              "f2e3",
+              "g5e3",
+              "g1h1",
+              "h6h5"
+            ]
+          },
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 40
+              }
+            },
+            "sanMoves": [
+              "d1d5",
+              "a6f1",
+              "g2f1",
+              "e6d5",
+              "d6f5",
+              "g7g6",
+              "f5h6",
+              "g8h7",
+              "h6f5",
+              "c5e4",
+              "g4f4",
+              "g6f5",
+              "f4f5",
+              "h7g8",
+              "f5g4",
+              "g8h8",
+              "g4h5",
+              "h8g8",
+              "f1h3",
+              "f8e8",
+              "h3f5",
+              "e7c5",
+              "f3g5",
+              "e4g5",
+              "h4g5",
+              "e8e6",
+              "h5h7",
+              "g8f8"
+            ]
+          }
+        ],
+        "is_sacrifice": true,
+        "move": "d1d5"
+      }
+    ]
+  },
+  {
+    "name": "Juwen KaterynaLagno Nf5",
+    "game": "119215241095",
+    "ply": 39,
+    "positions": [
+      "3q1rk1/p1r1bpp1/bp1N3p/2npP3/6QP/1P3NP1/PB3PB1/5RK1 w - - 0 20",
+      "3q1rk1/p1r1bpp1/bp5p/2npPN2/6QP/1P3NP1/PB3PB1/5RK1 b - - 1 20"
+    ],
+    "move": "d6f5",
+    "freshBrilliant": false,
+    "runs": [
+      {
+        "prevprev": {
+          "type": "cp",
+          "value": 42
+        },
+        "prev": {
+          "type": "cp",
+          "value": 114
+        },
+        "next": {
+          "type": "cp",
+          "value": 115
+        },
+        "color": "white",
+        "prevMoves": [
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 114
+              }
+            },
+            "sanMoves": [
+              "d6f5",
+              "g7g6",
+              "e5e6",
+              "c5e6",
+              "f5h6",
+              "g8h7",
+              "h6f7",
+              "f8f7",
+              "g4e6",
+              "f7f8",
+              "f1d1",
+              "e7f6",
+              "f3g5",
+              "f6g5",
+              "h4g5",
+              "d8g5",
+              "d1d5",
+              "c7c1",
+              "b2c1",
+              "g5c1",
+              "g1h2",
+              "f8f2"
+            ]
+          },
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 69
+              }
+            },
+            "sanMoves": [
+              "f1e1",
+              "h6h5",
+              "g4h5",
+              "c5d3",
+              "f3g5",
+              "e7g5",
+              "h4g5",
+              "d3e1",
+              "g5g6",
+              "f7g6",
+              "g2d5",
+              "f8f7",
+              "h5g6",
+              "e1f3",
+              "g1h1",
+              "d8g5",
+              "d5f7",
+              "g8f8",
+              "g6g5",
+              "f3g5"
+            ]
+          }
+        ],
+        "is_sacrifice": false,
+        "move": "d6f5"
+      },
+      {
+        "prevprev": {
+          "type": "cp",
+          "value": 63
+        },
+        "prev": {
+          "type": "cp",
+          "value": 92
+        },
+        "next": {
+          "type": "cp",
+          "value": 54
+        },
+        "color": "white",
+        "prevMoves": [
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 92
+              }
+            },
+            "sanMoves": [
+              "f1e1",
+              "h6h5",
+              "g4h5",
+              "c5d3",
+              "f3g5",
+              "e7g5",
+              "h4g5",
+              "d3e1",
+              "g5g6",
+              "f7g6",
+              "g2d5",
+              "f8f7",
+              "h5g6",
+              "e1f3",
+              "g1h1",
+              "d8f8",
+              "d5e4",
+              "f3g5",
+              "g6g5",
+              "f7f2",
+              "e4d5",
+              "f2f7",
+              "b2a3"
+            ]
+          },
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 68
+              }
+            },
+            "sanMoves": [
+              "d6f5",
+              "g7g6",
+              "e5e6",
+              "c5e6",
+              "f5h6",
+              "g8h7",
+              "h6f7",
+              "f8f7",
+              "g4e6",
+              "e7f6",
+              "f3g5",
+              "f6g5",
+              "h4g5",
+              "d8c8",
+              "e6e5",
+              "f7f5",
+              "e5d4",
+              "a6f1",
+              "d4h4",
+              "h7g8",
+              "h4h8",
+              "g8f7",
+              "h8g7",
+              "f7e8",
+              "g7g6",
+              "c7f7"
+            ]
+          }
+        ],
+        "is_sacrifice": false,
+        "move": "d6f5"
+      }
+    ]
+  },
+  {
+    "name": "Juwen KaterynaLagno Nxf7+",
+    "game": "119215241095",
+    "ply": 53,
+    "positions": [
+      "3q1r1k/pb1r1p2/1p1Nn1p1/3pP3/3B2QP/1P4P1/P4PB1/4R1K1 w - - 1 27",
+      "3q1r1k/pb1r1N2/1p2n1p1/3pP3/3B2QP/1P4P1/P4PB1/4R1K1 b - - 0 27"
+    ],
+    "move": "d6f7",
+    "freshBrilliant": false,
+    "runs": [
+      {
+        "prevprev": {
+          "type": "cp",
+          "value": 131
+        },
+        "prev": {
+          "type": "cp",
+          "value": 375
+        },
+        "next": {
+          "type": "cp",
+          "value": 389
+        },
+        "color": "white",
+        "prevMoves": [
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 375
+              }
+            },
+            "sanMoves": [
+              "d6f7",
+              "d7f7",
+              "g4e6",
+              "h8h7",
+              "e6g4",
+              "f7f5",
+              "e5e6",
+              "f8e8",
+              "g2h3",
+              "b7c8",
+              "g4d1",
+              "e8e6",
+              "h3f5",
+              "e6e1",
+              "d1e1",
+              "h7h6"
+            ]
+          },
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 254
+              }
+            },
+            "sanMoves": [
+              "d4b2",
+              "h8h7",
+              "b2a3",
+              "b7a8",
+              "f2f4",
+              "f8g8",
+              "d6f7",
+              "d7f7",
+              "g4e6",
+              "f7c7"
+            ]
+          }
+        ],
+        "is_sacrifice": false,
+        "move": "d6f7"
+      },
+      {
+        "prevprev": {
+          "type": "cp",
+          "value": 153
+        },
+        "prev": {
+          "type": "cp",
+          "value": 420
+        },
+        "next": {
+          "type": "cp",
+          "value": 446
+        },
+        "color": "white",
+        "prevMoves": [
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 420
+              }
+            },
+            "sanMoves": [
+              "d6f7",
+              "d7f7",
+              "g4e6",
+              "h8h7",
+              "e6g4",
+              "f7f5",
+              "e5e6",
+              "f8e8",
+              "d4b2",
+              "d8e7",
+              "g4d4",
+              "e8f8",
+              "e1e2",
+              "b7a6",
+              "e2c2",
+              "f8g8",
+              "d4g4"
+            ]
+          },
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 284
+              }
+            },
+            "sanMoves": [
+              "d4e3",
+              "d7c7",
+              "e3h6",
+              "f8g8",
+              "d6f7",
+              "c7f7",
+              "g4e6",
+              "d8e7",
+              "e6g4",
+              "h8h7",
+              "h6g5",
+              "e7c5",
+              "g4e2",
+              "g8e8",
+              "e5e6",
+              "d5d4",
+              "e6f7",
+              "e8e2",
+              "e1e2",
+              "b7g2",
+              "e2e8",
+              "g2f3",
+              "f7f8r"
+            ]
+          }
+        ],
+        "is_sacrifice": false,
+        "move": "d6f7"
+      }
+    ]
+  },
+  {
+    "name": "hansen Fedor_AntipovSPB Nd7",
+    "game": "183990510823",
+    "ply": 61,
+    "positions": [
+      "3r1q1k/2p3pp/3bR3/4Nr2/1nQP4/6BP/1P3PP1/4R1K1 w - - 7 31",
+      "3r1q1k/2pN2pp/3bR3/5r2/1nQP4/6BP/1P3PP1/4R1K1 b - - 8 31"
+    ],
+    "move": "e5d7",
+    "freshBrilliant": true,
+    "runs": [
+      {
+        "prevprev": {
+          "type": "cp",
+          "value": 371
+        },
+        "prev": {
+          "type": "cp",
+          "value": 420
+        },
+        "next": {
+          "type": "cp",
+          "value": 408
+        },
+        "color": "white",
+        "prevMoves": [
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 420
+              }
+            },
+            "sanMoves": [
+              "g3h4",
+              "d8a8",
+              "g2g4",
+              "f5f4",
+              "h4g3",
+              "g7g6",
+              "g1g2",
+              "h8g7",
+              "g3f4",
+              "f8f4",
+              "e6d6",
+              "c7d6",
+              "c4b4",
+              "d6e5",
+              "b4e7",
+              "g7g8",
+              "e1e5"
+            ]
+          },
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 395
+              }
+            },
+            "sanMoves": [
+              "e5d7",
+              "f8f7",
+              "g3d6",
+              "c7d6",
+              "c4b4",
+              "f7d7",
+              "b4d6",
+              "h8g8",
+              "d6b4",
+              "f5d5",
+              "e6e7",
+              "d7c6",
+              "e1e4",
+              "h7h6",
+              "b2b3",
+              "c6c1",
+              "g1h2"
+            ]
+          }
+        ],
+        "is_sacrifice": false,
+        "move": "e5d7"
+      },
+      {
+        "prevprev": {
+          "type": "cp",
+          "value": 426
+        },
+        "prev": {
+          "type": "cp",
+          "value": 426
+        },
+        "next": {
+          "type": "cp",
+          "value": 457
+        },
+        "color": "white",
+        "prevMoves": [
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 426
+              }
+            },
+            "sanMoves": [
+              "e5d7",
+              "d8d7",
+              "e6e8",
+              "d6g3",
+              "f2g3",
+              "b4d5",
+              "g3g4",
+              "f5f7",
+              "e1e5",
+              "d5f6",
+              "e8f8",
+              "f7f8",
+              "g4g5",
+              "f6h5",
+              "c4b5",
+              "d7f7",
+              "e5e4"
+            ]
+          },
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 394
+              }
+            },
+            "sanMoves": [
+              "g3h4",
+              "d8a8",
+              "h4g3",
+              "f8g8",
+              "d4d5",
+              "a8d8",
+              "c4h4",
+              "d6e5",
+              "e1e5",
+              "f5e5",
+              "g3e5",
+              "b4d3",
+              "h4c4",
+              "d3e5",
+              "e6e5",
+              "g8f8",
+              "c4e4"
+            ]
+          }
+        ],
+        "is_sacrifice": false,
+        "move": "e5d7"
+      }
+    ]
+  },
+  {
+    "name": "hansen Fedor_AntipovSPB Rxd6",
+    "game": "183990510823",
+    "ply": 67,
+    "positions": [
+      "3r3k/3q2pp/3pR3/5r2/1Q1P4/7P/1P3PP1/4R1K1 w - - 0 34",
+      "3r3k/3q2pp/3R4/5r2/1Q1P4/7P/1P3PP1/4R1K1 b - - 0 34"
+    ],
+    "move": "e6d6",
+    "freshBrilliant": false,
+    "runs": [
+      {
+        "prevprev": {
+          "type": "cp",
+          "value": 338
+        },
+        "prev": {
+          "type": "cp",
+          "value": 364
+        },
+        "next": {
+          "type": "cp",
+          "value": 473
+        },
+        "color": "white",
+        "prevMoves": [
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 364
+              }
+            },
+            "sanMoves": [
+              "d4d5",
+              "d7a7",
+              "e6e8",
+              "f5f8",
+              "e8f8",
+              "d8f8",
+              "e1e2",
+              "a7b8",
+              "b4d4",
+              "b8c7",
+              "g1h2",
+              "f8f7"
+            ]
+          },
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 334
+              }
+            },
+            "sanMoves": [
+              "e6e7",
+              "d7c6",
+              "b4c3",
+              "c6b5",
+              "b2b4",
+              "d8g8",
+              "e7e6",
+              "f5d5",
+              "f2f3",
+              "h7h6",
+              "e6e7"
+            ]
+          }
+        ],
+        "is_sacrifice": true,
+        "move": "e6d6"
+      },
+      {
+        "prevprev": {
+          "type": "cp",
+          "value": 456
+        },
+        "prev": {
+          "type": "cp",
+          "value": 480
+        },
+        "next": {
+          "type": "cp",
+          "value": 486
+        },
+        "color": "white",
+        "prevMoves": [
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 480
+              }
+            },
+            "sanMoves": [
+              "e6d6",
+              "d7c7",
+              "d6d8",
+              "c7d8",
+              "e1e5",
+              "f5f6",
+              "b4e1",
+              "f6f8",
+              "b2b4",
+              "h8g8",
+              "e1e4",
+              "d8a8",
+              "d4d5",
+              "a8b8",
+              "f2f4",
+              "b8d6",
+              "e5e8",
+              "h7h6",
+              "e8f8",
+              "g8f8",
+              "g1h2"
+            ]
+          },
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 384
+              }
+            },
+            "sanMoves": [
+              "b4d6",
+              "h7h6",
+              "d6d7",
+              "d8d7",
+              "e1d1",
+              "f5b5",
+              "e6e8",
+              "h8h7",
+              "d1d2",
+              "h7g6",
+              "g1f1",
+              "g6f7",
+              "e8e2",
+              "b5b4",
+              "d4d5",
+              "b4b5",
+              "f1e1"
+            ]
+          }
+        ],
+        "is_sacrifice": true,
+        "move": "e6d6"
+      }
+    ]
+  },
+  {
+    "name": "hansen Achuvettan Rxa1",
+    "game": "184007910437",
+    "ply": 57,
+    "positions": [
+      "6k1/5ppp/2N1pb2/1pPq4/3PQ3/1P5P/5PP1/r3R1K1 w - - 3 29",
+      "6k1/5ppp/2N1pb2/1pPq4/3PQ3/1P5P/5PP1/R5K1 b - - 0 29"
+    ],
+    "move": "e1a1",
+    "freshBrilliant": true,
+    "runs": [
+      {
+        "prevprev": {
+          "type": "cp",
+          "value": 82
+        },
+        "prev": {
+          "type": "cp",
+          "value": 711
+        },
+        "next": {
+          "type": "cp",
+          "value": 770
+        },
+        "color": "white",
+        "prevMoves": [
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 711
+              }
+            },
+            "sanMoves": [
+              "e1a1",
+              "d5c5",
+              "a1a8",
+              "c5f8",
+              "a8f8",
+              "g8f8",
+              "g2g4",
+              "g7g6",
+              "g1g2",
+              "f8g7",
+              "c6e5",
+              "h7h5",
+              "e4b7",
+              "f6e5",
+              "d4e5",
+              "h5g4",
+              "h3g4"
+            ]
+          },
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": -244
+              }
+            },
+            "sanMoves": [
+              "c6b8",
+              "f6d4",
+              "e4e2",
+              "a1e1",
+              "e2e1",
+              "d4c5",
+              "e1c3",
+              "d5d1",
+              "g1h2",
+              "c5f2"
+            ]
+          }
+        ],
+        "is_sacrifice": true,
+        "move": "e1a1"
+      },
+      {
+        "prevprev": {
+          "type": "cp",
+          "value": 80
+        },
+        "prev": {
+          "type": "cp",
+          "value": 785
+        },
+        "next": {
+          "type": "cp",
+          "value": 821
+        },
+        "color": "white",
+        "prevMoves": [
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 785
+              }
+            },
+            "sanMoves": [
+              "e1a1",
+              "g7g5",
+              "e4d5",
+              "e6d5",
+              "a1a8",
+              "g8g7",
+              "g1f1",
+              "g7g6",
+              "f1e2",
+              "g6f5",
+              "a8a7",
+              "f5e6",
+              "g2g4",
+              "h7h6",
+              "e2d3",
+              "h6h5",
+              "g4h5",
+              "g5g4",
+              "h3g4",
+              "f6h4",
+              "f2f4",
+              "f7f5",
+              "g4g5",
+              "h4e1"
+            ]
+          },
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": -371
+              }
+            },
+            "sanMoves": [
+              "c6e5",
+              "d5e4",
+              "e1a1",
+              "f6e5",
+              "d4e5",
+              "g7g5",
+              "a1c1",
+              "e4f4",
+              "c1d1",
+              "f4e5",
+              "c5c6",
+              "e5c7",
+              "d1c1",
+              "f7f6",
+              "b3b4",
+              "h7h5",
+              "c1c5",
+              "h5h4",
+              "g2g4"
+            ]
+          }
+        ],
+        "is_sacrifice": true,
+        "move": "e1a1"
+      }
+    ]
+  },
+  {
+    "name": "nelsi penetrators666 f5",
+    "game": "186399008010",
+    "ply": 37,
+    "positions": [
+      "5rk1/p1p1bp1p/qp4p1/3pP3/P2P1PQ1/7P/1Pn3P1/R1B2RK1 w - - 0 19",
+      "5rk1/p1p1bp1p/qp4p1/3pPP2/P2P2Q1/7P/1Pn3P1/R1B2RK1 b - - 0 19"
+    ],
+    "move": "f4f5",
+    "freshBrilliant": true,
+    "runs": [
+      {
+        "prevprev": {
+          "type": "cp",
+          "value": 164
+        },
+        "prev": {
+          "type": "cp",
+          "value": 165
+        },
+        "next": {
+          "type": "cp",
+          "value": 204
+        },
+        "color": "white",
+        "prevMoves": [
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 165
+              }
+            },
+            "sanMoves": [
+              "f4f5",
+              "c2a1",
+              "f5g6",
+              "h7g6",
+              "g4d7",
+              "a1b3",
+              "c1h6",
+              "e7g5",
+              "h6g5",
+              "a6e2",
+              "d7d5",
+              "b3d2",
+              "g5d2",
+              "e2d2",
+              "d5e4",
+              "f8e8",
+              "g1h2",
+              "c7c5",
+              "e5e6",
+              "e8e6",
+              "e4a8",
+              "g8g7",
+              "a8a7",
+              "e6f6",
+              "f1f6"
+            ]
+          },
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 113
+              }
+            },
+            "sanMoves": [
+              "g4d7",
+              "e7h4",
+              "d7g4",
+              "a6c4",
+              "a1b1",
+              "h4e7",
+              "b2b3",
+              "c4d4",
+              "g1h1",
+              "d4e4",
+              "f4f5",
+              "e4e5",
+              "c1f4",
+              "e5e4",
+              "b1c1",
+              "c2e3",
+              "f4e3",
+              "e4e3",
+              "f5g6"
+            ]
+          }
+        ],
+        "is_sacrifice": true,
+        "move": "f4f5"
+      },
+      {
+        "prevprev": {
+          "type": "cp",
+          "value": 214
+        },
+        "prev": {
+          "type": "cp",
+          "value": 211
+        },
+        "next": {
+          "type": "cp",
+          "value": 235
+        },
+        "color": "white",
+        "prevMoves": [
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 211
+              }
+            },
+            "sanMoves": [
+              "f4f5",
+              "h7h5",
+              "g4d1",
+              "c2a1",
+              "c1h6",
+              "f8c8",
+              "d1f3",
+              "b6b5",
+              "e5e6",
+              "a1c2",
+              "e6f7",
+              "g8h7",
+              "f7f8r",
+              "e7f8",
+              "h6f8",
+              "c2d4",
+              "f3e3",
+              "h7g8",
+              "f8c5",
+              "d4f5",
+              "f1f5",
+              "g6f5",
+              "e3g5",
+              "g8f7",
+              "g5f5",
+              "f7g8",
+              "f5d5"
+            ]
+          },
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 90
+              }
+            },
+            "sanMoves": [
+              "g4d7",
+              "e7h4",
+              "d7g4",
+              "f7f5",
+              "g4h4",
+              "c2a1",
+              "f1f3",
+              "a6e2",
+              "h4e7",
+              "e2d1",
+              "g1h2",
+              "d1c1",
+              "e7e6",
+              "g8g7",
+              "e6d5",
+              "a1c2",
+              "e5e6",
+              "c2e3"
+            ]
+          }
+        ],
+        "is_sacrifice": true,
+        "move": "f4f5"
+      }
+    ]
+  },
+  {
+    "name": "Juwen powerofapoint Bb2",
+    "game": "172016241890",
+    "ply": 37,
+    "positions": [
+      "r1bq2k1/pp3pBp/2p3p1/8/4r1n1/1P1P2P1/P2QPRKP/2RN4 w - - 0 19",
+      "r1bq2k1/pp3p1p/2p3p1/8/4r1n1/1P1P2P1/PB1QPRKP/2RN4 b - - 1 19"
+    ],
+    "move": "g7b2",
+    "freshBrilliant": true,
+    "runs": [
+      {
+        "prevprev": {
+          "type": "cp",
+          "value": 1
+        },
+        "prev": {
+          "type": "cp",
+          "value": 110
+        },
+        "next": {
+          "type": "cp",
+          "value": 109
+        },
+        "color": "white",
+        "prevMoves": [
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 110
+              }
+            },
+            "sanMoves": [
+              "g7a1",
+              "g4f2",
+              "d1f2",
+              "e4e8",
+              "d2h6",
+              "f7f6",
+              "f2e4",
+              "e8e4",
+              "d3e4",
+              "c8g4",
+              "c1f1",
+              "g4e2",
+              "f1f6",
+              "d8d7",
+              "a1c3",
+              "d7e7",
+              "h6e3",
+              "e2a6",
+              "e3d4"
+            ]
+          },
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 95
+              }
+            },
+            "sanMoves": [
+              "g7b2",
+              "g4f2",
+              "d1f2",
+              "e4e8",
+              "d2h6",
+              "f7f6",
+              "f2e4",
+              "e8e4",
+              "d3e4",
+              "c8g4",
+              "c1f1",
+              "d8e7",
+              "b2f6",
+              "e7d7",
+              "f6a1",
+              "g4e2"
+            ]
+          }
+        ],
+        "is_sacrifice": true,
+        "move": "g7b2"
+      },
+      {
+        "prevprev": {
+          "type": "cp",
+          "value": -5
+        },
+        "prev": {
+          "type": "cp",
+          "value": 115
+        },
+        "next": {
+          "type": "cp",
+          "value": 93
+        },
+        "color": "white",
+        "prevMoves": [
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 115
+              }
+            },
+            "sanMoves": [
+              "g7b2",
+              "g4f2",
+              "d1f2",
+              "e4e8",
+              "d2h6",
+              "f7f6",
+              "f2e4",
+              "e8f8",
+              "h6h4",
+              "c8f5",
+              "e4f6",
+              "f8f6",
+              "b2f6",
+              "d8d5",
+              "g2g1",
+              "d5e6",
+              "e2e4",
+              "f5h3",
+              "f6a1",
+              "a8f8",
+              "h4g5",
+              "h3g4"
+            ]
+          },
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 106
+              }
+            },
+            "sanMoves": [
+              "g7a1",
+              "g4f2",
+              "d1f2",
+              "e4e8",
+              "d2h6",
+              "f7f6",
+              "f2e4",
+              "e8f8",
+              "h6h4",
+              "c8f5",
+              "e4f6",
+              "f8f6",
+              "h4f6",
+              "d8f6",
+              "a1f6",
+              "f5g4",
+              "c1c2",
+              "g4d7"
+            ]
+          }
+        ],
+        "is_sacrifice": true,
+        "move": "g7b2"
+      }
+    ]
+  },
+  {
+    "name": "KNVB Cirky Bxh7+",
+    "game": "186066291740",
+    "ply": 21,
+    "positions": [
+      "r2q1rk1/pp1b1ppp/2nbp3/3p3n/3P4/2PBBNP1/PP1N1P1P/R2QK2R w KQ - 3 11",
+      "r2q1rk1/pp1b1ppB/2nbp3/3p3n/3P4/2P1BNP1/PP1N1P1P/R2QK2R b KQ - 0 11"
+    ],
+    "move": "d3h7",
+    "freshBrilliant": true,
+    "runs": [
+      {
+        "prevprev": {
+          "type": "cp",
+          "value": -13
+        },
+        "prev": {
+          "type": "cp",
+          "value": 125
+        },
+        "next": {
+          "type": "cp",
+          "value": 130
+        },
+        "color": "white",
+        "prevMoves": [
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 125
+              }
+            },
+            "sanMoves": [
+              "d3h7",
+              "g8h7",
+              "f3g5",
+              "h7g6",
+              "d2f3",
+              "g6f6",
+              "f3e5",
+              "g7g6",
+              "g3g4",
+              "c6e5",
+              "d4e5",
+              "d6e5",
+              "g5h7",
+              "f6g7",
+              "h7f8",
+              "d7b5"
+            ]
+          },
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 44
+              }
+            },
+            "sanMoves": [
+              "f3e5",
+              "h5f6",
+              "e3f4",
+              "d7e8",
+              "e1g1",
+              "d6e5",
+              "d4e5",
+              "f6d7",
+              "d1e2",
+              "h7h6",
+              "d3c2",
+              "f7f5",
+              "d2b3",
+              "a7a5"
+            ]
+          }
+        ],
+        "is_sacrifice": true,
+        "move": "d3h7"
+      },
+      {
+        "prevprev": {
+          "type": "cp",
+          "value": -3
+        },
+        "prev": {
+          "type": "cp",
+          "value": 115
+        },
+        "next": {
+          "type": "cp",
+          "value": 98
+        },
+        "color": "white",
+        "prevMoves": [
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 115
+              }
+            },
+            "sanMoves": [
+              "d3h7",
+              "g8h7",
+              "f3g5",
+              "h7g6",
+              "d2f3",
+              "g6f6",
+              "f3e5",
+              "g7g6",
+              "g3g4",
+              "f6g7",
+              "g4h5",
+              "c6e5",
+              "d4e5",
+              "d6e5",
+              "d1d2",
+              "d5d4",
+              "c3d4",
+              "e5c7",
+              "h5g6",
+              "f7g6",
+              "h2h4",
+              "d8f6",
+              "h4h5",
+              "f6f5",
+              "h5g6",
+              "f8h8",
+              "h1h7",
+              "h8h7",
+              "g6h7",
+              "c7a5"
+            ]
+          },
+          {
+            "score": {
+              "value": {
+                "type": "cp",
+                "value": 68
+              }
+            },
+            "sanMoves": [
+              "f3e5",
+              "h5f6",
+              "e3f4",
+              "d7e8",
+              "d1e2",
+              "a7a5",
+              "e1g1",
+              "a5a4",
+              "a2a3",
+              "d6e5",
+              "d4e5",
+              "f6d7",
+              "f1e1",
+              "f7f6"
+            ]
+          }
+        ],
+        "is_sacrifice": true,
+        "move": "d3h7"
+      }
+    ]
+  }
+]

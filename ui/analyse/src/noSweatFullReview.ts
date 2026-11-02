@@ -5,7 +5,12 @@ import { parseUci } from 'chessops/util';
 import { gameReviewQualities } from 'lib/nosweat/reviewQuality';
 import type { Glyph, TreeNodeBase } from 'lib/tree/types';
 
-import { type Annotation, type ClassificationInput, type ClassificationResult } from './noSweatClassify';
+import {
+  muteBrilliantSource,
+  type Annotation,
+  type ClassificationInput,
+  type ClassificationResult,
+} from './noSweatClassify';
 import { legalUcis, position, standardUci, terminalScore } from './noSweatCore';
 import type { Review } from './noSweatFish';
 
@@ -20,7 +25,15 @@ export const moveClasses = [
 ] as const;
 export const qualityGlyph = (symbol: Annotation): Glyph | undefined => {
   const c = moveClasses.find(c => c.symbol === symbol);
-  return c && { id: c.id, name: c.name, symbol, comp: true, source: reviewSource };
+  return (
+    c && {
+      id: c.id,
+      name: c.name,
+      symbol,
+      comp: true,
+      source: symbol === '!!' ? muteBrilliantSource : reviewSource,
+    }
+  );
 };
 
 export { gameReviewQualities, gameReviewQuality } from 'lib/nosweat/reviewQuality';

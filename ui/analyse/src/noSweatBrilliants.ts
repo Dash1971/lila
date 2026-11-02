@@ -2,11 +2,11 @@ import { parseUci } from 'chessops/util';
 
 import type { TreeNodeBase, Glyph } from 'lib/tree/types';
 
-import type { ClassificationInput, ClassificationResult } from './noSweatClassify';
+import { muteBrilliantSource, type ClassificationInput, type ClassificationResult } from './noSweatClassify';
 import { position, standardUci } from './noSweatCore';
 import type { Review } from './noSweatFish';
 
-export const brilliantSource = 'mobile-maia-brilliant-v1';
+export const brilliantSource = muteBrilliantSource;
 export const mainlineKey = (nodes: TreeNodeBase[]): string =>
   JSON.stringify(nodes.map(n => [n.ply, n.fen, n.uci]));
 export const hasQualityGlyph = (node: TreeNodeBase): boolean =>
