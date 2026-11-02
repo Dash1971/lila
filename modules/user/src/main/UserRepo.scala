@@ -147,8 +147,11 @@ final class UserRepo(c: Coll)(using Executor) extends lila.core.user.UserRepo(c)
           else if i < -2 then Color.white.some
           else none
 
-  def setProfile(id: UserId, profile: Profile): Funit =
-    coll.updateField(bid(id), F.profile, profile).void
+  def setProfile(id: UserId, profile: Profile): Fu[Boolean] =
+    coll.update
+      .one(bid(id), set(F.profile -> profile, "nameKeys" -> PublicNameKeys(id.value, profile.displayName)))
+      .map(_.n > 0)
+      .recover(lila.db.recoverDuplicateKey(_ => false))
 
   def setRealName(id: UserId, name: RealName): Funit =
     coll.updateField(bid(id), s"${F.profile}.realName", name).void
@@ -430,6 +433,7 @@ final class UserRepo(c: Coll)(using Executor) extends lila.core.user.UserRepo(c)
         bdoc(
           F.prevEmail -> lockEmail,
           F.createdAt -> user.createdAt,
+          "nameKeys" -> PublicNameKeys(user.id.value, None),
           F.deletedAt -> nowInstant
         )
       )
@@ -620,6 +624,7 @@ final class UserRepo(c: Coll)(using Executor) extends lila.core.user.UserRepo(c)
     bdoc(
       F.id -> name.id,
       F.username -> name.value,
+      "nameKeys" -> PublicNameKeys(name.id.value, None),
       F.email -> normalizedEmail,
       F.mustConfirmEmail -> mustConfirmEmail.option(now),
       F.bpass -> passwordHash,

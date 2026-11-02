@@ -50,12 +50,20 @@ final class Account(
                 profile.links.exists(env.security.spam.detect).option("profile.links" -> ~profile.links)
               .so: (resource, text) =>
                 env.report.api.autoCommFlag(lila.report.Suspect(me).id, resource, text)
-            _ <- env.user.repo.setProfile(me, profile)
-            flairForm = env.user.forms.flair(asMod = isGranted(_.LichessTeam))
-            _ <- bindForm(flairForm)(_ => funit, env.user.repo.setFlair(me, _))
-          yield
-            env.user.lightUserApi.invalidate(me)
-            Redirect(routes.User.show(me.username)).flashSuccess
+            saved <- env.user.repo.setProfile(me, profile)
+            result <-
+              if !saved then
+                val err = form.fill(profile).withError("displayName", "That username is already taken")
+                negotiate(
+                  BadRequest.page(pages.profile(me, err, realName.isDefined)),
+                  jsonFormError(err)
+                )
+              else
+                val flairForm = env.user.forms.flair(asMod = isGranted(_.LichessTeam))
+                bindForm(flairForm)(_ => funit, env.user.repo.setFlair(me, _)).map: _ =>
+                  env.user.lightUserApi.invalidate(me)
+                  Redirect(routes.User.show(me.username)).flashSuccess
+          yield result
       )
   }
 

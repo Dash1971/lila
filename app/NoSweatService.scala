@@ -286,7 +286,10 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
                     bdoc(s"${UserFields.profile}.displayName" -> name.value),
                     bdoc(s"${UserFields.profile}.displayName" -> alias)
                   ),
-                  set(s"${UserFields.profile}.displayName" -> alias)
+                  set(
+                    s"${UserFields.profile}.displayName" -> alias,
+                    "nameKeys" -> lila.user.PublicNameKeys(name.id.value, Some(alias))
+                  )
                 )
                 .void
           else funit
@@ -399,6 +402,9 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
                   .createNostr(UserName(name), pubkey)
                   .map:
                     _.getOrElse(throw NoSweatError(503, "Could not create identity"))
+                  .recover(
+                    lila.db.recoverDuplicateKey(_ => throw NoSweatError(409, "Username already taken"))
+                  )
 
   def isNostr(user: UserModel): Fu[Boolean] =
     env.user.repo.withColl(_.exists(bdoc("_id" -> user.id, "nostr" -> bdoc("$exists" -> true))))

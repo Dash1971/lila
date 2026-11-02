@@ -11,6 +11,20 @@ export async function initModule(): Promise<void> {
   makeLinkPopups($('.social_links'));
   makeLinkPopups($('.user-infos .bio'));
 
+  const npubLink = document.querySelector<HTMLAnchorElement>('.user-show__nostr-link');
+  if (npubLink)
+    npubLink.addEventListener('click', e => {
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      navigator.clipboard.writeText(npubLink.innerText.trim()).then(
+        () => {
+          npubLink.title = 'Copied npub';
+          setTimeout(() => (npubLink.title = 'Copy public npub'), 1500);
+        },
+        () => alert('Could not copy the npub. You can select and copy the text instead.'),
+      );
+    });
+
   tmpRandomTutorLink();
   updatePackedTrophies();
   window.addEventListener('resize', updatePackedTrophies);

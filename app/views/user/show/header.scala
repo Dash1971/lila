@@ -84,24 +84,11 @@ object header:
         .flatMap(lila.core.NostrName.npub)
         .map: npub =>
           div(cls := "user-show__nostr")(
-            label(`for` := "profile-nostr-npub")("Public Nostr identity (npub)"),
-            div(cls := "copy-me")(
-              input(
-                id := "profile-nostr-npub",
-                cls := "copy-me__target",
-                tpe := "text",
-                spellcheck := "false",
-                readonly,
-                value := npub
-              ),
-              button(
-                tpe := "button",
-                cls := "copy-me__button button button-metal",
-                dataIcon := Icon.Clipboard,
-                ariaTitle("Copy public npub")
-              )
-            ),
-            a(cls := "user-show__nostr-link", href := s"/@/$npub")("Permanent profile link")
+            a(
+              cls := "user-show__nostr-link",
+              href := s"/@/$npub",
+              ariaTitle("Copy public npub")
+            )(npub)
           ),
       div(cls := "user-show__social")(
         div(cls := "number-menu")(
