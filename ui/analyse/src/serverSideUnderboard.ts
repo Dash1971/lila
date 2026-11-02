@@ -28,6 +28,15 @@ export default function (element: HTMLElement, ctrl: AnalyseCtrl) {
   }
   const data = ctrl.data;
   const $panels = $('.analyse__underboard__panels > div');
+  if (ctrl.noSweat) {
+    const panel = document.querySelector('.analyse__underboard__panels > .computer-analysis');
+    if (panel) {
+      const graph = document.createElement('div');
+      graph.className = 'nosweat-review-chart';
+      graph.append(...panel.childNodes);
+      panel.append(graph);
+    }
+  }
   const $menu = $('.analyse__underboard__menu');
   const inputFen = document.querySelector<HTMLInputElement>('.analyse__underboard__fen input');
   const positionGifLink = document.querySelector<HTMLAnchorElement>('.position-gif a');
@@ -88,7 +97,9 @@ export default function (element: HTMLElement, ctrl: AnalyseCtrl) {
   function startAdvantageChart() {
     if (advChart || site.blindMode) return;
     const loading = !ctrl.hasFullComputerAnalysis();
-    const $panel = $panels.filter('.computer-analysis');
+    const $panel = ctrl.noSweat
+      ? $panels.filter('.computer-analysis').find('.nosweat-review-chart')
+      : $panels.filter('.computer-analysis');
     if (!$('#acpl-chart-container').length) {
       $panel.html(
         $html`
@@ -166,7 +177,9 @@ export default function (element: HTMLElement, ctrl: AnalyseCtrl) {
   if (ctrl.idbTree.hasLocalAnalysis) {
     startAdvantageChart();
   }
-  $panels.on('click', '.analysis-editor', () => site.asset.loadEsm('analyse.local', { init: ctrl }));
+  $panels.on('click', '.analysis-editor', () =>
+    site.asset.loadEsm('analyse.local', { init: ctrl.noSweat ? { ctrl, start: true } : ctrl }),
+  );
   if (!data.analysis) {
     $panels.find('form.future-game-analysis').on('submit', function (this: HTMLFormElement) {
       if ($(this).hasClass('must-login')) {

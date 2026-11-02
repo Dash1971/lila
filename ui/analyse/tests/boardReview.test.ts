@@ -155,8 +155,13 @@ test('board uses native review entry point and chart, preserving editable inputs
   root.querySelector<HTMLButtonElement>('.computer-analysis button')!.click();
   assert.equal(load.mock.calls[0].arguments[0], 'analyse.local');
   assert.deepEqual((load.mock.calls[0].arguments as any)[1].init, { ctrl, start: true });
+  const inlineStatus = document.createElement('div');
+  inlineStatus.className = 'nosweat-inline-analysis';
+  inlineStatus.textContent = 'Classifying moves';
+  root.querySelector('.computer-analysis')!.append(inlineStatus);
   (ctrl as any).mainlineAnalysis = {};
   ctrl.redraw();
+  assert.equal(root.querySelector('.nosweat-inline-analysis'), inlineStatus);
   await new Promise(resolve => setTimeout(resolve, 0));
   assert.equal(acpl.mock.callCount(), 1);
   assert.ok(root.querySelector('.analysis-chart-actions + .analysis-chart-plot canvas'));
@@ -166,6 +171,7 @@ test('board uses native review entry point and chart, preserving editable inputs
   (ctrl as any).mainlineAnalysis = undefined;
   ctrl.redraw();
   assert.equal(chart.destroy.mock.callCount(), 1);
+  assert.equal(root.querySelector('.nosweat-inline-analysis'), inlineStatus);
   assert.equal(root.querySelector('textarea'), input);
   assert.equal(input.value, '1. e4 e5');
   patch(vnode, hl('div'));

@@ -28,6 +28,13 @@ export class BoardReview {
 
   constructor(private readonly ctrl: AnalyseCtrl) {}
 
+  showComputerAnalysis(): void {
+    this.selected = 'computer-analysis';
+    this.ctrl.settings.set('showMainlineAnalysis', true);
+    this.ctrl.redraw();
+    this.chart?.resize();
+  }
+
   view(inputs?: VNode): VNode {
     this.sync();
     const tab = (id: string, label: string) =>
@@ -64,7 +71,9 @@ export class BoardReview {
             class: { active: this.selected === 'computer-analysis' },
             hook: {
               ...onInsert(elm => {
-                this.panel = elm;
+                this.panel = document.createElement('div');
+                this.panel.className = 'nosweat-review-chart';
+                elm.append(this.panel);
                 pubsub.on('analysis.server.progress', this.onAnalysis);
                 this.sync();
               }),

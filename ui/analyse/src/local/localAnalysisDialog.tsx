@@ -30,6 +30,11 @@ import { gameReviewQuality } from '../noSweatFullReview';
 import { isFinished } from '../study/studyChapters';
 import { LocalAnalysisEngine } from './localAnalysisEngine';
 
+export interface InlineAnalysisHost {
+  readonly inline: true;
+  close(): void;
+}
+
 export async function localAnalysisDialog(ctrl: AnalyseCtrl, start = false): Promise<void> {
   const state = new LocalAnalysisDialog(ctrl, await site.asset.loadEsm<ChartGame>('chart.game'));
   let redraw: Redraw = () => {};
@@ -49,9 +54,11 @@ export class LocalAnalysisDialog {
   private engine?: LocalAnalysisEngine;
   private running = false;
   private closed = false;
+  private stopped = false;
   private chartData: Parameters<ChartGame['acpl']>[1];
   private chart?: AcplChart;
   private status?: LooseVNodes;
+  private progress?: { done: number; total: number };
   private readonly quality: Prop<number>;
   private readonly engineId: StoredProp<string>;
   private readonly threads: StoredProp<number>;
@@ -60,7 +67,7 @@ export class LocalAnalysisDialog {
 
   constructor(
     readonly ctrl: AnalyseCtrl,
-    private readonly chartGame: ChartGame,
+    private readonly chartGame?: ChartGame,
   ) {
     const info = this.bestEngineDefaults;
     this.engineId = storedStringProp(
@@ -81,7 +88,7 @@ export class LocalAnalysisDialog {
     this.engine = new LocalAnalysisEngine(ctrl);
   }
 
-  readonly render = (redraw: Redraw, dialog: Dialog): LooseVNodes => {
+  private watchDownloads(redraw: Redraw): void {
     if (!this.updateDownloadStatus) {
       this.updateDownloadStatus = (d: { bytes: number; total: number }) => {
         const megabytes = (n: number) => Math.round(n / 1000 / 1000) + 'MB';
@@ -100,7 +107,33 @@ export class LocalAnalysisDialog {
       };
       pubsub.on('ceval.engine.download', this.updateDownloadStatus);
     }
+  }
 
+  readonly renderInline = (redraw: Redraw): jsx.JSX.Element => {
+    this.watchDownloads(redraw);
+    return (
+      <div class="nosweat-inline-analysis__content">
+        {this.running && (
+          <progress
+            max={this.progress?.total ?? 1}
+            attrs={this.progress ? { value: this.progress.done } : {}}
+            aria-label="Game analysis progress"
+          />
+        )}
+        <div role="status" aria-live="polite">
+          {this.status}
+        </div>
+        {this.running && (
+          <button class="button button-empty" type="button" on={{ click: this.stop }}>
+            Stop analysis
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  readonly render = (redraw: Redraw, dialog: Dialog): LooseVNodes => {
+    this.watchDownloads(redraw);
     return [
       <div class="main-content">
         <h2 class={[!(this.canAnalyse && this.engine) && 'hidden']}>{i18n.study.analysisEditor}</h2>
@@ -111,7 +144,7 @@ export class LocalAnalysisDialog {
           <canvas
             class="chart"
             hook={onInsert<HTMLCanvasElement>(async canvas => {
-              this.chart = await this.chartGame.acpl(canvas, this.ctrl.data, this.engine!.nodes);
+              this.chart = await this.chartGame!.acpl(canvas, this.ctrl.data, this.engine!.nodes);
             })}
           />
         </div>
@@ -139,7 +172,14 @@ export class LocalAnalysisDialog {
         </p>
         <button
           class={['button analyse-btn', !this.canAnalyse && 'none']}
-          on={{ click: async () => this.analyse(dialog, redraw) }}>
+          on={{
+            click: async () => {
+              if (this.ctrl.noSweat && !this.ctrl.study && !this.ctrl.opts.study) {
+                dialog.close();
+                await site.asset.loadEsm('analyse.local', { init: { ctrl: this.ctrl, start: true } });
+              } else await this.analyse(dialog, redraw);
+            },
+          }}>
           {this.ctrl.noSweat ? 'Analyze' : i18n.localAnalysis.analyse}
         </button>
         <button class={['button ok-btn', this.engine && 'none']} on={{ click: () => dialog.close('ok') }}>
@@ -149,22 +189,32 @@ export class LocalAnalysisDialog {
     ];
   };
 
+  readonly stop = () => {
+    this.stopped = true;
+    this.engine?.stop();
+  };
+
   readonly close = () => {
     this.closed = true;
     pubsub.off('ceval.engine.download', this.updateDownloadStatus);
     this.engine?.stop();
   };
 
-  async analyse(dlg: Dialog, redraw: Redraw): Promise<void> {
+  async analyse(dlg: Dialog | InlineAnalysisHost, redraw: Redraw): Promise<void> {
     if (this.closed || this.running || !this.engine) return;
     const then = performance.now();
     const engine = this.engine;
     this.running = true;
+    this.progress = undefined;
     this.status = 'Preparing analysis…';
     redraw();
     try {
       const division = await engine.getDivision();
       if (this.closed) return;
+      if (this.stopped) {
+        this.status = 'Analysis stopped.';
+        return;
+      }
       this.chartData = {
         ...this.ctrl.data,
         game: { ...this.ctrl.data.game, division },
@@ -180,23 +230,36 @@ export class LocalAnalysisDialog {
         },
       );
       if (this.closed) return;
-      if (!engine.isCurrent) return dlg.close('cancel');
+      if (this.stopped) {
+        this.status = 'Analysis stopped.';
+        return;
+      }
+      if (!engine.isCurrent) return 'inline' in dlg ? dlg.close() : dlg.close('cancel');
       await this.ctrl.idbTree.saveAnalysis(result);
       if (this.closed) return;
-      if (!engine.isCurrent) return dlg.close('cancel');
+      if (!engine.isCurrent) return 'inline' in dlg ? dlg.close() : dlg.close('cancel');
       const mergeResult = () =>
         this.ctrl.mergeMainlineAnalysisData({
           ...result.localUpdate,
           tree: structuredCloneLite(result.localUpdate.tree),
         });
       mergeResult();
+      if (this.stopped) {
+        this.status = 'Analysis stopped.';
+        this.engine = undefined;
+        return;
+      }
       // Keep the completed native review even if optional brilliant verification is cancelled.
       let brillianceUnavailable = false;
       if (this.ctrl.noSweat) {
+        this.progress = undefined;
+        this.status = 'Classifying moves…';
+        redraw();
         try {
           const verified = await engine.verifyBrilliants(
             result,
             (done, total, phase = 'Classifying moves') => {
+              this.progress = undefined;
               this.status = `${phase}: ${done} / ${total}`;
               this.chart?.updateData(this.ctrl.data, engine.nodes);
               redraw();
@@ -231,14 +294,19 @@ export class LocalAnalysisDialog {
       this.engine = undefined;
       redraw();
     } catch (e) {
-      if (e !== 'cancelled') {
-        log(e);
-        await alert(String(e));
+      if ('inline' in dlg) {
+        this.status = e === 'cancelled' ? 'Analysis stopped.' : `Analysis failed: ${String(e)}`;
+        this.engine = undefined;
+      } else {
+        if (e !== 'cancelled') {
+          log(e);
+          await alert(String(e));
+        }
+        dlg.close('cancel');
       }
-      dlg.close('cancel');
     } finally {
       this.running = false;
-      if (dlg.dialog.open) redraw();
+      if (!this.closed && ('inline' in dlg || dlg.dialog.open)) redraw();
     }
   }
 
@@ -298,6 +366,7 @@ export class LocalAnalysisDialog {
   };
 
   private readonly updateEngineStatus = (nodeIndex: number, totalNodes: number, nodesPerMove: number) => {
+    this.progress = { done: nodeIndex, total: totalNodes };
     const progress =
       nodeIndex === 0
         ? i18n.localAnalysis.startingPosition
