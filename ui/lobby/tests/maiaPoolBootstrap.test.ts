@@ -13,12 +13,12 @@ mock.module('../src/view/correspondence', { defaultExport: () => h('div.seeks') 
 const { default: main } = await import('../src/main');
 import type { LobbyOpts } from '../src/interfaces';
 
-for (const state of ['signed-in', 'anonymous', 'now-playing'] as const)
-  test(`new-opponent pool entry waits for native lobby initialization: ${state}`, async t => {
+for (const state of ['signed-in', 'anonymous', 'now-playing', 'custom'] as const)
+  test(`Maia pairing preserves native bootstrap and game-start sound: ${state}`, async t => {
     t.mock.timers.enable({ apis: ['setTimeout', 'setInterval', 'Date'] });
     Object.assign(globalThis, { location: window.location, history: window.history });
     localStorage.clear();
-    window.history.replaceState(null, '', '/#pool/15+10/previousBot');
+    window.history.replaceState(null, '', state === 'custom' ? '/' : '/#pool/15+10/previousBot');
     document.body.innerHTML = '<div class="lobby__app"></div><div class="lobby__table"></div>';
     let respond!: (response: Response) => void;
     const request = t.mock.method(
@@ -52,21 +52,22 @@ for (const state of ['signed-in', 'anonymous', 'now-playing'] as const)
     assert.ok(document.querySelector('.lobby__app__content'));
     // Pool entry must not redraw while main() is still constructing its VNodes.
     assert.equal(request.mock.callCount(), 0);
+    if (state === 'custom') void ctrl.matchMaia({ minutes: 7, increment: 2, rated: true }, 'custom');
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(request.mock.callCount(), 1);
     assert.equal(ctrl.tab, 'pools');
-    assert.equal(ctrl.poolMember?.id, '15+10');
-    assert.ok(document.querySelector('.lpool.active[data-id="15+10"] .spinner'));
+    assert.equal(ctrl.poolMember?.id, state === 'custom' ? 'custom' : '15+10');
+    if (state !== 'custom') assert.ok(document.querySelector('.lpool.active[data-id="15+10"] .spinner'));
     const [url, options] = request.mock.calls[0].arguments as unknown as [string, RequestInit];
     assert.equal(url, '/club/play');
     assert.deepEqual(JSON.parse(options.body as string), {
-      minutes: 15,
-      increment: 10,
+      minutes: state === 'custom' ? 7 : 15,
+      increment: state === 'custom' ? 2 : 10,
       rated: state !== 'anonymous',
     });
     respond(Response.json({ url: '/abcd1234wxyz' }));
     await new Promise(resolve => setImmediate(resolve));
-    assert.deepEqual(redirect.mock.calls[0].arguments, ['/abcd1234wxyz']);
+    assert.deepEqual(redirect.mock.calls[0].arguments, ['/abcd1234wxyz', true]);
     assert.equal(ctrl.poolMember, undefined);
     t.mock.timers.reset();
   });

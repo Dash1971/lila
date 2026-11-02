@@ -295,7 +295,7 @@ export default class LobbyController {
       if (!response.ok)
         throw new Error(game.error || muteText('PairingUnavailable', 'Pairing is temporarily unavailable'));
       this.setRedirecting();
-      site.redirect(game.url);
+      site.redirect(game.url, true);
     } catch (error) {
       await alert(
         error instanceof Error
