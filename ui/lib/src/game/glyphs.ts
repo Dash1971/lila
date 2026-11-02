@@ -2,6 +2,7 @@ import type { DrawShape } from '@lichess-org/chessground/draw';
 import * as cgGlyphs from '@lichess-org/chessground/glyph';
 import { parseUci, makeSquare, squareRank } from 'chessops/util';
 
+import { moveClasses } from '@/nosweat/moveClasses';
 import type { Glyph, TreeNode } from '@/tree/types';
 
 // maximum number of glyphs to show for a given move
@@ -27,7 +28,15 @@ export function annotationShapes(node: TreeNode, existingShapes: DrawShape[] = [
           const symbol = glyph.symbol;
           const stackedNumber =
             idx + existingShapes.filter(shape => shape.orig === destSquare && shape.customSvg).length;
-          const prerendered = glyphToSvg[symbol] ? glyphToSvg[symbol](stackedNumber) : undefined;
+          const nativeSvg = glyphToSvg[symbol] ? glyphToSvg[symbol](stackedNumber) : undefined;
+          const color =
+            typeof document !== 'undefined' && document.documentElement.dataset.brand === 'mutechess'
+              ? moveClasses.find(category => category.symbol === symbol)?.color
+              : undefined;
+          const prerendered =
+            nativeSvg && color
+              ? nativeSvg.replace(/(<circle\b[^>]*\bfill=")[^"]*(")/, `$1${color}$2`)
+              : nativeSvg;
           return {
             orig: destSquare,
             brush: prerendered ? '' : undefined,
