@@ -11,6 +11,7 @@ import {
   showMaiaRating,
   showEngineSettings,
 } from 'lib/nosweat/engineSettings';
+import { muteText } from 'lib/nosweat/i18n';
 import { loadBrowserMaia, ReviewMaia, reviewAllowed } from 'lib/nosweat/reviewMaia';
 import { hl, bind } from 'lib/view';
 
@@ -269,8 +270,8 @@ export class PuzzleMaia {
         hl('button.fbt.nosweat-maia-settings', {
           attrs: {
             type: 'button',
-            'aria-label': 'Engine Analysis settings',
-            title: 'Engine Analysis settings',
+            'aria-label': muteText('EngineAnalysis', 'Engine Analysis settings'),
+            title: muteText('EngineAnalysis', 'Engine Analysis settings'),
             'data-icon': licon.Gear,
             'aria-haspopup': 'dialog',
           },

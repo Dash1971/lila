@@ -1,4 +1,5 @@
 import { numberFormat } from 'lib/i18n';
+import { muteText } from 'lib/nosweat/i18n';
 import * as poolRangeStorage from 'lib/poolRangeStorage';
 import { pubsub } from 'lib/pubsub';
 import { colors } from 'lib/setup/color';
@@ -291,11 +292,16 @@ export default class LobbyController {
         body: JSON.stringify(setup),
       });
       const game = await response.json();
-      if (!response.ok) throw new Error(game.error || 'Pairing is temporarily unavailable');
+      if (!response.ok)
+        throw new Error(game.error || muteText('PairingUnavailable', 'Pairing is temporarily unavailable'));
       this.setRedirecting();
       site.redirect(game.url);
     } catch (error) {
-      await alert(error instanceof Error ? error.message : 'Pairing is temporarily unavailable');
+      await alert(
+        error instanceof Error
+          ? error.message
+          : muteText('PairingUnavailable', 'Pairing is temporarily unavailable'),
+      );
     } finally {
       this.poolMember = undefined;
       this.redraw();

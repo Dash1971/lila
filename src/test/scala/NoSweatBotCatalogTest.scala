@@ -93,3 +93,24 @@ class NoSweatBotCatalogTest extends munit.FunSuite:
     assert(NoSweatBotCatalog.aliasEligible(Some("SignalTrain001"), "SignalTrain001", "Roy Batty"))
     assert(NoSweatBotCatalog.aliasEligible(Some("Roy Batty"), "SignalTrain001", "Roy Batty"))
     assert(!NoSweatBotCatalog.aliasEligible(Some("ChosenName"), "SignalTrain001", "Roy Batty"))
+
+  test("Wintermute always receives the owner's fixed Circuit Knight flair"):
+    val wintermute = Json.obj("username" -> "Wintermute")
+    assertEquals(NoSweatBotCatalog.chooseFlair(wintermute, Map.empty), "symbols.mute-circuit-knight")
+
+  test("named sci-fi identities and aliases are assigned only original cyberpunk flairs"):
+    val featured = List(
+      Json.obj("username" -> "Pris", "homage" -> "Blade Runner"),
+      Json.obj("username" -> "HAL9000", "name_reference" -> "2001: A Space Odyssey"),
+      Json.obj("username" -> "SignalTrain084")
+    )
+    val aliases = Map("signaltrain084" -> "Roy Batty")
+    for bot <- featured do
+      assert(NoSweatBotCatalog.featuredFlair(bot, aliases))
+      assert(NoSweatBotCatalog.customFlairs.contains(NoSweatBotCatalog.chooseFlair(bot, aliases)))
+    assert(
+      !NoSweatBotCatalog.featuredFlair(
+        Json.obj("username" -> "ordinary", "rating_assignment" -> Json.obj()),
+        aliases
+      )
+    )

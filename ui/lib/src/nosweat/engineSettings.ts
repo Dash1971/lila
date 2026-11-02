@@ -1,7 +1,8 @@
-import { frag } from '../index';
+import { escapeHtml, frag } from '../index';
 import { storage } from '../storage';
 import { domDialog } from '../view';
 import { engineColors, type EngineColors } from './arrows';
+import { muteText } from './i18n';
 import { readEnginePreferences, type EnginePreferences } from './preferences';
 import { gameReviewQualities, gameReviewQuality } from './reviewQuality';
 
@@ -19,7 +20,7 @@ export function showMaiaRating(rating: number, choose: (rating: number) => void)
     show: true,
     easyClose: 'clickOutside',
     focus: '[aria-pressed="true"]',
-    htmlText: `<h2>Maia rating</h2><div class="nosweat-rating-grid">${maiaRatings
+    htmlText: `<h2>${escapeHtml(muteText('MaiaRating', 'Maia rating'))}</h2><div class="nosweat-rating-grid">${maiaRatings
       .map(
         n =>
           `<button type="button" class="fbt" data-rating="${n}" aria-pressed="${n === rating}">${n}</button>`,
@@ -74,40 +75,40 @@ export function engineSettingsView(
     stockfishSecond: 'Stockfish second move',
   };
   const accountMarkup = () => `<div class="nosweat-engine-settings-page">
-    ${accountToggle('secondMaiaEnabled', 'Enable a second Maia for analysis')}
-    ${accountSelect('selfElo', 'Primary Maia rating', ratings)}
-    ${accountSelect('secondMaiaElo', 'Second Maia rating', ratings)}
-    ${accountSelect('model', 'Maia model', [
+    ${accountToggle('secondMaiaEnabled', escapeHtml(muteText('SecondMaiaEnabled', 'Enable a second Maia for analysis')))}
+    ${accountSelect('selfElo', escapeHtml(muteText('PrimaryMaiaRating', 'Primary Maia rating')), ratings)}
+    ${accountSelect('secondMaiaElo', escapeHtml(muteText('SecondMaiaRating', 'Second Maia rating')), ratings)}
+    ${accountSelect('model', escapeHtml(muteText('MaiaModel', 'Maia model')), [
       ['5m', 'Maia3 5M · light'],
       ['79m', 'Maia3 79M'],
     ])}
-    ${accountToggle('history', 'Use move history')}
-    ${accountToggle('maiaArrows', 'Show Maia arrows')}
-    ${accountToggle('fishArrows', 'Show Stockfish arrows')}
+    ${accountToggle('history', escapeHtml(muteText('UseHistory', 'Use move history')))}
+    ${accountToggle('maiaArrows', escapeHtml(muteText('MaiaArrows', 'Show Maia arrows')))}
+    ${accountToggle('fishArrows', escapeHtml(muteText('StockfishArrows', 'Show Stockfish arrows')))}
     ${(Object.keys(engineColors) as (keyof EngineColors)[]).map(key => section(`${arrowName[key]} arrow color`, `<input type="color" data-arrow-color="${key}" value="${prefs.arrowColors[key]}" aria-label="${arrowName[key]} arrow color">`, key === 'maiaSecond' ? 'data-second-maia' : '')).join('')}
-    <section><button type="button" class="button button-empty nosweat-reset-arrow-colors">Reset arrow colors</button></section>
-    ${section('Computer analysis', `<group class="radio">${gameReviewQualities.map(q => `<div><input id="maia-quality-${q.name}" type="radio" name="nosweat-review-quality" value="${q.name}" ${q.name === gameReviewQuality(storage.get('nosweat.gameReview.quality')).name ? 'checked' : ''}><label for="maia-quality-${q.name}">${q.name}</label></div>`).join('')}</group><p class="help">Fast: depth 12, up to 0.5 seconds per position. Balanced: depth 14, up to 1 second. Thorough: depth 16, up to 1.5 seconds. Applies to your next computer analysis.</p>`)}
+    <section><button type="button" class="button button-empty nosweat-reset-arrow-colors">${escapeHtml(muteText('ResetArrows', 'Reset arrow colors'))}</button></section>
+    ${section('Computer analysis', `<group class="radio">${gameReviewQualities.map(q => `<div><input id="maia-quality-${q.name}" type="radio" name="nosweat-review-quality" value="${q.name}" ${q.name === gameReviewQuality(storage.get('nosweat.gameReview.quality')).name ? 'checked' : ''}><label for="maia-quality-${q.name}">${escapeHtml(muteText(q.name, q.name))}</label></div>`).join('')}</group><p class="help">Fast: depth 12, up to 0.5 seconds per position. Balanced: depth 14, up to 1 second. Thorough: depth 16, up to 1.5 seconds. Applies to your next computer analysis.</p>`)}
   </div>`;
   const view = frag<HTMLElement>(
     accountPage
       ? accountMarkup()
       : `<div class="nosweat-maia-settings-view">
-    <fieldset><legend>Analysis engines</legend>
-      ${toggle('secondMaiaEnabled', 'Enable a second Maia for analysis')}
+    <fieldset><legend>${escapeHtml(muteText('AnalysisEngines', 'Analysis engines'))}</legend>
+      ${toggle('secondMaiaEnabled', escapeHtml(muteText('SecondMaiaEnabled', 'Enable a second Maia for analysis')))}
       <p>Compare two ratings, or turn this off to show more moves from one Maia. Puzzle review shows one row when this is off.</p>
-      ${select('selfElo', 'Primary Maia rating', ratings)}
-      ${select('secondMaiaElo', 'Second Maia rating', ratings)}
+      ${select('selfElo', escapeHtml(muteText('PrimaryMaiaRating', 'Primary Maia rating')), ratings)}
+      ${select('secondMaiaElo', escapeHtml(muteText('SecondMaiaRating', 'Second Maia rating')), ratings)}
     </fieldset>
-    <details><summary>Advanced Maia settings</summary><fieldset><legend>Maia preferences</legend>
-      ${select('model', 'Maia model', [
+    <details><summary>${escapeHtml(muteText('AdvancedMaia', 'Advanced Maia settings'))}</summary><fieldset><legend>${escapeHtml(muteText('MaiaPreferences', 'Maia preferences'))}</legend>
+      ${select('model', escapeHtml(muteText('MaiaModel', 'Maia model')), [
         ['5m', 'Maia3 5M · light'],
         ['79m', 'Maia3 79M'],
       ])}
-      ${toggle('history', 'Use move history')}
+      ${toggle('history', escapeHtml(muteText('UseHistory', 'Use move history')))}
       <small>Maia downloads 36 MB for 5M or 331 MB for 79M on first use. Ratings are model inputs, not calibrated Elo. Settings are saved in this browser.</small>
     </fieldset></details>
-    <fieldset><legend>Board arrows</legend>
-      ${toggle('maiaArrows', 'Show Maia arrows')}${toggle('fishArrows', 'Show Stockfish arrows')}
+    <fieldset><legend>${escapeHtml(muteText('BoardArrows', 'Board arrows'))}</legend>
+      ${toggle('maiaArrows', escapeHtml(muteText('MaiaArrows', 'Show Maia arrows')))}${toggle('fishArrows', escapeHtml(muteText('StockfishArrows', 'Show Stockfish arrows')))}
       <div class="nosweat-arrow-palette">${(Object.keys(engineColors) as (keyof EngineColors)[])
         .map(key => {
           const name = {
@@ -119,10 +120,10 @@ export function engineSettingsView(
           return `<label class="setting" ${key === 'maiaSecond' ? 'data-second-maia' : ''}><span>${name}</span><input type="color" data-arrow-color="${key}" value="${prefs.arrowColors[key]}" aria-label="${name} arrow color"></label>`;
         })
         .join('')}</div>
-      <button type="button" class="button button-empty nosweat-reset-arrow-colors">Reset arrow colors</button>
+      <button type="button" class="button button-empty nosweat-reset-arrow-colors">${escapeHtml(muteText('ResetArrows', 'Reset arrow colors'))}</button>
     </fieldset>
     <fieldset><legend>Computer analysis</legend>
-      <div class="nosweat-review-quality">${gameReviewQualities.map(q => `<label><input type="radio" name="nosweat-review-quality" value="${q.name}" ${q.name === gameReviewQuality(storage.get('nosweat.gameReview.quality')).name ? 'checked' : ''}><span>${q.name}</span></label>`).join('')}</div>
+      <div class="nosweat-review-quality">${gameReviewQualities.map(q => `<label><input type="radio" name="nosweat-review-quality" value="${q.name}" ${q.name === gameReviewQuality(storage.get('nosweat.gameReview.quality')).name ? 'checked' : ''}><span>${escapeHtml(muteText(q.name, q.name))}</span></label>`).join('')}</div>
       <p>Choose faster review or deeper analysis. Applies the next time you analyze a game or line.</p><details><summary>About analysis quality</summary><p>Fast: depth 12, up to 0.5 seconds per position.<br>Balanced: depth 14, up to 1 second per position.<br>Thorough: depth 16, up to 1.5 seconds per position.</p></details>
     </fieldset>
   </div>`,
@@ -187,7 +188,7 @@ export function showEngineSettings(
   if (advanced)
     view.append(
       frag(
-        '<button type="button" class="button button-empty nosweat-advanced-stockfish">Advanced Stockfish settings</button>',
+        `<button type="button" class="button button-empty nosweat-advanced-stockfish">${escapeHtml(muteText('AdvancedStockfish', 'Advanced Stockfish settings'))}</button>`,
       ),
     );
   domDialog({
@@ -195,7 +196,7 @@ export function showEngineSettings(
     modal: true,
     show: true,
     easyClose: 'clickOutside',
-    htmlText: '<h2>Engine Analysis</h2>',
+    htmlText: `<h2>${escapeHtml(muteText('EngineAnalysis', 'Engine Analysis'))}</h2>`,
     insert: [{ nodes: view }],
     actions: advanced
       ? [

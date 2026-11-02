@@ -1,4 +1,5 @@
 import { licon, type LiconValue } from 'lib/licon';
+import { muteText } from 'lib/nosweat/i18n';
 import { pubsub } from 'lib/pubsub';
 import { type Attrs, hl, type VNode, bind } from 'lib/view';
 import { userLine, profileUrl } from 'lib/view/userLink';
@@ -53,7 +54,7 @@ export class LinksCtrl extends PaneCtrl {
               licon.Gear,
               this.root.opts.playing ? { target: '_blank' } : undefined,
             ),
-            d.noSweat ? 'Profile & settings' : i18n.preferences.preferences,
+            d.noSweat ? muteText('ProfileSettings', 'Profile & settings') : i18n.preferences.preferences,
           ),
           d.coach && hl('a.text', linkCfg('/coach/edit', licon.GraduateCap), i18n.site.coachManager),
           d.streamer && hl('a.text', linkCfg('/streamer/edit', licon.Mic), i18n.site.streamerManager),

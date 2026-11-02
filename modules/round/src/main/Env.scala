@@ -146,6 +146,12 @@ final class Env(
 
   private lazy val drawer = wire[Drawer]
 
+  lazy val noSweatPresetChat = NoSweatPresetChat(
+    db(CollName("nosweat_game")),
+    proxyRepo.game,
+    chatApi
+  )
+
   lazy val messenger = wire[Messenger]
 
   val getSocketStatus: Game => Future[SocketStatus] = (game: Game) =>

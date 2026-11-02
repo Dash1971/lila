@@ -3,7 +3,7 @@ package lila.round
 import lila.chat.{ ChatApi, ChatTimeout }
 import lila.core.chat.PublicSource
 
-final class Messenger(api: ChatApi):
+final class Messenger(api: ChatApi, noSweatPresetChat: NoSweatPresetChat)(using Executor):
 
   def system(game: Game, message: String): Unit =
     system(persistent = true)(game, message)
@@ -27,6 +27,13 @@ final class Messenger(api: ChatApi):
   private val whisperCommands = List("/whisper ", "/w ", "/W ")
 
   def owner(gameId: GameId, userId: UserId, text: String): Funit =
+    noSweatPresetChat
+      .post(gameId, Left(userId), text)
+      .flatMap:
+        case Some(_) => funit
+        case None => nativeOwner(gameId, userId, text)
+
+  private def nativeOwner(gameId: GameId, userId: UserId, text: String): Funit =
     whisperCommands
       .collectFirst:
         case command if text.startsWith(command) =>
@@ -37,8 +44,13 @@ final class Messenger(api: ChatApi):
           api.userChat.write(gameId.into(ChatId), userId, text, publicSource = none, _.round)
 
   def owner(game: Game, anonColor: Color, text: String): Funit =
-    (game.sourceIs(_.Friend) || presets.contains(text))
-      .so(api.playerChat.write(game.id.into(ChatId), anonColor, text, _.round))
+    noSweatPresetChat
+      .post(game.id, Right(anonColor), text)
+      .flatMap:
+        case Some(_) => funit
+        case None =>
+          (game.sourceIs(_.Friend) || presets.contains(text))
+            .so(api.playerChat.write(game.id.into(ChatId), anonColor, text, _.round))
 
   def timeout(chatId: ChatId, suspect: UserId, reason: String, text: String)(using mod: MyId): Funit =
     ChatTimeout

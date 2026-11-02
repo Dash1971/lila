@@ -1,6 +1,8 @@
 package lila.pref
 package ui
 
+import lila.core.i18n.I18nKey
+
 import play.api.data.Form
 
 import lila.ui.*
@@ -236,7 +238,7 @@ final class AccountPref(helpers: Helpers, helper: PrefHelper, bits: AccountUi):
   def engineAnalysis(u: User)(using Context) =
     AccountPage(s"Engine Analysis - ${u.username}", "engine-analysis"):
       div(cls := "box box-pad")(
-        h1(cls := "box__top")("Engine Analysis"),
+        h1(cls := "box__top")(I18nKey("muteEngineAnalysis").txt()),
         form(cls := "nosweat-engine-preferences")(
           div(id := "nosweat-engine-settings-page"),
           p(cls := "help")("Settings are saved automatically in this browser."),

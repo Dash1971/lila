@@ -1,10 +1,12 @@
 package views
 
+import lila.core.i18n.I18nKey
+
 import lila.app.UiEnv.{ *, given }
 
 object noSweatLogin:
   def apply()(using Context) =
-    Page("Sign in")
+    Page(I18nKey("muteSignIn").txt())
       .css("bits.auth")
       .headAppend(link(rel := "stylesheet", href := s"${assetPath("nosweat/nostr.css")}?v=key-backup2"))
       .headAppend(script(src := s"${assetPath("nosweat/nostr.js")}?v=key-backup2", defer)):
@@ -21,7 +23,7 @@ object noSweatLogin:
               alt := "Mute Chess"
             )
           ),
-          h1("Sign in or join"),
+          h1(I18nKey("muteSignInOrJoin").txt()),
           p(cls := "nostr-intro")(
             "Your Nostr identity connects you to your profile and games. No email needed."
           ),
@@ -38,7 +40,7 @@ object noSweatLogin:
             )
           ),
           div(id := "nostr-methods", cls := "form3")(
-            button(id := "nostr-generate", cls := "button button-green")("Create a key and play"),
+            button(id := "nostr-generate", cls := "button button-green")(I18nKey("muteCreateKey").txt()),
             div(id := "nostr-created", hidden)(
               p(
                 "Save a copy of this key so you can return on another device. A password manager is a good place for it; anyone with the key can use this identity."
@@ -52,37 +54,50 @@ object noSweatLogin:
                 aria.label := "Your new Nostr secret key"
               ),
               div(cls := "nostr-key-actions")(
-                button(id := "nostr-copy", cls := "button button-metal")("Copy key"),
-                button(id := "nostr-download", cls := "button button-metal")("Download .txt"),
-                button(id := "nostr-reveal", cls := "button button-empty")("Show key")
+                button(id := "nostr-copy", cls := "button button-metal")(I18nKey("muteCopyKey").txt()),
+                button(id := "nostr-download", cls := "button button-metal")(
+                  I18nKey("muteDownloadKey").txt()
+                ),
+                button(
+                  id := "nostr-reveal",
+                  cls := "button button-empty",
+                  attr("data-show-key") := I18nKey("muteShowKey").txt(),
+                  attr("data-hide-key") := I18nKey("muteHideKey").txt()
+                )(I18nKey("muteShowKey").txt())
               ),
-              label(cls := "form-label", `for` := "nostr-username")("Username (optional)"),
+              label(cls := "form-label", `for` := "nostr-username")(I18nKey("muteUserName").txt()),
               input(
                 id := "nostr-username",
                 cls := "form-control",
                 maxlength := 20,
                 autocomplete := "username"
               ),
-              button(id := "nostr-create-login", cls := "button button-green")("Save key and play")
+              button(id := "nostr-create-login", cls := "button button-green")(
+                I18nKey("muteSaveKeyAndPlay").txt()
+              )
             ),
             p(cls := "nostr-help")(
               "This browser remembers your key between visits, as long as its site data is kept. Keep a separate backup."
             ),
             div(id := "nostr-saved", hidden)(
-              button(id := "nostr-use-saved", cls := "button")("Continue with saved key"),
+              button(id := "nostr-use-saved", cls := "button")(I18nKey("muteContinueSaved").txt()),
               details(cls := "nostr-guide")(
                 summary("Back up your saved key"),
                 p("Copy it to your password manager or download a private .txt copy."),
                 div(cls := "nostr-key-actions")(
-                  button(id := "nostr-copy-saved", cls := "button button-metal")("Copy key"),
-                  button(id := "nostr-download-saved", cls := "button button-metal")("Download .txt")
+                  button(id := "nostr-copy-saved", cls := "button button-metal")(
+                    I18nKey("muteCopyKey").txt()
+                  ),
+                  button(id := "nostr-download-saved", cls := "button button-metal")(
+                    I18nKey("muteDownloadKey").txt()
+                  )
                 )
               ),
-              button(id := "nostr-forget", cls := "button button-empty")("Forget saved key")
+              button(id := "nostr-forget", cls := "button button-empty")(I18nKey("muteForgetSaved").txt())
             ),
             div(cls := "or-separator")(span("Already use Nostr?")),
             button(id := "nostr-extension", cls := "button button-metal")(
-              "Log in with signer"
+              I18nKey("muteSigner").txt()
             ),
             p(cls := "nostr-help")(
               "Already have a signer? Continue directly. Or install ",
@@ -93,7 +108,7 @@ object noSweatLogin:
               )("nos2x for Chrome / Chromium"),
               ". Other compatible Nostr signers work too."
             ),
-            label(cls := "form-label", `for` := "nostr-nsec")("Or paste your existing secret key"),
+            label(cls := "form-label", `for` := "nostr-nsec")(I18nKey("muteExistingKey").txt()),
             input(
               id := "nostr-nsec",
               cls := "form-control",
@@ -102,7 +117,7 @@ object noSweatLogin:
               spellcheck := "false",
               placeholder := "nsec1…"
             ),
-            button(id := "nostr-import", cls := "button button-metal")("Save key and sign in"),
+            button(id := "nostr-import", cls := "button button-metal")(I18nKey("muteImportKey").txt()),
             details(cls := "nostr-guide")(
               summary("Keeping access to your key"),
               p(
@@ -128,12 +143,12 @@ object noSweatLogin:
               autocomplete := "one-time-code",
               maxlength := 64
             ),
-            button(id := "nostr-verify", cls := "button button-green")("Sign in"),
+            button(id := "nostr-verify", cls := "button button-green")(I18nKey("muteSignIn").txt()),
             button(id := "nostr-back", cls := "button button-empty")("Use a different key")
           ),
           p(id := "nostr-status", role := "status", aria.live := "polite"),
           p(cls := "nostr-help")(
             "Your secret key stays in your browser. Signing in does not post anything to Nostr."
           ),
-          a(href := "/")("Play without signing in")
+          a(href := "/")(I18nKey("mutePlayAnon").txt())
         )

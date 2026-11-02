@@ -7,7 +7,12 @@ import lila.app.{ *, given }
 final class I18n(env: Env) extends LilaController(env):
 
   def select = OpenBody:
-    bindForm(lila.i18n.LangForm.select)(
+    val form = if env.noSweat.enabled then
+      play.api.data.Form(
+        lila.i18n.LangForm.select.mapping.verifying(lila.i18n.NoSweatLanguages.codes.contains)
+      )
+    else lila.i18n.LangForm.select
+    bindForm(form)(
       _ => notFound,
       code =>
         val lang = lila.i18n.LangPicker.byStr(code).err("Universe is collapsing")

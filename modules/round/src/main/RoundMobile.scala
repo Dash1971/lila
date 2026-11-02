@@ -51,6 +51,7 @@ final class RoundMobile(
     forecastApi: ForecastApi,
     isOfferingRematch: lila.core.round.IsOfferingRematch,
     chatApi: lila.chat.ChatApi,
+    noSweatPresetChat: NoSweatPresetChat,
     chatJson: lila.chat.ChatJsonView,
     bookmarkExists: lila.core.misc.BookmarkExists,
     tourApi: lila.core.data.CircularDep[lila.core.tournament.TournamentApi]
@@ -170,9 +171,10 @@ final class RoundMobile(
     game.hasChat.so:
       for
         chat <- chatApi.playerChat.findIf(game.id.into(ChatId), !game.justCreated)
+        maia <- noSweatPresetChat.restricted(game)
         filtered = chat.copy(lines = chat.lines.filterNot(l => l.troll || l.deleted))
         lines <- chatJson.asyncLines(filtered)
-      yield Chat.RestrictedLines(lines, restricted = game.sourceIs(_.Lobby) && !isAuth).some
+      yield Chat.RestrictedLines(lines, restricted = maia || (game.sourceIs(_.Lobby) && !isAuth)).some
 
   private def getWatcherChat(game: Game)(using myId: Option[MyId]): Fu[Option[Chat.RestrictedLines]] =
     game.hasChat.so:

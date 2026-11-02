@@ -29,7 +29,8 @@ final class Dasher(env: Env) extends LilaController(env):
               "lang" -> Json.obj(
                 "current" -> ctx.lang.code,
                 "accepted" -> LangPicker.allFromRequestHeaders(ctx.req).map(_.code),
-                "list" -> LangList.allChoices
+                "list" -> (if env.noSweat.enabled then lila.i18n.NoSweatLanguages.choices
+                           else LangList.allChoices)
               ),
               "streamer" -> isStreamer,
               "noSweat" -> env.noSweat.enabled

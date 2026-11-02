@@ -1,5 +1,7 @@
 package views
 
+import lila.core.i18n.I18nKey
+
 import play.api.libs.json.*
 import lila.app.UiEnv.{ *, given }
 
@@ -11,7 +13,7 @@ object noSweatBot:
     val history = (personality \ "history").as[Boolean]
     val style = (personality \ "timingStyle").as[String].replace('-', ' ')
     div(cls := "nosweat-bot-policy")(
-      h2("Bot settings"),
+      h2(I18nKey("muteBotSettings").txt()),
       table(
         tbody(
           tr(th("Model"), td("Maia3 79M")),
@@ -26,9 +28,15 @@ object noSweatBot:
           tr(th("Opponent rating input"), td("Your rating for this time control (600–2600)")),
           tr(th("Temperature"), td((bot \ "temperature_after_opening").as[Double].toString)),
           tr(th("Top-p"), td((bot \ "top_p_after_opening").as[Double].toString)),
-          tr(th("Move history"), td(if history then "On" else "Off")),
-          tr(th("Human timing"), td(if timing then "On" else "Off")),
-          tr(th("Timing style"), td(style + (if timing then "" else " (inactive)"))),
+          tr(
+            th(I18nKey("muteMoveHistory").txt()),
+            td(if history then I18nKey("muteOn").txt() else I18nKey("muteOff").txt())
+          ),
+          tr(
+            th(I18nKey("muteHumanTiming").txt()),
+            td(if timing then I18nKey("muteOn").txt() else I18nKey("muteOff").txt())
+          ),
+          tr(th(I18nKey("muteTimingStyle").txt()), td(style + (if timing then "" else " (inactive)"))),
           (opening > 0).option(tr(th("Opening"), td(s"Full sampling for the first $opening moves")))
         )
       ),

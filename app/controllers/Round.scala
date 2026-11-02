@@ -213,10 +213,11 @@ final class Round(
           for
             chat <- env.chat.api.playerChat.findIf(game.id.into(ChatId), !game.justCreated)
             lines <- env.chat.json.asyncLines(chat)
+            maia <- env.round.noSweatPresetChat.restricted(game)
           yield Chat
             .GameOrEvent:
               Left:
-                Chat.Restricted(chat, lines, restricted = game.sourceIs(_.Lobby) && ctx.isAnon)
+                Chat.Restricted(chat, lines, restricted = maia || (game.sourceIs(_.Lobby) && ctx.isAnon))
             .some
 
   def sides(gameId: GameId, color: Color) = Open:

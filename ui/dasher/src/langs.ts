@@ -54,6 +54,6 @@ export class LangsCtrl extends PaneCtrl {
 
   private readonly list = () => [
     ...this.data.list.filter(([code, _]) => this.isCurrent(code) || this.isAccepted(code)),
-    ...this.data.list,
+    ...this.data.list.filter(([code, _]) => !this.isCurrent(code) && !this.isAccepted(code)),
   ];
 }

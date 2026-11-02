@@ -1,6 +1,8 @@
 package lila.pref
 package ui
 
+import lila.core.i18n.I18nKey
+
 import play.api.data.Form
 
 import lila.core.security.TurnstilePublicConfig
@@ -139,7 +141,7 @@ final class AccountPages(helpers: Helpers, ui: AccountUi, flagApi: lila.core.use
           div(cls := "form-group")(trans.site.allInformationIsPublicAndOptional()),
           form3.group(
             form("displayName"),
-            "Public name",
+            I18nKey("mutePublicName").txt(),
             help = Some(
               "Up to 20 characters. Leave empty to use your username or a shortened Nostr public key. Your account and game history stay the same."
             )

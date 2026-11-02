@@ -290,6 +290,32 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
                 )
                 .void
           else funit
+      _ <- env.user.repo.withColl:
+        val wintermute = name.value.equalsIgnoreCase("Wintermute")
+        val featured = NoSweatBotCatalog.featuredFlair(bot, botAliases)
+        val condition =
+          if wintermute then bdoc(UserFields.flair -> bdoc("$ne" -> "symbols.mute-circuit-knight"))
+          else if featured then bdoc("noSweatFeaturedFlairVersion" -> bdoc("$exists" -> false))
+          else bdoc(UserFields.flair -> bdoc("$exists" -> false))
+        _.update
+          .one(
+            bid(user.id) ++ bdoc("noSweatBot" -> true) ++ condition,
+            set(
+              bdoc(UserFields.flair -> NoSweatBotCatalog.chooseFlair(bot, botAliases)) ++
+                Option.when(featured)(bdoc("noSweatFeaturedFlairVersion" -> "cyberpunk-v1")).getOrElse(bdoc())
+            )
+          )
+          .void
+      _ <- env.user.repo.withColl:
+        _.update
+          .one(
+            bid(user.id) ++ bdoc("noSweatBot" -> true) ++ or(
+              bdoc(s"${UserFields.profile}.location" -> bdoc("$exists" -> false)),
+              bdoc(s"${UserFields.profile}.location" -> "")
+            ),
+            set(s"${UserFields.profile}.location" -> NoSweatBotCatalog.chooseLocation(bot, botAliases))
+          )
+          .void
     yield env.user.lightUserApi.invalidate(user.id)
 
   private def initialize(): Funit =

@@ -1,5 +1,7 @@
 package lila.pref
 package ui
+import lila.core.i18n.I18nKey
+
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
@@ -90,7 +92,7 @@ final class AccountUi(helpers: Helpers):
               a(
                 activeCls("engine-analysis"),
                 href := routes.Pref.form("engine-analysis")
-              )("Engine Analysis")
+              )(I18nKey("muteEngineAnalysis").txt())
             ),
           a(activeCls("notification"), href := routes.Pref.form("notification"))(
             trans.site.notifications()

@@ -124,7 +124,7 @@ final class RoundSocket(
         case t => logger.warn(s"Unhandled round socket message: $t")
     case Protocol.In.Flag(gameId, color, fromPlayerId) => rounds.tell(gameId, ClientFlag(color, fromPlayerId))
     case Protocol.In.PlayerChatSay(id, Right(color), msg) =>
-      gameIfPresent(id).foreach:
+      getGame(id).foreach:
         _.foreach:
           messenger.owner(_, color, msg)
     case Protocol.In.PlayerChatSay(id, Left(userId), msg) =>

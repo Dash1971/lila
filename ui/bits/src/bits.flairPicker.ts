@@ -19,7 +19,7 @@ export async function initModule(cfg: Config): Promise<void> {
     ...cfg,
     onClickOutside: cfg.close,
     data: makeEmojiData,
-    categories: CATEGORIES.map(categ => categ[0]),
+    categories: ['cyberpunk', ...CATEGORIES.map(categ => categ[0])],
     categoryIcons,
     previewEmoji: 'people.backhand-index-pointing-up',
     noResultsEmoji: 'smileys.crying-face',
@@ -46,13 +46,16 @@ function getPickerLang(): PickerLocale {
 const makeEmojiData = async () => {
   const res = await fetch(site.asset.url('flair/list.txt', { pathVersion: true }));
   const text = await res.text();
-  const lines = text.split('\n').slice(0, -1);
+  const lines = text.trim().split(/\r?\n/).filter(Boolean);
   return {
-    categories: CATEGORIES.map(([id, name]) => ({
-      id,
-      name,
-      emojis: lines.filter(line => line.startsWith(id)),
-    })),
+    categories: [
+      { id: 'cyberpunk', name: 'Bot flairs', emojis: cyberpunk.filter(key => lines.includes(key)) },
+      ...CATEGORIES.map(([id, name]) => ({
+        id,
+        name,
+        emojis: lines.filter(line => line.startsWith(id)),
+      })),
+    ],
     emojis: Object.fromEntries(
       lines.map(key => {
         const [categ, name] = key.split('.');
@@ -61,7 +64,11 @@ const makeEmojiData = async () => {
           {
             id: key,
             name,
-            keywords: [categ, ...name.split('-')],
+            keywords: [
+              categ,
+              ...name.split('-'),
+              ...(cyberpunk.includes(key) ? ['cyberpunk', 'cypherpunk', 'technology', 'AI'] : []),
+            ],
             skins: [
               {
                 src: site.asset.flairSrc(key),
@@ -73,6 +80,32 @@ const makeEmojiData = async () => {
     ),
   };
 };
+
+const cyberpunk = [
+  'symbols.mute-circuit-knight',
+  'symbols.mute-synthetic-eye',
+  'symbols.mute-neural-chip',
+  'symbols.mute-neon-fox',
+  'symbols.mute-origami-crane',
+  'symbols.mute-ghost-terminal',
+
+  'smileys.robot',
+  'smileys.alien',
+  'smileys.alien-monster',
+  'objects.desktop-computer',
+  'objects.computer-disk',
+  'objects.floppy-disk',
+  'objects.satellite-antenna',
+  'objects.gear',
+  'objects.shield',
+  'activity.joystick',
+  'objects.electric-plug',
+  'objects.battery',
+  'objects.key',
+  'objects.locked',
+  'symbols.antenna-bars',
+  'symbols.infinity',
+];
 
 const CATEGORIES: [string, string][] = [
   ['smileys', 'Smileys'],
@@ -86,6 +119,9 @@ const CATEGORIES: [string, string][] = [
 ];
 
 const categoryIcons = {
+  cyberpunk: {
+    svg: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M4 4h16v16H4V4zm2 2v12h12V6H6zm2 2h8v8H8V8zM0 7h3v2H0V7zm0 8h3v2H0v-2zm21-8h3v2h-3V7zm0 8h3v2h-3v-2zM7 0h2v3H7V0zm8 0h2v3h-2V0zM7 21h2v3H7v-3zm8 0h2v3h-2v-3z"/></svg>',
+  },
   smileys: {
     svg: $html`
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">

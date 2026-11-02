@@ -7,6 +7,7 @@ import { winningChances } from 'lib/ceval';
 import { licon } from 'lib/licon';
 import { saveEnginePreferences, showMaiaRating, showEngineSettings } from 'lib/nosweat/engineSettings';
 import { maiaExpectedScore } from 'lib/nosweat/expectedScore';
+import { muteText } from 'lib/nosweat/i18n';
 import { storage } from 'lib/storage';
 import { hl, type VNode } from 'lib/view';
 
@@ -798,7 +799,7 @@ export class NoSweatAnalysis {
           }),
         },
         [
-          hl('span', expanded ? 'Leading moves' : 'Others'),
+          hl('span', expanded ? muteText('LeadingMoves', 'Leading moves') : muteText('Others', 'Others')),
           hl('span', !candidates.length ? '—' : expanded ? '−' : (rest * 100).toFixed(1) + '% +'),
         ],
       ),
@@ -810,12 +811,12 @@ export class NoSweatAnalysis {
       hl('div.nosweat-maia-cards', [this.maiaCard(false), this.secondMaiaEnabled && this.maiaCard(true)]),
       hl('section.nosweat-rating-explorer', [
         hl('header.nosweat-rating-heading', [
-          hl('h3', 'Moves by Rating'),
+          hl('h3', muteText('MovesByRating', 'Moves by Rating')),
           hl('button.fbt.nosweat-maia-settings', {
             attrs: {
               type: 'button',
-              'aria-label': 'Engine Analysis settings',
-              title: 'Engine Analysis settings',
+              'aria-label': muteText('EngineAnalysis', 'Engine Analysis settings'),
+              title: muteText('EngineAnalysis', 'Engine Analysis settings'),
               'data-icon': licon.Gear,
               'aria-haspopup': 'dialog',
             },

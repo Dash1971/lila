@@ -74,29 +74,54 @@ final class ChatApi(
         busChan: BusChan.Select,
         persist: Boolean = true
     ): Funit =
-      makeLine(chatId, userId, text).flatMapz: line =>
-        isChatFresh(publicSource).flatMap:
-          if _ then
-            linkCheck(line, publicSource).flatMap:
-              if _ then
-                val actuallyPersist = persist && (publicSource.isEmpty || !GarbageDetector(text))
-                for _ <- actuallyPersist.so(persistLine(chatId, line))
-                yield
-                  if actuallyPersist then
-                    if publicSource.isDefined then cached.invalidate(chatId)
-                    publicSource.match
-                      case Some(source) => shutupApi.publicText(userId, text, source)
-                      case _ => shutupApi.privateChat(chatId.value, userId, text)
-                    lila.mon.chat
-                      .message(publicSource.fold("player")(_.typeName), line.troll)
-                      .increment()
-                  publishLine(chatId, line, busChan)
-              else
-                logger.info(s"Link check rejected $line in $publicSource")
-                funit
-          else
-            logger.info(s"Can't post $line in $publicSource: chat is closed")
-            funit
+      writeAccepted(chatId, userId, text, publicSource, busChan, persist).void
+
+    def writeAccepted(
+        chatId: ChatId,
+        userId: UserId,
+        text: String,
+        publicSource: Option[PublicSource],
+        busChan: BusChan.Select,
+        persist: Boolean = true
+    ): Fu[Boolean] =
+      makeLine(chatId, userId, text).flatMap:
+        case None => fuccess(false)
+        case Some(line) =>
+          acceptedLine(chatId, userId, text, publicSource, busChan, persist, line)
+
+    private def acceptedLine(
+        chatId: ChatId,
+        userId: UserId,
+        text: String,
+        publicSource: Option[PublicSource],
+        busChan: BusChan.Select,
+        persist: Boolean,
+        line: UserLine
+    ): Fu[Boolean] =
+      isChatFresh(publicSource).flatMap:
+        if _ then
+          linkCheck(line, publicSource).flatMap:
+            if _ then
+              val actuallyPersist = persist && (publicSource.isEmpty || !GarbageDetector(text))
+              for
+                _ <- actuallyPersist.so(persistLine(chatId, line))
+                _ <- publishLine(chatId, line, busChan)
+              yield
+                if actuallyPersist then
+                  if publicSource.isDefined then cached.invalidate(chatId)
+                  publicSource.match
+                    case Some(source) => shutupApi.publicText(userId, text, source)
+                    case _ => shutupApi.privateChat(chatId.value, userId, text)
+                  lila.mon.chat
+                    .message(publicSource.fold("player")(_.typeName), line.troll)
+                    .increment()
+                !line.troll
+            else
+              logger.info(s"Link check rejected $line in $publicSource")
+              fuccess(false)
+        else
+          logger.info(s"Can't post $line in $publicSource: chat is closed")
+          fuccess(false)
 
     private def linkCheck(line: UserLine, source: Option[PublicSource]) =
       source.fold(fuccess(true)): s =>
@@ -276,10 +301,18 @@ final class ChatApi(
       coll.optionsByOrderedIds[MixedChat, ChatId](chatIds, none, _.sec)(_.id)
 
     def write(chatId: ChatId, color: Color, text: String, busChan: BusChan.Select): Funit =
-      makeLine(chatId, color, text).so: line =>
-        for _ <- persistLine(chatId, line) yield
-          publishLine(chatId, line, busChan)
-          lila.mon.chat.message("anonPlayer", troll = false).increment()
+      writeAccepted(chatId, color, text, busChan).void
+
+    def writeAccepted(chatId: ChatId, color: Color, text: String, busChan: BusChan.Select): Fu[Boolean] =
+      makeLine(chatId, color, text) match
+        case None => fuccess(false)
+        case Some(line) =>
+          for
+            _ <- persistLine(chatId, line)
+            _ <- publishLine(chatId, line, busChan)
+          yield
+            lila.mon.chat.message("anonPlayer", troll = false).increment()
+            true
 
     private def makeLine(chatId: ChatId, color: Color, t1: String): Option[Line] =
       Writer

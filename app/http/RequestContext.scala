@@ -43,7 +43,8 @@ trait RequestContext(using Executor):
         BodyContext(req, lang, userCtx, _)
 
   private def getAndSaveLang(req: RequestHeader, me: Option[Me]): Lang =
-    val lang = LangPicker(req, me.flatMap(_.lang))
+    val lang = if env.noSweat.enabled then lila.i18n.NoSweatLanguages.pick(req, me.flatMap(_.lang))
+    else LangPicker(req, me.flatMap(_.lang))
     me.filter(_.lang.forall(_ != lang.toTag)).foreach { env.user.repo.setLang(_, lang) }
     LangPicker.pageOverride.get(req) | lang
 
