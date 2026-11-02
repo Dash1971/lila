@@ -200,6 +200,11 @@ cg-container .cg-custom-below {
   z-index: $z-cg-below-pieces-1;
 }
 
+// Lift only our custom arrow plane above pieces, while native glyphs stay above it.
+cg-container .cg-custom-below:has(.nosweat-engine-arrow) {
+  z-index: 3;
+}
+
 cg-container .cg-custom-svgs svg,
 cg-container .cg-custom-below svg {
   overflow: visible;

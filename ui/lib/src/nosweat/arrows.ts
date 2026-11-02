@@ -76,6 +76,7 @@ export function engineShapes(arrows: EngineArrow[], orientation: Color): DrawSha
     return {
       orig: uci.slice(0, 2) as Key,
       dest: uci.slice(2, 4) as Key,
+      below: true,
       customSvg: {
         html: `<g class="nosweat-engine-arrow" data-move="${uci}" data-tail="${tail.join(',')}" data-head="${head.join(',')}" transform="translate(50,50) rotate(${angle})" fill="none">${shaft}${tip}</g>`,
       },
