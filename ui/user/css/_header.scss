@@ -25,15 +25,25 @@
 }
 
 .user-show__nostr {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
   min-width: 0;
   padding: 0 1.5em 1em;
   background: $c-bg-zebra;
 
   &-link {
+    min-width: 0;
     display: inline-block;
     color: $c-font-dim;
     font-family: monospace;
     font-size: 0.85em;
     overflow-wrap: anywhere;
+  }
+
+  &-feedback {
+    flex: 0 0 4em;
+    color: $c-font-dim;
+    font-size: 0.8em;
   }
 }

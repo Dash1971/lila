@@ -88,7 +88,8 @@ object header:
               cls := "user-show__nostr-link",
               href := s"/@/$npub",
               ariaTitle("Copy public npub")
-            )(npub)
+            )(npub),
+            span(cls := "user-show__nostr-feedback", attr("role") := "status", attr("aria-live") := "polite")
           ),
       div(cls := "user-show__social")(
         div(cls := "number-menu")(

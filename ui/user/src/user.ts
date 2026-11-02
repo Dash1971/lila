@@ -12,6 +12,8 @@ export async function initModule(): Promise<void> {
   makeLinkPopups($('.user-infos .bio'));
 
   const npubLink = document.querySelector<HTMLAnchorElement>('.user-show__nostr-link');
+  const npubFeedback = document.querySelector<HTMLElement>('.user-show__nostr-feedback');
+  let copiedTimer: ReturnType<typeof setTimeout> | undefined;
   if (npubLink)
     npubLink.addEventListener('click', e => {
       if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -19,7 +21,12 @@ export async function initModule(): Promise<void> {
       navigator.clipboard.writeText(npubLink.innerText.trim()).then(
         () => {
           npubLink.title = 'Copied npub';
-          setTimeout(() => (npubLink.title = 'Copy public npub'), 1500);
+          if (npubFeedback) npubFeedback.textContent = 'Copied';
+          clearTimeout(copiedTimer);
+          copiedTimer = setTimeout(() => {
+            npubLink.title = 'Copy public npub';
+            if (npubFeedback) npubFeedback.textContent = '';
+          }, 900);
         },
         () => alert('Could not copy the npub. You can select and copy the text instead.'),
       );
