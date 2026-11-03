@@ -2,6 +2,7 @@
 import type { Chess } from 'chessops/chess';
 import type { NormalMove } from 'chessops/types';
 
+import { evaluateBrilliantForest } from './noSweatBrilliantForest';
 import { after as afterMove, legalMoves, position } from './noSweatCore';
 import type { Review } from './noSweatFish';
 import type { Snapshot } from './noSweatSnapshots';
@@ -98,7 +99,8 @@ export const isSacrifice = (before: string, after: string, evaluateMaterial = na
   !position(after).isEnd() && evaluateMaterial(before) > -evaluateMaterial(after) + 100;
 
 // Mute-only experiment. Keep annotation()/isSacrifice() above as the EC oracle.
-export const muteBrilliantSource = 'mute-chess-brilliant-v2';
+export const muteBrilliantSource = 'mute-chess-brilliant-v5';
+export const legacyMuteBrilliantSource = 'mute-chess-brilliant-v4';
 export const muteBrilliantRules = {
   maxLoss: 5,
   minimumCp: -100,
@@ -141,6 +143,103 @@ export function hasPieceOffer(before: string, after: string): boolean {
 // material probe can mistake foregone gains and quiet tactics for sacrifices.
 export const isMuteSacrifice = hasPieceOffer;
 
+const proofPositionLimit = 512;
+function boundedExchangeGain(pos: Chess, target: number, budget: { used: number }): number {
+  if (++budget.used > proofPositionLimit) throw new Error('offer-proof-budget');
+  let best = 0;
+  for (const move of legalMoves(pos)) {
+    if (move.to !== target || !capturedValue(pos, move)) continue;
+    const child = pos.clone();
+    child.play(move);
+    best = Math.max(
+      best,
+      capturedValue(pos, move) +
+        (move.promotion ? pieceValue(move.promotion) - 90 : 0) -
+        boundedExchangeGain(child, target, budget),
+    );
+  }
+  return best;
+}
+// A literal legal reply checkmate, after accepting a qualifying piece offer.
+// Search stops at a complete two-move witness; exhaustion supplies no witness.
+export function hasMatingAcceptance(beforeFen: string, afterFen: string): boolean {
+  const before = position(beforeFen);
+  const pos = position(afterFen);
+  const budget = { used: 0 };
+  const credit = Math.max(0, -material(pos) - material(before));
+  try {
+    for (const capture of legalMoves(pos)) {
+      const victim = pos.board.get(capture.to);
+      if (!victim || victim.color === pos.turn || victim.role === 'pawn' || victim.role === 'king') continue;
+      const child = pos.clone();
+      child.play(capture);
+      const net =
+        capturedValue(pos, capture) +
+        (capture.promotion ? pieceValue(capture.promotion) - 90 : 0) -
+        boundedExchangeGain(child, capture.to, budget);
+      if (net <= credit + muteBrilliantRules.minimumMaterialLoss) continue;
+      for (const reply of legalMoves(child)) {
+        if (++budget.used > proofPositionLimit) return false;
+        const end = child.clone();
+        end.play(reply);
+        if (end.isCheckmate()) return true;
+      }
+    }
+  } catch (error) {
+    if (!(error instanceof Error) || error.message !== 'offer-proof-budget') throw error;
+  }
+  return false;
+}
+// Only suppress a proven continuation: every current offer is an unchanged,
+// unmoved piece already equally vulnerable after the preceding own move.
+// Unknown history or exhausted board proof supplies no continuation veto.
+export function continuedOfferWhileInCheck(
+  previousFen: string | undefined,
+  beforeFen: string,
+  afterFen: string,
+  uci: string,
+): boolean {
+  const before = position(beforeFen);
+  if (!previousFen || !before.isCheck()) return false;
+  const old = position(previousFen);
+  const pos = position(afterFen);
+  const budget = { used: 0 };
+  const credit = Math.max(0, -material(pos) - material(before));
+  let offers = 0;
+  try {
+    for (const [square, piece] of pos.board) {
+      if (piece.color === pos.turn || piece.role === 'pawn' || piece.role === 'king') continue;
+      const gain = boundedExchangeGain(pos, square, budget);
+      if (gain <= credit + muteBrilliantRules.minimumMaterialLoss) continue;
+      offers++;
+      const destination = uci.slice(2, 4);
+      const squareName = String.fromCharCode(97 + (square % 8)) + (1 + Math.floor(square / 8));
+      const prior = old.board.get(square);
+      if (
+        destination === squareName ||
+        !prior ||
+        prior.role !== piece.role ||
+        prior.color !== piece.color ||
+        boundedExchangeGain(old, square, budget) !== gain
+      )
+        return false;
+    }
+  } catch (error) {
+    if (!(error instanceof Error) || error.message !== 'offer-proof-budget') throw error;
+    return false;
+  }
+  return offers > 0;
+}
+// Phase weights N/B=1,R=2,Q=4 (24 initially). The <=8 boundary and a full
+// minor-piece material lead are our explicit, conservative context choices.
+export function convertedMaterialOrEndgame(fen: string): boolean {
+  const pos = position(fen);
+  let phase = 0;
+  for (const [, piece] of pos.board)
+    phase += ({ knight: 1, bishop: 1, rook: 2, queen: 4 } as Record<string, number>)[piece.role] ?? 0;
+  return phase <= 8 || material(pos) >= 300;
+}
+
 export function muteAnnotation(
   previous: EvalScore | undefined,
   before: Snapshot,
@@ -149,6 +248,7 @@ export function muteAnnotation(
   move: string,
   ecSacrifice: boolean,
   sacrificeForMove: (uci: string) => boolean,
+  context?: { additionalMate: boolean; routineRelevant: boolean; checkedContinuation: boolean },
 ): Annotation {
   const original = annotation(previous, before, after, color, move, ecSacrifice);
   if (original === '??' || original === '?' || original === '?!') return original;
@@ -158,16 +258,26 @@ export function muteAnnotation(
   if ((original === '!!' || original === '!?') && !sacrifice) return '';
   const next = normalized(after, color);
   const loss = winChance(normalized(before.lines[0], color)) - winChance(next);
+  // A local offer can be an ordinary combination that recovers material on
+  // another square. Require the existing broader material check as well.
+  // Its mate sentinel is not physical material: a searched winning mate may
+  // corroborate the offer instead. The whole-window check repeats this test.
+  const corroborated = ecSacrifice || (after.mate !== undefined && next > 0) || context?.additionalMate;
   if (
     before.lines.length > 1 &&
     loss <= muteBrilliantRules.maxLoss &&
     next >= muteBrilliantRules.minimumCp &&
     sacrifice &&
-    !before.lines.some(
-      line =>
-        line.moves[0] !== move &&
-        normalized(line, color) >= muteBrilliantRules.routineWinCp &&
-        !sacrificeForMove(line.moves[0]),
+    corroborated &&
+    !context?.checkedContinuation &&
+    !(
+      context?.routineRelevant !== false &&
+      before.lines.some(
+        line =>
+          line.moves[0] !== move &&
+          normalized(line, color) >= muteBrilliantRules.routineWinCp &&
+          !sacrificeForMove(line.moves[0]),
+      )
     )
   )
     return '!!';
@@ -181,7 +291,7 @@ export interface ClassificationInput {
   reviews: Review[];
   move: string;
   confirmation?: Review[];
-  policy?: 'en-croissant' | 'mute-brilliant-v2';
+  policy?: 'en-croissant' | 'mute-brilliant-v4' | 'mute-brilliant-v5';
 }
 export interface ClassificationResult {
   symbol: Annotation;
@@ -200,7 +310,27 @@ export function classify(input: ClassificationInput, evaluateMaterial = naiveMat
   const previous = n > 2 ? reviews[n - 3] : undefined;
   const color = position(positions[n - 2]).turn;
   const sacrifice = isSacrifice(positions[n - 2], positions[n - 1], evaluateMaterial);
-  const mute = input.policy === 'mute-brilliant-v2';
+  const mute = input.policy === 'mute-brilliant-v4';
+  const forest =
+    input.policy === 'mute-brilliant-v5'
+      ? evaluateBrilliantForest(input, {
+          rawOffer: hasPieceOffer,
+          ecMaterial: evaluateMaterial,
+          isSacrifice: (b, a) => isSacrifice(b, a, evaluateMaterial),
+          matingAcceptance: hasMatingAcceptance,
+          checkedContinuation: continuedOfferWhileInCheck,
+          phaseRelevant: convertedMaterialOrEndgame,
+          normalized,
+          winChance,
+        })
+      : undefined;
+  // The frozen study contains no physical-probe timeouts. A slower browser must
+  // abstain instead of treating that unvalidated missingness as badge evidence.
+  const forestCandidate =
+    !!forest &&
+    !forest.diagnostics.physicalUnknown &&
+    forest.windows.current.eligible &&
+    forest.windowScores.current >= 5 / 6;
   const offers = new Map<string, boolean>();
   const sacrificeForMove = (uci: string): boolean => {
     if (!offers.has(uci))
@@ -210,10 +340,34 @@ export function classify(input: ClassificationInput, evaluateMaterial = naiveMat
       );
     return offers.get(uci)!;
   };
-  const predicate = (b: Snapshot, a: Snapshot, p?: Snapshot): Annotation =>
-    mute
-      ? muteAnnotation(p?.lines[0], b, a.lines[0], color, move, sacrifice, sacrificeForMove)
-      : annotation(p?.lines[0], b, a.lines[0], color, move, sacrifice);
+  const context = {
+    additionalMate: mute && !sacrifice && hasMatingAcceptance(positions[n - 2], positions[n - 1]),
+    routineRelevant: convertedMaterialOrEndgame(positions[n - 2]),
+    checkedContinuation:
+      mute &&
+      continuedOfferWhileInCheck(
+        n > 2 ? positions[n - 3] : undefined,
+        positions[n - 2],
+        positions[n - 1],
+        move,
+      ),
+  };
+  const predicate = (
+    b: Snapshot,
+    a: Snapshot,
+    p?: Snapshot,
+    which: 'current' | 'previous' = 'current',
+  ): Annotation => {
+    if (mute)
+      return muteAnnotation(p?.lines[0], b, a.lines[0], color, move, sacrifice, sacrificeForMove, context);
+    const original = annotation(p?.lines[0], b, a.lines[0], color, move, sacrifice);
+    if (!forest || original === '??' || original === '?' || original === '?!') return original;
+    if (forestCandidate && forest.windows[which].eligible && forest.windowScores[which] >= 5 / 6) return '!!';
+    // The model controls only Brilliant eligibility. Preserve the EC meanings of
+    // other judgments, including their normal full-window corroboration.
+    if ((original === '!!' || original === '!?') && !sacrificeForMove(move)) return '';
+    return original === '!!' ? (sacrifice && normalized(a.lines[0], color) > -200 ? '!?' : '') : original;
+  };
   let symbol = predicate(before.current, after.current, previous?.current);
   const provisional = symbol;
   let withheld = false;
@@ -229,6 +383,7 @@ export function classify(input: ClassificationInput, evaluateMaterial = naiveMat
     const previousPrevious = checked ? checked[checked.length - 3]?.current : previous?.previous;
     const sufficient =
       before.quality === after.quality &&
+      (!forestCandidate || forest?.confidenceSufficient) &&
       (!needsPrevious || previous?.quality === before.quality) &&
       (!checked ||
         checked.every((r, i) => {
@@ -246,7 +401,7 @@ export function classify(input: ClassificationInput, evaluateMaterial = naiveMat
       !previousBefore ||
       !previousAfter ||
       (needsPrevious && !previousPrevious) ||
-      predicate(previousBefore, previousAfter, previousPrevious) !== symbol
+      predicate(previousBefore, previousAfter, previousPrevious, 'previous') !== symbol
     ) {
       symbol = '';
       withheld = true;
@@ -262,6 +417,6 @@ export function classify(input: ClassificationInput, evaluateMaterial = naiveMat
       0,
       normalized(before.current.lines[0], color) - normalized(after.current.lines[0], color),
     ),
-    version: mute ? muteBrilliantSource : 'ec015-mobilemaia-window-v2',
+    version: forest ? muteBrilliantSource : mute ? legacyMuteBrilliantSource : 'ec015-mobilemaia-window-v2',
   };
 }

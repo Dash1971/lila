@@ -7,6 +7,7 @@ import {
   hasPieceOffer,
   muteAnnotation,
   muteBrilliantSource,
+  legacyMuteBrilliantSource,
   isMuteSacrifice,
   isSacrifice,
   naiveMaterial,
@@ -30,7 +31,7 @@ const inputFor = (sample: any, run: any) => {
     { current: before, previous: before, quality: 'test' },
     { current: after, previous: after, quality: 'test' },
   ];
-  return { positions: sample.positions, move: sample.move, reviews, policy: 'mute-brilliant-v2' as const };
+  return { positions: sample.positions, move: sample.move, reviews, policy: 'mute-brilliant-v4' as const };
 };
 
 test('Qf5+ does not sacrifice the optional promotion gain from the previous position', () => {
@@ -52,7 +53,7 @@ test('Qf5+ does not sacrifice the optional promotion gain from the previous posi
   const input = {
     positions: [before, after],
     move: 'd5f5',
-    policy: 'mute-brilliant-v2' as const,
+    policy: 'mute-brilliant-v4' as const,
     reviews: [
       { current, previous: current, quality: 'regression' },
       { current: next, previous: next, quality: 'regression' },
@@ -69,16 +70,16 @@ test('Qf5+ does not sacrifice the optional promotion gain from the previous posi
   assert.equal(isMuteSacrifice(black, blackAfter), false, 'same rule from Black’s perspective');
 });
 
-test('five fresh-review examples pass Mute eligibility on both recorded budgets', () => {
-  for (const sample of samples.filter((s: any) => s.freshBrilliant))
+test('four recorded sacrifices retain eligibility at both budgets; Nd7 is an explicit conservative loss', () => {
+  for (const sample of samples.filter((s: any) => s.freshBrilliant && s.game !== '183990510823'))
     for (const run of sample.runs) {
       const result = classify(inputFor(sample, run));
       assert.equal(result.symbol, '!!', sample.name);
-      assert.equal(result.version, muteBrilliantSource);
+      assert.equal(result.version, legacyMuteBrilliantSource);
     }
 });
 
-test('Bf5 is a defended tactic rather than a legal piece offer, while Ndxe5 retains eligibility', () => {
+test('Bf5 is defended, while Ndxe5 passes only the preliminary legal-offer test', () => {
   const before = 'r5k1/pp2ppbp/1q4p1/4P3/4Q1b1/P2r4/1P4PP/RNB2R1K b - - 1 17';
   const after = afterMove(before, 'g4f5');
   assert.equal(isSacrifice(before, after), true, 'the capture-only EC probe misses quiet Rd1+');
@@ -108,9 +109,10 @@ test('Bf5 is a defended tactic rather than a legal piece offer, while Ndxe5 reta
   assert.equal(isMuteSacrifice(knight, afterMove(knight, 'd7e5')), true);
 });
 
-test('an apparent knight offer can qualify when EC sees only a 90-point net material change', () => {
+test('an apparent knight offer without material corroboration no longer receives Brilliant', () => {
   const sample = samples.find((s: any) => s.game === '183990510823' && s.ply === 61);
   assert.equal(hasPieceOffer(...(sample.positions as [string, string])), true);
+  for (const run of sample.runs) assert.notEqual(classify(inputFor(sample, run)).symbol, '!!');
   assert.equal(classify({ ...inputFor(sample, sample.runs[1]), policy: 'en-croissant' }).symbol, '');
 });
 
@@ -143,7 +145,7 @@ const snapshot = (best: number, second: number, playedFirst = true): Snapshot =>
 });
 test('soundness, near-best tolerance and a clearly winning safe alternative gate the award', () => {
   const label = (before: Snapshot, after: EvalScore, offers: string[] = ['offer'], color: Color = 'white') =>
-    muteAnnotation(undefined, before, after, color, 'offer', false, move => offers.includes(move));
+    muteAnnotation(undefined, before, after, color, 'offer', true, move => offers.includes(move));
   assert.equal(label(snapshot(50, 40), { cp: 45 }), '!!');
   assert.equal(label(snapshot(50, 40, false), { cp: 40 }), '!!', 'near-best second choice');
   assert.notEqual(label(snapshot(-150, -160), { cp: -150 }), '!!', 'losing position');
@@ -178,19 +180,25 @@ test('the historical Rxd5 gallery label is withheld when the two recorded score 
   assert.equal(result.withheld, true);
 });
 
-test('the actual worker selects Mute policy and broadens the legacy brilliant prefilter', async () => {
+test('the worker applies the full precision policy after its preliminary legal-offer filter', async () => {
   const original = globalThis.self;
   const results: any[] = [];
   const worker: any = { postMessage: (value: unknown) => results.push(value) };
   (globalThis as any).self = worker;
   try {
     await import('../src/analyse.nosweatWorker');
-    const sample = samples.find((s: any) => s.game === '183990510823' && s.ply === 61);
-    worker.onmessage({ data: inputFor(sample, sample.runs[1]) });
+    const forestSamples = JSON.parse(
+      readFileSync(new URL('./fixtures/noSweat/brilliant-v5.json', import.meta.url), 'utf8'),
+    ).cases;
+    const sample = forestSamples.find((s: any) => s.key === '167741829524:33');
+    worker.onmessage({ data: { ...sample.input, policy: 'en-croissant' } });
     assert.equal(results[0].result.symbol, '!!');
     assert.equal(results[0].result.version, muteBrilliantSource);
-    worker.onmessage({ data: { material: sample.positions } });
+    worker.onmessage({ data: { material: sample.input.positions.slice(-2) } });
     assert.equal(results[1].result, true);
+    const knight = forestSamples.find((s: any) => s.key === '186311900336:28');
+    worker.onmessage({ data: knight.input });
+    assert.notEqual(results[2].result.symbol, '!!', 'the prefilter cannot bypass the fixed model');
   } finally {
     (globalThis as any).self = original;
   }

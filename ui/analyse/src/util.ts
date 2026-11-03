@@ -55,7 +55,12 @@ export function mergeReviewData(into: TreeNodeLite, from: TreeNodeLite): void {
     if (
       (g.source === 'mobile-maia-brilliant-v1' ||
         g.source === 'mute-chess-brilliant-v1' ||
-        g.source === 'mute-chess-brilliant-v2') &&
+        g.source === 'mute-chess-brilliant-v2' ||
+        g.source === 'mute-chess-brilliant-v3' ||
+        g.source === 'mute-chess-brilliant-v4' ||
+        g.source === 'mute-chess-brilliant-v5' ||
+        g.source === 'mute-chess-brilliant-v6' ||
+        g.source === 'mute-chess-brilliant-v7') &&
       [...glyphs.values(), ...(from.glyphs ?? []).filter(other => other !== g)].some(
         other => other.id >= 1 && other.id <= 6,
       )

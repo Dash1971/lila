@@ -1,0 +1,857 @@
+{
+  "provenance": "Recorded full current/prior windows from the318-move study; SF18,1thread,64MB,300000nodes. No score copies fabricated. Full source/data publication linked in docs/brilliant-moves.md.",
+  "cases": [
+    {
+      "game": "183988710985",
+      "ply": 29,
+      "san": "Nxb5",
+      "observed_chesscom_label": "non_brilliant",
+      "source_url": "https://www.chess.com/analysis/game/live/183988710985?move=28",
+      "positions": [
+        "1rbq1rk1/4ppb1/2np1npp/1p6/1P6/2NP1NP1/3BPPBP/1RQ2RK1 b - - 1 14",
+        "1rbq1r2/4ppbk/2np1npp/1p6/1P6/2NP1NP1/3BPPBP/1RQ2RK1 w - - 2 15",
+        "1rbq1r2/4ppbk/2np1npp/1N6/1P6/3P1NP1/3BPPBP/1RQ2RK1 b - - 0 15"
+      ],
+      "move": "c3b5",
+      "reviews": [
+        {
+          "current": {
+            "depth": 15,
+            "lines": [
+              {
+                "cp": 100,
+                "moves": [
+                  "c8g4",
+                  "c3b5",
+                  "d8b6",
+                  "b5a3",
+                  "f8c8",
+                  "a3c4",
+                  "b6d8",
+                  "c1d1",
+                  "g4f3",
+                  "g2f3",
+                  "d6d5",
+                  "b4b5",
+                  "c6d4",
+                  "d2a5",
+                  "d4f3",
+                  "e2f3"
+                ]
+              },
+              {
+                "cp": 105,
+                "moves": [
+                  "c6e5",
+                  "d2h6",
+                  "e5f3",
+                  "g2f3",
+                  "c8b7",
+                  "e2e4",
+                  "d8d7",
+                  "h6g7",
+                  "g8g7",
+                  "b1a1",
+                  "f8h8"
+                ]
+              }
+            ],
+            "reported_nodes": 246819
+          },
+          "previous": {
+            "depth": 14,
+            "lines": [
+              {
+                "cp": 107,
+                "moves": [
+                  "c8g4",
+                  "c3b5",
+                  "d8b6",
+                  "b5a3",
+                  "g4f3",
+                  "g2f3",
+                  "c6d4",
+                  "d2h6",
+                  "g7h6",
+                  "c1h6",
+                  "d4f3",
+                  "e2f3",
+                  "b6d4",
+                  "h6d2",
+                  "f8c8",
+                  "b4b5"
+                ]
+              },
+              {
+                "cp": 107,
+                "moves": [
+                  "c6e5",
+                  "f3e5",
+                  "d6e5",
+                  "d2h6",
+                  "g7h6",
+                  "c1h6",
+                  "c8b7",
+                  "f1c1",
+                  "d8b6",
+                  "h6e3",
+                  "b6d4",
+                  "e3d4",
+                  "e5d4",
+                  "c3e4",
+                  "f6e4",
+                  "d3e4",
+                  "f8c8"
+                ]
+              }
+            ],
+            "reported_nodes": 159416
+          },
+          "terminal": false,
+          "quality": "recorded-sf18-300k"
+        },
+        {
+          "current": {
+            "depth": 14,
+            "lines": [
+              {
+                "cp": 105,
+                "moves": [
+                  "c3b5",
+                  "b8b5",
+                  "c1c6",
+                  "c8d7",
+                  "c6c4",
+                  "e7e5",
+                  "f1c1",
+                  "d8b8",
+                  "c4h4",
+                  "f6h5",
+                  "b1a1",
+                  "d7e6",
+                  "a1a5",
+                  "d6d5",
+                  "a5b5",
+                  "b8b5",
+                  "h4e7",
+                  "b5a4",
+                  "e7b7",
+                  "f8a8",
+                  "h2h3",
+                  "a8a7"
+                ]
+              },
+              {
+                "cp": 17,
+                "moves": [
+                  "h2h3",
+                  "d8e8",
+                  "e2e4",
+                  "c8e6",
+                  "g1h2",
+                  "e8d7",
+                  "d2e3",
+                  "f8c8",
+                  "f1d1",
+                  "d6d5",
+                  "f3d4",
+                  "c6d4",
+                  "e3d4",
+                  "f6e8"
+                ]
+              }
+            ],
+            "reported_nodes": 245665
+          },
+          "previous": {
+            "depth": 13,
+            "lines": [
+              {
+                "cp": 116,
+                "moves": [
+                  "c3b5",
+                  "b8b5",
+                  "c1c6",
+                  "c8d7",
+                  "c6c4",
+                  "e7e5",
+                  "f1c1",
+                  "d8b8",
+                  "b1a1",
+                  "d7e6",
+                  "c4h4",
+                  "f6h5",
+                  "d3d4"
+                ]
+              },
+              {
+                "cp": 17,
+                "moves": [
+                  "h2h3",
+                  "c8d7",
+                  "e2e4",
+                  "e7e5",
+                  "d2e3",
+                  "d8e7",
+                  "c1d2",
+                  "f8c8",
+                  "d3d4",
+                  "e5d4",
+                  "f3d4"
+                ]
+              }
+            ],
+            "reported_nodes": 153000
+          },
+          "terminal": false,
+          "quality": "recorded-sf18-300k"
+        },
+        {
+          "current": {
+            "depth": 15,
+            "lines": [
+              {
+                "cp": 113,
+                "moves": [
+                  "b8b5",
+                  "c1c6",
+                  "c8d7",
+                  "c6c4",
+                  "e7e5",
+                  "f1c1",
+                  "d8b8",
+                  "c4c7",
+                  "d7e6",
+                  "c7b8",
+                  "f8b8",
+                  "b1a1"
+                ]
+              },
+              {
+                "cp": 132,
+                "moves": [
+                  "c8b7",
+                  "b5a3",
+                  "c6e5",
+                  "f3e5",
+                  "d6e5",
+                  "g2b7",
+                  "b8b7",
+                  "b4b5",
+                  "e5e4",
+                  "c1c6",
+                  "b7b8",
+                  "a3c4",
+                  "e4d3",
+                  "d2a5",
+                  "d8d4",
+                  "e2d3",
+                  "f6d5",
+                  "b5b6"
+                ]
+              }
+            ],
+            "reported_nodes": 254474
+          },
+          "previous": {
+            "depth": 14,
+            "lines": [
+              {
+                "cp": 111,
+                "moves": [
+                  "b8b5",
+                  "c1c6",
+                  "c8d7",
+                  "c6c4",
+                  "e7e5",
+                  "f1c1",
+                  "d8b8",
+                  "c4c7",
+                  "d7e6",
+                  "f3e1",
+                  "d6d5",
+                  "b1a1",
+                  "b5b7",
+                  "c7b8",
+                  "f8b8",
+                  "e1c2",
+                  "b7c7"
+                ]
+              },
+              {
+                "cp": 136,
+                "moves": [
+                  "c8b7",
+                  "b5c3",
+                  "f6d7",
+                  "b4b5",
+                  "c6e5",
+                  "f3e5",
+                  "d7e5",
+                  "c1d1",
+                  "b7g2",
+                  "g1g2",
+                  "d6d5",
+                  "d1b3",
+                  "e7e6",
+                  "b1a1",
+                  "f8e8",
+                  "f1c1"
+                ]
+              }
+            ],
+            "reported_nodes": 140917
+          },
+          "terminal": false,
+          "quality": "recorded-sf18-300k"
+        }
+      ],
+      "expected_brilliant": false
+    },
+    {
+      "game": "186367356936",
+      "ply": 21,
+      "san": "Qxg6+",
+      "observed_chesscom_label": "brilliant",
+      "source_url": "https://www.chess.com/analysis/game/live/186367356936?move=20",
+      "positions": [
+        "r1bqkb1r/pp1np1pp/2p1p3/3pN2Q/3P4/2PB4/P1P2PPP/R1B1K2R b KQkq - 3 10",
+        "r1bqkb1r/pp1np2p/2p1p1p1/3pN2Q/3P4/2PB4/P1P2PPP/R1B1K2R w KQkq - 0 11",
+        "r1bqkb1r/pp1np2p/2p1p1Q1/3pN3/3P4/2PB4/P1P2PPP/R1B1K2R b KQkq - 0 11"
+      ],
+      "move": "h5g6",
+      "reviews": [
+        {
+          "current": {
+            "depth": 245,
+            "lines": [
+              {
+                "mate": 2,
+                "moves": ["g7g6", "d3g6", "h7g6", "h5g6"]
+              }
+            ],
+            "reported_nodes": 21741
+          },
+          "previous": {
+            "depth": 244,
+            "lines": [
+              {
+                "mate": 2,
+                "moves": ["g7g6", "d3g6", "h7g6", "h5g6"]
+              }
+            ],
+            "reported_nodes": 21639
+          },
+          "terminal": false,
+          "quality": "recorded-sf18-300k"
+        },
+        {
+          "current": {
+            "depth": 245,
+            "lines": [
+              {
+                "mate": 2,
+                "moves": ["d3g6", "h7g6", "h5g6"]
+              },
+              {
+                "mate": 2,
+                "moves": ["h5g6", "h7g6", "d3g6"]
+              }
+            ],
+            "reported_nodes": 26789
+          },
+          "previous": {
+            "depth": 244,
+            "lines": [
+              {
+                "mate": 2,
+                "moves": ["d3g6", "h7g6", "h5g6"]
+              },
+              {
+                "mate": 2,
+                "moves": ["h5g6", "h7g6", "d3g6"]
+              }
+            ],
+            "reported_nodes": 26640
+          },
+          "terminal": false,
+          "quality": "recorded-sf18-300k"
+        },
+        {
+          "current": {
+            "depth": 245,
+            "lines": [
+              {
+                "mate": 1,
+                "moves": ["h7g6", "d3g6"]
+              }
+            ],
+            "reported_nodes": 490
+          },
+          "previous": {
+            "depth": 244,
+            "lines": [
+              {
+                "mate": 1,
+                "moves": ["h7g6", "d3g6"]
+              }
+            ],
+            "reported_nodes": 488
+          },
+          "terminal": false,
+          "quality": "recorded-sf18-300k"
+        }
+      ],
+      "expected_brilliant": true
+    },
+    {
+      "game": "167357653844",
+      "ply": 42,
+      "san": "Qh1+",
+      "observed_chesscom_label": "brilliant",
+      "source_url": "https://www.chess.com/analysis/game/live/167357653844?move=41",
+      "positions": [
+        "r3k2r/p3b3/2p1p3/5p2/3Pp3/6N1/PPP1QPPq/R3R1K1 w kq - 2 21",
+        "r3k2r/p3b3/2p1p3/5p2/3Pp3/6N1/PPP1QPPq/R3RK2 b kq - 3 21",
+        "r3k2r/p3b3/2p1p3/5p2/3Pp3/6N1/PPP1QPP1/R3RK1q w kq - 4 22"
+      ],
+      "move": "h2h1",
+      "reviews": [
+        {
+          "current": {
+            "depth": 245,
+            "lines": [
+              {
+                "mate": -2,
+                "moves": ["g1f1", "h2h1", "g3h1", "h8h1"]
+              }
+            ],
+            "reported_nodes": 35796
+          },
+          "previous": {
+            "depth": 244,
+            "lines": [
+              {
+                "mate": -2,
+                "moves": ["g1f1", "h2h1", "g3h1", "h8h1"]
+              }
+            ],
+            "reported_nodes": 35733
+          },
+          "terminal": false,
+          "quality": "recorded-sf18-300k"
+        },
+        {
+          "current": {
+            "depth": 17,
+            "lines": [
+              {
+                "mate": -2,
+                "moves": ["h2h1", "g3h1", "h8h1"]
+              },
+              {
+                "cp": -220,
+                "moves": [
+                  "e8f7",
+                  "e2e3",
+                  "a8g8",
+                  "e3f4",
+                  "h8h4",
+                  "f4e5",
+                  "h4g4",
+                  "e1e3",
+                  "g8g5",
+                  "e3b3",
+                  "f5f4",
+                  "e5c7",
+                  "g5b5",
+                  "c7c6",
+                  "f4g3",
+                  "c6b5",
+                  "g3f2",
+                  "f1e2",
+                  "g4g2"
+                ]
+              }
+            ],
+            "reported_nodes": 275326
+          },
+          "previous": {
+            "depth": 16,
+            "lines": [
+              {
+                "mate": -2,
+                "moves": ["h2h1", "g3h1", "h8h1"]
+              },
+              {
+                "cp": -241,
+                "moves": [
+                  "e8f7",
+                  "e2e3",
+                  "a8g8",
+                  "e3f4",
+                  "g8g6",
+                  "f1e2",
+                  "h8h4",
+                  "f4c7",
+                  "h2g2",
+                  "e1g1",
+                  "g2f3",
+                  "e2d2",
+                  "f3f2",
+                  "g3e2",
+                  "g6g1",
+                  "a1g1"
+                ]
+              }
+            ],
+            "reported_nodes": 62148
+          },
+          "terminal": false,
+          "quality": "recorded-sf18-300k"
+        },
+        {
+          "current": {
+            "depth": 245,
+            "lines": [
+              {
+                "mate": -1,
+                "moves": ["g3h1", "h8h1"]
+              }
+            ],
+            "reported_nodes": 490
+          },
+          "previous": {
+            "depth": 244,
+            "lines": [
+              {
+                "mate": -1,
+                "moves": ["g3h1", "h8h1"]
+              }
+            ],
+            "reported_nodes": 488
+          },
+          "terminal": false,
+          "quality": "recorded-sf18-300k"
+        }
+      ],
+      "expected_brilliant": true
+    },
+    {
+      "game": "167409453646",
+      "ply": 49,
+      "san": "Qc7",
+      "observed_chesscom_label": "non_brilliant",
+      "source_url": "https://www.chess.com/analysis/game/live/167409453646?move=48",
+      "positions": [
+        "1r3rk1/3R1ppp/p1n1p3/q6P/4P3/5N2/PPQ2PP1/3R2K1 b - - 0 24",
+        "1r3rk1/3R1ppp/p3p3/q3n2P/4P3/5N2/PPQ2PP1/3R2K1 w - - 1 25",
+        "1r3rk1/2QR1ppp/p3p3/q3n2P/4P3/5N2/PP3PP1/3R2K1 b - - 2 25"
+      ],
+      "move": "c2c7",
+      "reviews": [
+        {
+          "current": {
+            "depth": 13,
+            "lines": [
+              {
+                "cp": 30,
+                "moves": [
+                  "c6e5",
+                  "f3e5",
+                  "a5e5",
+                  "b2b3",
+                  "e5h5",
+                  "d7c7",
+                  "h5b5",
+                  "d1d4",
+                  "b5e5",
+                  "c2c3",
+                  "h7h6"
+                ]
+              },
+              {
+                "cp": 37,
+                "moves": [
+                  "b8c8",
+                  "c2c3",
+                  "a5h5",
+                  "a2a4",
+                  "h5g4",
+                  "c3e3",
+                  "h7h6",
+                  "d1c1",
+                  "e6e5",
+                  "d7d5",
+                  "c6d4",
+                  "f3d4",
+                  "c8c1",
+                  "e3c1",
+                  "g4e4"
+                ]
+              }
+            ],
+            "reported_nodes": 203182
+          },
+          "previous": {
+            "depth": 12,
+            "lines": [
+              {
+                "cp": 30,
+                "moves": [
+                  "c6e5",
+                  "f3e5",
+                  "a5e5",
+                  "b2b3",
+                  "e5h5",
+                  "d7c7",
+                  "h7h6",
+                  "c7c5",
+                  "h5g6",
+                  "c5c6",
+                  "b8b4",
+                  "f2f3"
+                ]
+              },
+              {
+                "cp": 55,
+                "moves": [
+                  "b8c8",
+                  "c2e2",
+                  "h7h6",
+                  "a2a3",
+                  "a5h5",
+                  "e4e5",
+                  "a6a5",
+                  "e2e4",
+                  "f8e8",
+                  "g2g4",
+                  "h5g6",
+                  "e4g6",
+                  "f7g6"
+                ]
+              }
+            ],
+            "reported_nodes": 131671
+          },
+          "terminal": false,
+          "quality": "recorded-sf18-300k"
+        },
+        {
+          "current": {
+            "depth": 16,
+            "lines": [
+              {
+                "cp": 26,
+                "moves": [
+                  "f3e5",
+                  "a5e5",
+                  "h5h6",
+                  "b8b2",
+                  "c2c4",
+                  "a6a5",
+                  "c4c1",
+                  "b2e2",
+                  "d7d8",
+                  "e2e1",
+                  "d1e1",
+                  "f8d8",
+                  "h6g7",
+                  "d8d3",
+                  "c1h6",
+                  "e5d4",
+                  "e1b1",
+                  "d3d1",
+                  "b1d1",
+                  "d4d1",
+                  "g1h2"
+                ]
+              },
+              {
+                "cp": -1,
+                "moves": [
+                  "c2c7",
+                  "a5c7",
+                  "d7c7",
+                  "e5f3",
+                  "g2f3",
+                  "b8b2",
+                  "a2a4",
+                  "b2b4",
+                  "d1a1",
+                  "f8a8",
+                  "g1g2",
+                  "b4d4",
+                  "g2g3",
+                  "h7h6",
+                  "a1a3",
+                  "d4d8"
+                ]
+              }
+            ],
+            "reported_nodes": 265908
+          },
+          "previous": {
+            "depth": 15,
+            "lines": [
+              {
+                "cp": 28,
+                "moves": [
+                  "f3e5",
+                  "a5e5",
+                  "h5h6",
+                  "b8b2",
+                  "c2c1",
+                  "e5f6",
+                  "c1c5",
+                  "g7g5",
+                  "c5d4",
+                  "f6d4",
+                  "d1d4",
+                  "b2a2",
+                  "d7a7",
+                  "a2a5",
+                  "g2g4",
+                  "a5b5",
+                  "d4a4",
+                  "b5e5",
+                  "a4c4",
+                  "e5b5"
+                ]
+              },
+              {
+                "cp": 1,
+                "moves": [
+                  "c2c7",
+                  "a5c7",
+                  "d7c7",
+                  "e5f3",
+                  "g2f3",
+                  "b8b2",
+                  "a2a4",
+                  "b2b4",
+                  "d1a1",
+                  "f8a8",
+                  "g1g2",
+                  "b4d4",
+                  "g2g3",
+                  "h7h6",
+                  "c7c5"
+                ]
+              }
+            ],
+            "reported_nodes": 201231
+          },
+          "terminal": false,
+          "quality": "recorded-sf18-300k"
+        },
+        {
+          "current": {
+            "depth": 19,
+            "lines": [
+              {
+                "cp": -9,
+                "moves": [
+                  "e5f3",
+                  "g2f3",
+                  "a5g5",
+                  "c7g3",
+                  "g5g3",
+                  "f2g3",
+                  "b8b2",
+                  "a2a4",
+                  "b2a2",
+                  "d1d4",
+                  "e6e5",
+                  "d4d5",
+                  "a2a4",
+                  "d5e5"
+                ]
+              },
+              {
+                "cp": 2,
+                "moves": [
+                  "a5c7",
+                  "d7c7",
+                  "e5f3",
+                  "g2f3",
+                  "b8b2",
+                  "a2a4",
+                  "b2b4",
+                  "d1a1",
+                  "f8a8",
+                  "g1g2",
+                  "g8f8",
+                  "a1a3",
+                  "h7h6",
+                  "a3a1",
+                  "f8g8",
+                  "c7c5",
+                  "b4d4",
+                  "c5a5",
+                  "f7f5",
+                  "a1e1",
+                  "d4c4"
+                ]
+              }
+            ],
+            "reported_nodes": 250855
+          },
+          "previous": {
+            "depth": 18,
+            "lines": [
+              {
+                "cp": 0,
+                "moves": [
+                  "e5f3",
+                  "g2f3",
+                  "a5c7",
+                  "d7c7",
+                  "b8b2",
+                  "a2a4",
+                  "b2b4",
+                  "d1a1",
+                  "f8a8",
+                  "g1g2",
+                  "h7h6",
+                  "a1a3",
+                  "b4d4",
+                  "g2g3",
+                  "d4b4",
+                  "g3g2"
+                ]
+              },
+              {
+                "cp": 0,
+                "moves": [
+                  "a5c7",
+                  "d7c7",
+                  "e5f3",
+                  "g2f3",
+                  "b8b2",
+                  "a2a4",
+                  "b2b4",
+                  "d1a1",
+                  "f8a8",
+                  "g1g2",
+                  "h7h6",
+                  "a1a3",
+                  "b4d4",
+                  "g2g3",
+                  "d4b4",
+                  "a3a1",
+                  "b4d4",
+                  "g3f4"
+                ]
+              }
+            ],
+            "reported_nodes": 160202
+          },
+          "terminal": false,
+          "quality": "recorded-sf18-300k"
+        }
+      ],
+      "expected_brilliant": false
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 {
   "extends": "../tsconfig.base.json",
-  "compilerOptions": { "noEmit": true, "isolatedDeclarations": false },
+  "compilerOptions": { "noEmit": true, "isolatedDeclarations": false, "resolveJsonModule": true },
+  "include": ["**/*", "src/noSweatBrilliantForestModel.json"],
   "references": [
     { "path": "../bits/tsconfig.json" },
     { "path": "../chart/tsconfig.json" },
