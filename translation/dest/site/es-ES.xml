@@ -1149,4 +1149,17 @@ Déjalo vacío para empezar las partidas desde la posición inicial habitual.</s
 <string name="muteSiteTitle">Mute Chess — Sigue siendo humano. Juega contra bots.</string>
   <string name="muteSiteDescription">Ajedrez gratuito y de código abierto con rivales Maia que juegan como humanos.</string>
   <string name="mutePlayerNotFound">Este nombre de usuario no corresponde a ningún jugador de Mute Chess.</string>
+  <string name="muteWelcomeTitle">¡Bienvenido a Mute Chess!</string>
+  <string name="muteWelcomePlayMaia">Juega contra Maia, un rival con estilo humano.</string>
+  <string name="muteWelcomeFindFriends">Encuentra y sigue a tus amigos.</string>
+  <string name="muteWelcomeAnalyze">Analiza una partida o una posición.</string>
+  <string name="muteWelcomeSettings">Configura Mute Chess a tu gusto.</string>
+  <string name="muteInvitePlayer">O invita a un jugador de Mute Chess:</string>
+  <string name="muteStudyWelcomeTitle">¡Bienvenido a los estudios de Mute Chess!</string>
+  <string name="muteStudyWelcomeText">Este es un tablero de análisis compartido. Úsalo para analizar y comentar partidas, debatir posiciones con amigos o dar clases de ajedrez. Veamos cómo funciona.</string>
+  <string name="muteForumDescription">Conversaciones sobre ajedrez y comentarios sobre Mute Chess.</string>
+<string name="muteDonationDismiss">Ocultar factura</string>
+  <string name="muteDonationDismissHelp">Esto oculta la solicitud. La factura del monedero se puede pagar hasta que caduque.</string>
+  <string name="muteDonationDismissed">Factura ocultada. Se puede pagar hasta que caduque; cualquier pago confirmado se tendrá en cuenta.</string>
+  <string name="muteDonationDismissFailed">No se pudo ocultar esta factura. Comprueba el pago y vuelve a intentarlo.</string>
 </resources>

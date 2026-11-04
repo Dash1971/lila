@@ -3,10 +3,11 @@ package ui
 
 import scalalib.paginator.Paginator
 
+import lila.core.i18n.I18nKey
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
-final class CategUi(helpers: Helpers, bits: ForumBits):
+final class CategUi(helpers: Helpers, bits: ForumBits, focused: Boolean = false):
   import helpers.{ *, given }
 
   def index(categs: List[CategView])(using Context) =
@@ -14,14 +15,16 @@ final class CategUi(helpers: Helpers, bits: ForumBits):
       .css("bits.forum")
       .csp(_.withInlineIconFont)
       .graph(
-        title = "Lichess community forum",
+        title = if focused then I18nKey("muteForumLabel").txt() else "Lichess community forum",
         url = routeUrl(routes.ForumCateg.index),
-        description = "Chess discussions and feedback about Lichess development"
+        description = if focused then I18nKey("muteForumDescription").txt()
+        else "Chess discussions and feedback about Lichess development"
       ):
         val (teamCategs, globalCategs) = categs.partition(_.categ.isTeam)
         main(cls := "forum index box")(
           boxTop(
-            h1(dataIcon := Icon.BubbleConvo, cls := "text")("Mute Chess Forum"),
+            h1(dataIcon := Icon.BubbleConvo, cls := "text")(if focused then I18nKey("muteForumLabel")()
+            else "Lichess Forum"),
             bits.searchForm()
           ),
           showCategs(globalCategs),

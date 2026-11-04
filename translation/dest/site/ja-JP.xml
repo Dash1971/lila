@@ -1108,4 +1108,17 @@
 <string name="muteSiteTitle">Mute Chess — 人間らしく。ボットと対局。</string>
   <string name="muteSiteDescription">人間らしく指すMaiaと対局できる、無料のオープンソース・チェス。</string>
   <string name="mutePlayerNotFound">このユーザー名に該当するMute Chessのプレイヤーはいません。</string>
+  <string name="muteWelcomeTitle">Mute Chessへようこそ！</string>
+  <string name="muteWelcomePlayMaia">人間らしく指すMaiaと対局しましょう。</string>
+  <string name="muteWelcomeFindFriends">友達を見つけてフォローしましょう。</string>
+  <string name="muteWelcomeAnalyze">棋譜や局面を分析しましょう。</string>
+  <string name="muteWelcomeSettings">Mute Chessを好みに合わせて設定しましょう。</string>
+  <string name="muteInvitePlayer">またはMute Chessのプレイヤーを招待：</string>
+  <string name="muteStudyWelcomeTitle">Mute Chessのスタディへようこそ！</string>
+  <string name="muteStudyWelcomeText">これは共有の分析盤です。棋譜の分析や注釈の追加、友達との局面の検討、チェスのレッスンに使えます。使い方を見てみましょう。</string>
+  <string name="muteForumDescription">チェスの話題やMute Chessへのご意見。</string>
+<string name="muteDonationDismiss">請求書を非表示</string>
+  <string name="muteDonationDismissHelp">この操作で依頼を非表示にします。ウォレットの請求書は有効期限まで支払い可能です。</string>
+  <string name="muteDonationDismissed">請求書を非表示にしました。有効期限までは支払い可能で、確認された支払いは反映されます。</string>
+  <string name="muteDonationDismissFailed">この請求書を非表示にできませんでした。支払いを確認してから、もう一度お試しください。</string>
 </resources>

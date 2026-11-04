@@ -24,6 +24,8 @@ object noSweatPatron:
           attr("data-pubkey") := pubkey.getOrElse(""),
           attr("data-paid-status") := I18nKey("muteDonationPaid").txt(),
           attr("data-waiting") := I18nKey("muteDonationWaiting").txt(),
+          attr("data-dismissed") := I18nKey("muteDonationDismissed").txt(),
+          attr("data-dismiss-failed") := I18nKey("muteDonationDismissFailed").txt(),
           attr("data-signer-needed") := I18nKey("muteDonationSignInAgain").txt()
         )(
           div(cls := "patron-heading")(
@@ -95,8 +97,14 @@ object noSweatPatron:
                 p(id := "patron-invoice-amount"),
                 div(cls := "patron-actions")(
                   button(id := "patron-copy", tpe := "button", cls := "button button-empty")("Copy invoice"),
-                  button(id := "patron-check", tpe := "button", cls := "button button-empty")("Check payment")
-                )
+                  button(id := "patron-check", tpe := "button", cls := "button button-empty")(
+                    "Check payment"
+                  ),
+                  button(id := "patron-dismiss", tpe := "button", cls := "button button-empty")(
+                    I18nKey("muteDonationDismiss")()
+                  )
+                ),
+                p(cls := "patron-note")(I18nKey("muteDonationDismissHelp")())
               )
             )
           ),

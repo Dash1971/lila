@@ -47,12 +47,12 @@ export interface PubsubEvents {
   'socket.in.finish': (data: { id: string; win?: 'b' | 'w' }) => void;
   'socket.in.following_enters': (
     titleName: string,
-    msg: { playing: boolean; patronColor?: PatronColor },
+    msg: { playing: boolean; patronColor?: PatronColor; displayName?: string },
   ) => void;
   'socket.in.following_leaves': (titleName: string) => void;
   'socket.in.following_onlines': (
     friends: string[],
-    msg: { playing: string[]; patronColors: PatronColor[] },
+    msg: { playing: string[]; patronColors: PatronColor[]; displayNames?: Record<string, string> },
   ) => void;
   'socket.in.following_playing': (titleName: string) => void;
   'socket.in.following_stopped_playing': (titleName: string) => void;

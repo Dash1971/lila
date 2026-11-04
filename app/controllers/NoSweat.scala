@@ -101,17 +101,26 @@ final class NoSweat(env: Env) extends LilaController(env):
     me ?=>
       handle:
         for
-          invoices <- club.patronPending(me.value)
+          pending <- club.patronPending(me.value)
           paidAt <- club.patronLastPaidAt(me.value)
-        yield paidAt.fold(Ok(invoices))(at =>
-          Ok(invoices).withHeaders("X-Mute-Patron-Paid-At" -> at.toString)
-        )
+        yield
+          val result = Ok(pending._1).withHeaders(
+            "X-Mute-Patron-Dismissed" -> pending._2.mkString(","),
+            "Cache-Control" -> "no-store"
+          )
+          paidAt.fold(result)(at => result.withHeaders("X-Mute-Patron-Paid-At" -> at.toString))
 
   def patronInvoice = AuthBody(parse.tolerantText(8192)): context ?=>
     me ?=>
       handle:
         sameOrigin
         club.patronInvoice(me.value, Json.parse(context.body.body)).map(Ok(_))
+
+  def patronDismiss = AuthBody(parse.tolerantText(256)): context ?=>
+    me ?=>
+      handle:
+        sameOrigin
+        club.patronDismiss(me.value, Json.parse(context.body.body)).map(Ok(_))
 
   def patronReceipt = AuthBody(parse.tolerantText(16384)): context ?=>
     me ?=>

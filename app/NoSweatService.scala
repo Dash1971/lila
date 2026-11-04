@@ -158,14 +158,25 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
           .map(_.minusSeconds(30L * 86400).getEpochSecond)
       )
 
-  def patronPending(user: UserModel): Fu[JsValue] =
+  def patronPending(user: UserModel): Fu[(JsValue, List[String])] =
     donations
       .find(bdoc("userId" -> user.id, "paid" -> false, "expiresAt" -> bdoc("$gt" -> nowInstant)))
       .sort(sort.desc("createdAt"))
       .cursor[Bdoc]()
       .list(5)
       .map: docs =>
-        Json.toJson(docs.flatMap(_.getAsOpt[String]("invoice")))
+        (
+          Json.toJson(docs.flatMap(_.getAsOpt[String]("invoice"))),
+          docs.filter(_.getAsOpt[Boolean]("dismissed").contains(true)).flatMap(_.getAsOpt[String]("_id"))
+        )
+
+  def patronDismiss(user: UserModel, data: JsValue): Fu[JsValue] =
+    val payment = (data \ "paymentHash").as[String]
+    if !payment.matches("[0-9a-f]{64}") then fuccess(Json.obj("dismissed" -> false))
+    else
+      donations.update
+        .one(NoSweatDonation.dismissSelector(user.id, payment), set("dismissed" -> true))
+        .map(result => Json.obj("dismissed" -> (result.n == 1)))
 
   def patronInvoice(user: UserModel, data: JsValue): Fu[JsValue] =
     for

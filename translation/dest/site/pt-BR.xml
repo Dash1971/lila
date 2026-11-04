@@ -1148,4 +1148,17 @@ Deixe em branco para começar as partidas na posição inicial padrão.</string>
 <string name="muteSiteTitle">Mute Chess — Continue humano. Jogue contra bots.</string>
   <string name="muteSiteDescription">Xadrez gratuito e de código aberto com adversários Maia que jogam como humanos.</string>
   <string name="mutePlayerNotFound">Este nome de usuário não corresponde a nenhum jogador do Mute Chess.</string>
+  <string name="muteWelcomeTitle">Boas-vindas ao Mute Chess!</string>
+  <string name="muteWelcomePlayMaia">Jogue contra Maia, um adversário com estilo humano.</string>
+  <string name="muteWelcomeFindFriends">Encontre e siga seus amigos.</string>
+  <string name="muteWelcomeAnalyze">Analise uma partida ou posição.</string>
+  <string name="muteWelcomeSettings">Configure o Mute Chess ao seu gosto.</string>
+  <string name="muteInvitePlayer">Ou convide um jogador do Mute Chess:</string>
+  <string name="muteStudyWelcomeTitle">Boas-vindas aos estudos do Mute Chess!</string>
+  <string name="muteStudyWelcomeText">Este é um tabuleiro de análise compartilhado. Use-o para analisar e comentar partidas, discutir posições com amigos ou dar aulas de xadrez. Vamos ver como funciona.</string>
+  <string name="muteForumDescription">Discussões sobre xadrez e comentários sobre o Mute Chess.</string>
+<string name="muteDonationDismiss">Ocultar fatura</string>
+  <string name="muteDonationDismissHelp">Isso oculta a solicitação. A fatura da carteira ainda pode ser paga até expirar.</string>
+  <string name="muteDonationDismissed">Fatura ocultada. Ela ainda pode ser paga até expirar; qualquer pagamento confirmado será contabilizado.</string>
+  <string name="muteDonationDismissFailed">Não foi possível ocultar esta fatura. Verifique o pagamento e tente novamente.</string>
 </resources>

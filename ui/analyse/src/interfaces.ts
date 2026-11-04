@@ -160,6 +160,7 @@ export interface AnalysisMetaSide {
 }
 
 export interface AnalyseOpts {
+  muteStudyWelcome?: { title: string; text: string };
   standardOnly?: boolean;
   element: HTMLElement;
   data: AnalyseData;

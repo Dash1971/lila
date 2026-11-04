@@ -1107,4 +1107,17 @@
 <string name="muteSiteTitle">Mute Chess — 保持人性，与机器人对弈。</string>
   <string name="muteSiteDescription">免费开源的国际象棋，与像人类一样下棋的 Maia 对手对弈。</string>
   <string name="mutePlayerNotFound">没有 Mute Chess 玩家使用此用户名。</string>
+  <string name="muteWelcomeTitle">欢迎来到 Mute Chess！</string>
+  <string name="muteWelcomePlayMaia">与模拟人类棋风的 Maia 对弈。</string>
+  <string name="muteWelcomeFindFriends">寻找并关注你的朋友。</string>
+  <string name="muteWelcomeAnalyze">分析棋局或局面。</string>
+  <string name="muteWelcomeSettings">按你的喜好设置 Mute Chess。</string>
+  <string name="muteInvitePlayer">或邀请一位 Mute Chess 玩家：</string>
+  <string name="muteStudyWelcomeTitle">欢迎使用 Mute Chess 研究！</string>
+  <string name="muteStudyWelcomeText">这是一个共享分析棋盘。你可以用它分析和注释棋局、与朋友讨论局面，或进行国际象棋教学。让我们看看如何使用。</string>
+  <string name="muteForumDescription">讨论国际象棋并提出对 Mute Chess 的意见。</string>
+<string name="muteDonationDismiss">隐藏账单</string>
+  <string name="muteDonationDismissHelp">此操作会隐藏请求。在到期前，钱包账单仍可支付。</string>
+  <string name="muteDonationDismissed">账单已隐藏。到期前仍可支付；任何已确认的付款都会计入。</string>
+  <string name="muteDonationDismissFailed">无法隐藏此账单。请检查付款状态，然后重试。</string>
 </resources>

@@ -4,6 +4,7 @@ package ui
 import play.api.libs.json.{ JsObject, Json }
 
 import lila.challenge.Challenge.Status
+import lila.core.i18n.I18nKey
 import lila.core.LightUser
 import lila.core.game.GameRule
 import lila.core.relation.Relation
@@ -11,7 +12,7 @@ import lila.core.user.WithPerf
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
-final class ChallengeUi(helpers: Helpers):
+final class ChallengeUi(helpers: Helpers, focused: Boolean = false):
   import helpers.{ *, given }
 
   def page(c: Challenge, json: JsObject, owner: Boolean, color: Option[Color] = None)(using
@@ -149,7 +150,8 @@ final class ChallengeUi(helpers: Helpers):
                       ),
                       ctx.isAuth.option(
                         div(cls := "invite__user")(
-                          h2(cls := "ninja-title", trans.challenge.inviteLichessUser()),
+                          h2(cls := "ninja-title")(if focused then I18nKey("muteInvitePlayer")()
+                          else trans.challenge.inviteLichessUser()),
                           friends.nonEmpty.option(
                             div(cls := "invite__user__recent")(
                               friends.map: user =>

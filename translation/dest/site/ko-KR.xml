@@ -1107,4 +1107,17 @@ FEN 포지션을 생성하기 위해 %s를 사용할 수 있습니다.
 <string name="muteSiteTitle">Mute Chess — 사람답게. 봇과 대국하세요.</string>
   <string name="muteSiteDescription">사람처럼 두는 Maia 상대와 즐기는 무료 오픈 소스 체스.</string>
   <string name="mutePlayerNotFound">이 사용자 이름에 해당하는 Mute Chess 플레이어가 없습니다.</string>
+  <string name="muteWelcomeTitle">Mute Chess에 오신 것을 환영합니다!</string>
+  <string name="muteWelcomePlayMaia">사람처럼 두는 Maia와 대국하세요.</string>
+  <string name="muteWelcomeFindFriends">친구를 찾아 팔로우하세요.</string>
+  <string name="muteWelcomeAnalyze">대국이나 포지션을 분석하세요.</string>
+  <string name="muteWelcomeSettings">Mute Chess를 원하는 대로 설정하세요.</string>
+  <string name="muteInvitePlayer">또는 Mute Chess 플레이어를 초대하세요:</string>
+  <string name="muteStudyWelcomeTitle">Mute Chess 스터디에 오신 것을 환영합니다!</string>
+  <string name="muteStudyWelcomeText">함께 사용하는 분석 보드입니다. 대국을 분석하고 주석을 달거나, 친구와 포지션을 토론하거나, 체스 수업에 활용할 수 있습니다. 사용 방법을 살펴보세요.</string>
+  <string name="muteForumDescription">체스 토론과 Mute Chess에 대한 의견.</string>
+<string name="muteDonationDismiss">청구서 숨기기</string>
+  <string name="muteDonationDismissHelp">요청을 숨깁니다. 지갑의 청구서는 만료될 때까지 결제할 수 있습니다.</string>
+  <string name="muteDonationDismissed">청구서를 숨겼습니다. 만료될 때까지 결제할 수 있으며, 확인된 결제는 모두 반영됩니다.</string>
+  <string name="muteDonationDismissFailed">이 청구서를 숨길 수 없습니다. 결제를 확인한 후 다시 시도하세요.</string>
 </resources>

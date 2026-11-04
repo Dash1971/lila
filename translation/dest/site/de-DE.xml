@@ -1149,4 +1149,17 @@ Leer lassen, um Partien von der normalen Ausgangsstellung aus zu starten.</strin
 <string name="muteSiteTitle">Mute Chess — Bleib menschlich. Spiel gegen Bots.</string>
   <string name="muteSiteDescription">Kostenloses Open-Source-Schach mit menschenähnlichen Maia-Gegnern.</string>
   <string name="mutePlayerNotFound">Dieser Benutzername gehört zu keinem Spieler auf Mute Chess.</string>
+  <string name="muteWelcomeTitle">Willkommen bei Mute Chess!</string>
+  <string name="muteWelcomePlayMaia">Spiele gegen Maia mit menschlichem Spielstil.</string>
+  <string name="muteWelcomeFindFriends">Finde deine Freunde und folge ihnen.</string>
+  <string name="muteWelcomeAnalyze">Analysiere eine Partie oder Stellung.</string>
+  <string name="muteWelcomeSettings">Passe Mute Chess nach deinen Wünschen an.</string>
+  <string name="muteInvitePlayer">Oder lade jemanden von Mute Chess ein:</string>
+  <string name="muteStudyWelcomeTitle">Willkommen bei den Mute-Chess-Studien!</string>
+  <string name="muteStudyWelcomeText">Dies ist ein gemeinsames Analysebrett. Du kannst Partien analysieren und kommentieren, Stellungen mit Freunden besprechen oder Schachunterricht geben. Schauen wir uns an, wie es funktioniert.</string>
+  <string name="muteForumDescription">Schachdiskussionen und Feedback zu Mute Chess.</string>
+<string name="muteDonationDismiss">Rechnung ausblenden</string>
+  <string name="muteDonationDismissHelp">Dies blendet die Anfrage aus. Die Wallet-Rechnung kann bis zu ihrem Ablauf weiterhin bezahlt werden.</string>
+  <string name="muteDonationDismissed">Rechnung ausgeblendet. Sie kann bis zum Ablauf weiterhin bezahlt werden; jede bestätigte Zahlung wird angerechnet.</string>
+  <string name="muteDonationDismissFailed">Diese Rechnung konnte nicht ausgeblendet werden. Prüfe die Zahlung und versuche es erneut.</string>
 </resources>

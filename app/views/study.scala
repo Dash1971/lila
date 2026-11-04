@@ -6,6 +6,7 @@ import play.api.libs.json.Json
 
 import lila.app.UiEnv.{ *, given }
 import lila.common.Json.given
+import lila.core.i18n.I18nKey
 import lila.core.socket.SocketVersion
 import lila.core.study.IdName
 
@@ -71,27 +72,37 @@ def show(
     .js(
       PageModule(
         "analyse.study",
-        Json.obj(
-          "study" -> data.study
-            .add("admin", isGranted(_.StudyAdmin))
-            .add("showRatings", ctx.pref.showRatings),
-          "data" -> data.analysis,
-          "tagTypes" -> lila.study.StudyPgnTags.typesToString,
-          "userId" -> ctx.userId,
-          "chat" -> chatOption.map: c =>
-            views.chat.json(
-              c.chat,
-              c.lines,
-              name = trans.site.chatRoom.txt(),
-              timeout = c.timeout,
-              writeable = ctx.userId.exists(s.canChat),
-              public = true,
-              resource = lila.core.chat.PublicSource.Study(s.id),
-              localMod = ctx.userId.exists(s.canContribute)
-            ),
-          "socketUrl" -> socketUrl(s.id),
-          "socketVersion" -> socketVersion
-        ) ++ views.analyse.ui.explorerAndCevalConfig
+        Json
+          .obj(
+            "study" -> data.study
+              .add("admin", isGranted(_.StudyAdmin))
+              .add("showRatings", ctx.pref.showRatings),
+            "data" -> data.analysis,
+            "tagTypes" -> lila.study.StudyPgnTags.typesToString,
+            "userId" -> ctx.userId,
+            "chat" -> chatOption.map: c =>
+              views.chat.json(
+                c.chat,
+                c.lines,
+                name = trans.site.chatRoom.txt(),
+                timeout = c.timeout,
+                writeable = ctx.userId.exists(s.canChat),
+                public = true,
+                resource = lila.core.chat.PublicSource.Study(s.id),
+                localMod = ctx.userId.exists(s.canContribute)
+              ),
+            "socketUrl" -> socketUrl(s.id),
+            "socketVersion" -> socketVersion
+          )
+          .add(
+            "muteStudyWelcome",
+            Option.when(env.noSweat.enabled)(
+              Json.obj(
+                "title" -> I18nKey("muteStudyWelcomeTitle").txt(),
+                "text" -> I18nKey("muteStudyWelcomeText").txt()
+              )
+            )
+          ) ++ views.analyse.ui.explorerAndCevalConfig
       )
     )
     .flag(_.noRobots, !s.isPublic)

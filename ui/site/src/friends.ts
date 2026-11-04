@@ -1,4 +1,5 @@
 import { api } from 'lib/api';
+import { escapeHtml } from 'lib/common';
 import { licon } from 'lib/licon';
 import { profileUrl } from 'lib/view/userLink';
 
@@ -7,6 +8,7 @@ type TitleName = string;
 interface Friend {
   id: string;
   name: string;
+  displayName?: string;
   title?: string;
   playing: boolean;
   patronColor?: PatronColor;
@@ -41,12 +43,16 @@ export default class OnlineFriends {
     }
   };
 
-  receive = (friends: TitleName[], msg: { playing: string[]; patronColors: PatronColor[] }) => {
+  receive = (
+    friends: TitleName[],
+    msg: { playing: string[]; patronColors: PatronColor[]; displayNames?: Record<string, string> },
+  ) => {
     this.users.clear();
     this.receivedOnlineFriends = true;
     friends.forEach((f, i) => {
       const friend = this.insert(f);
       friend.patronColor = msg.patronColors[i];
+      friend.displayName = msg.displayNames?.[friend.id!];
       friend.playing = msg.playing.includes(friend.id!);
     });
     this.repaint();
@@ -82,13 +88,17 @@ export default class OnlineFriends {
     const tvButton = friend.playing
       ? `<a data-icon="${licon.AnalogTv}" class="tv ulpt" data-pt-pos="nw" href="${url}/tv" data-href="${url}"></a>`
       : '';
-    return `<div><a class="online user-link ulpt" data-pt-pos="nw" href="${url}">${icon}${titleTag}${friend.name}</a>${tvButton}</div>`;
+    return `<div><a class="online user-link ulpt" data-pt-pos="nw" href="${url}">${icon}${titleTag}${escapeHtml(friend.displayName || friend.name)}</a>${tvButton}</div>`;
   };
 
-  enters = (titleName: TitleName, msg: { playing: boolean; patronColor?: PatronColor }) => {
+  enters = (
+    titleName: TitleName,
+    msg: { playing: boolean; patronColor?: PatronColor; displayName?: string },
+  ) => {
     const friend = this.insert(titleName);
     friend.playing = msg.playing;
     friend.patronColor = msg.patronColor;
+    friend.displayName = msg.displayName;
     this.repaint();
   };
 

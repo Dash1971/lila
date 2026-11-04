@@ -37,8 +37,8 @@ export function initModule(): StudyTour {
 
     const steps: Shepherd.Step.StepOptions[] = [
       {
-        title: i18n.study.welcomeToLichessStudyTitle,
-        text: i18n.study.welcomeToLichessStudyText,
+        title: ctrl.opts.muteStudyWelcome?.title ?? i18n.study.welcomeToLichessStudyTitle,
+        text: ctrl.opts.muteStudyWelcome?.text ?? i18n.study.welcomeToLichessStudyText,
         attachTo: { element: helpButtonSelector, on: 'top' },
       },
       {

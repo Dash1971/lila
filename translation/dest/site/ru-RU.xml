@@ -1231,4 +1231,17 @@
 <string name="muteSiteTitle">Mute Chess — Оставайтесь людьми. Играйте с ботами.</string>
   <string name="muteSiteDescription">Бесплатные шахматы с открытым исходным кодом и соперниками Maia, играющими как люди.</string>
   <string name="mutePlayerNotFound">Это имя пользователя не принадлежит ни одному игроку Mute Chess.</string>
+  <string name="muteWelcomeTitle">Добро пожаловать в Mute Chess!</string>
+  <string name="muteWelcomePlayMaia">Сыграйте с Maia, имитирующей игру человека.</string>
+  <string name="muteWelcomeFindFriends">Находите друзей и подписывайтесь на них.</string>
+  <string name="muteWelcomeAnalyze">Проанализируйте партию или позицию.</string>
+  <string name="muteWelcomeSettings">Настройте Mute Chess по своему вкусу.</string>
+  <string name="muteInvitePlayer">Или пригласите игрока Mute Chess:</string>
+  <string name="muteStudyWelcomeTitle">Добро пожаловать в исследования Mute Chess!</string>
+  <string name="muteStudyWelcomeText">Это общая аналитическая доска. На ней можно анализировать и комментировать партии, обсуждать позиции с друзьями или проводить уроки шахмат. Давайте посмотрим, как она работает.</string>
+  <string name="muteForumDescription">Обсуждение шахмат и отзывы о Mute Chess.</string>
+<string name="muteDonationDismiss">Скрыть счёт</string>
+  <string name="muteDonationDismissHelp">Запрос будет скрыт. Счёт в кошельке по-прежнему можно оплатить до истечения срока действия.</string>
+  <string name="muteDonationDismissed">Счёт скрыт. Его можно оплатить до истечения срока действия; любой подтверждённый платёж будет учтён.</string>
+  <string name="muteDonationDismissFailed">Не удалось скрыть этот счёт. Проверьте платёж и повторите попытку.</string>
 </resources>

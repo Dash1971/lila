@@ -1148,4 +1148,17 @@ Laissez vide pour commencer les parties à partir de la position initiale normal
 <string name="muteSiteTitle">Mute Chess — Restez humain. Jouez contre des bots.</string>
   <string name="muteSiteDescription">Des échecs gratuits et libres, avec des adversaires Maia qui jouent comme des humains.</string>
   <string name="mutePlayerNotFound">Ce nom d’utilisateur ne correspond à aucun joueur de Mute Chess.</string>
+  <string name="muteWelcomeTitle">Bienvenue sur Mute Chess !</string>
+  <string name="muteWelcomePlayMaia">Affrontez Maia, un adversaire au style humain.</string>
+  <string name="muteWelcomeFindFriends">Retrouvez vos amis et suivez-les.</string>
+  <string name="muteWelcomeAnalyze">Analysez une partie ou une position.</string>
+  <string name="muteWelcomeSettings">Configurez Mute Chess à votre goût.</string>
+  <string name="muteInvitePlayer">Ou invitez un joueur de Mute Chess :</string>
+  <string name="muteStudyWelcomeTitle">Bienvenue dans les études Mute Chess !</string>
+  <string name="muteStudyWelcomeText">Ceci est un échiquier d’analyse partagé. Utilisez-le pour analyser et annoter des parties, discuter de positions avec vos amis ou donner des cours d’échecs. Voyons comment il fonctionne.</string>
+  <string name="muteForumDescription">Discussions sur les échecs et retours sur Mute Chess.</string>
+<string name="muteDonationDismiss">Masquer la facture</string>
+  <string name="muteDonationDismissHelp">Cela masque la demande. La facture du portefeuille peut encore être payée jusqu’à son expiration.</string>
+  <string name="muteDonationDismissed">Facture masquée. Elle peut encore être payée avant son expiration ; tout paiement confirmé sera pris en compte.</string>
+  <string name="muteDonationDismissFailed">Impossible de masquer cette facture. Vérifiez le paiement, puis réessayez.</string>
 </resources>

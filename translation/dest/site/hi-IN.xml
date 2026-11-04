@@ -978,4 +978,17 @@
 <string name="muteSiteTitle">Mute Chess — इंसान बने रहें। बॉट्स से खेलें।</string>
   <string name="muteSiteDescription">इंसानों की तरह खेलने वाले Maia प्रतिद्वंद्वियों के साथ मुफ़्त, ओपन-सोर्स शतरंज।</string>
   <string name="mutePlayerNotFound">यह उपयोगकर्ता नाम किसी भी Mute Chess खिलाड़ी से मेल नहीं खाता।</string>
+  <string name="muteWelcomeTitle">Mute Chess में आपका स्वागत है!</string>
+  <string name="muteWelcomePlayMaia">इंसानों की तरह खेलने वाले Maia प्रतिद्वंद्वी से खेलें।</string>
+  <string name="muteWelcomeFindFriends">अपने दोस्तों को खोजें और फ़ॉलो करें।</string>
+  <string name="muteWelcomeAnalyze">किसी खेल या स्थिति का विश्लेषण करें।</string>
+  <string name="muteWelcomeSettings">Mute Chess को अपनी पसंद के अनुसार सेट करें।</string>
+  <string name="muteInvitePlayer">या Mute Chess के किसी खिलाड़ी को आमंत्रित करें:</string>
+  <string name="muteStudyWelcomeTitle">Mute Chess अध्ययनों में आपका स्वागत है!</string>
+  <string name="muteStudyWelcomeText">यह एक साझा विश्लेषण बोर्ड है। इससे खेलों का विश्लेषण करें और टिप्पणियाँ जोड़ें, दोस्तों के साथ स्थितियों पर चर्चा करें या शतरंज सिखाएँ। आइए देखें कि यह कैसे काम करता है।</string>
+  <string name="muteForumDescription">शतरंज पर चर्चा और Mute Chess के बारे में सुझाव।</string>
+<string name="muteDonationDismiss">इनवॉइस छिपाएँ</string>
+  <string name="muteDonationDismissHelp">इससे अनुरोध छिप जाता है। वॉलेट का इनवॉइस समाप्त होने तक उसका भुगतान किया जा सकता है।</string>
+  <string name="muteDonationDismissed">इनवॉइस छिपा दिया गया है। समाप्त होने तक भुगतान किया जा सकता है; हर पुष्ट भुगतान गिना जाएगा।</string>
+  <string name="muteDonationDismissFailed">यह इनवॉइस छिपाया नहीं जा सका। भुगतान जाँचें, फिर दोबारा कोशिश करें।</string>
 </resources>

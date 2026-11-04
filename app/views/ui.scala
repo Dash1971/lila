@@ -62,7 +62,7 @@ object forum:
   import lila.forum.ui.*
   val bits = ForumBits(helpers)
   val post = PostUi(helpers, bits)
-  val categ = CategUi(helpers, bits)
+  val categ = CategUi(helpers, bits, env.noSweat.enabled)
   val topic = TopicUi(helpers, bits, post)(
     captcha.apply,
     lila.msg.MsgPreset.forumDeletion.presets
@@ -83,7 +83,7 @@ val storm = lila.storm.ui.StormUi(helpers)
 
 val racer = lila.racer.ui.RacerUi(helpers)
 
-val challenge = lila.challenge.ui.ChallengeUi(helpers)
+val challenge = lila.challenge.ui.ChallengeUi(helpers, env.noSweat.enabled)
 
 val dev = lila.web.ui.DevUi(helpers)(views.mod.ui.menu)
 
