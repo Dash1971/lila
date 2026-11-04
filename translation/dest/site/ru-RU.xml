@@ -1221,4 +1221,11 @@
   <string name="muteContactDetails">В сообщении об ошибке укажите URL страницы и опишите, что произошло. Делитесь данными аккаунта или платежей только в личной переписке.</string>
   <string name="muteForumLabel">Форум Mute Chess</string>
   <string name="muteNostrContactLabel">Mute Chess в Nostr</string>
+  <string name="muteDonationPaid">Платёж подтверждён. Спасибо!</string>
+  <string name="muteDonationWaiting">Отсканируйте для оплаты. Ожидаем платёж…</string>
+  <string name="muteDonationSignInAgain">Войдите здесь ещё раз, чтобы создать счёт.</string>
+  <string name="mutePatronThanks">Ваши крылья активны. Спасибо!</string>
+  <string name="muteCopyProfileLink">Скопировать постоянную ссылку на профиль</string>
+  <string name="muteCopiedProfileLink">Ссылка на профиль скопирована</string>
+  <string name="muteCopyProfileLinkFailed">Не удалось скопировать ссылку. Используйте функцию копирования ссылки в браузере.</string>
 </resources>

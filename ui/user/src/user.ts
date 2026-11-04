@@ -51,6 +51,33 @@ export async function initModule(): Promise<void> {
       );
     });
 
+  const profileLink = document.querySelector<HTMLAnchorElement>('.user-show__profile-link');
+  const profileFeedback = document.querySelector<HTMLElement>('.user-show__profile-feedback');
+  let profileCopiedTimer: ReturnType<typeof setTimeout> | undefined;
+  if (profileLink)
+    profileLink.addEventListener('click', e => {
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      navigator.clipboard.writeText(profileLink.href).then(
+        () => {
+          profileLink.title = muteText('CopiedProfileLink', 'Profile link copied');
+          if (profileFeedback) profileFeedback.textContent = muteText('Copied', 'Copied');
+          clearTimeout(profileCopiedTimer);
+          profileCopiedTimer = setTimeout(() => {
+            profileLink.title = muteText('CopyProfileLink', 'Copy permanent profile link');
+            if (profileFeedback) profileFeedback.textContent = '';
+          }, 900);
+        },
+        () =>
+          alert(
+            muteText(
+              'CopyProfileLinkFailed',
+              'Could not copy the link. Use your browser’s Copy link action.',
+            ),
+          ),
+      );
+    });
+
   tmpRandomTutorLink();
   updatePackedTrophies();
   window.addEventListener('resize', updatePackedTrophies);

@@ -69,15 +69,6 @@
     font-size: 0.9em;
   }
 
-  .patron-direct {
-    display: flex;
-    flex-direction: column;
-    gap: 0.6em;
-    padding-top: 1em;
-    border-top: $border;
-    overflow-wrap: anywhere;
-  }
-
   #patron-status:empty,
   #patron-quote:empty {
     display: none;
@@ -92,5 +83,79 @@
     display: block;
     max-width: 100%;
     margin: 1em auto;
+  }
+}
+
+#nostr-patron {
+  #patron-thanks[hidden],
+  #patron-payment[hidden] {
+    display: none;
+  }
+
+  .patron-paid-wing,
+  .patron-paid-check {
+    display: inline-block;
+    color: $c-good;
+  }
+
+  .patron-paid-check {
+    display: none;
+    margin-inline-start: 0.3em;
+  }
+
+  &.payment-confirmed {
+    #patron-form {
+      display: none;
+    }
+
+    .patron-thanks {
+      text-align: center;
+      padding: 1em;
+      border-radius: 0.5em;
+      background: color-mix(in oklab, $c-good 12%, transparent);
+      animation: patron-paid-glow 2.2s ease-out both;
+    }
+
+    .patron-paid-wing {
+      font-size: 1.5em;
+      animation: patron-paid-pop 0.65s ease-out both;
+    }
+
+    .patron-paid-check {
+      display: inline-block;
+      animation: patron-paid-pop 0.65s 0.12s ease-out both;
+    }
+  }
+}
+
+@keyframes patron-paid-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6) translateY(0.2em);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.15) translateY(-0.08em);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes patron-paid-glow {
+  from {
+    box-shadow: 0 0 0 0 color-mix(in oklab, $c-good 35%, transparent);
+  }
+  to {
+    box-shadow: 0 0 0 1em transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #nostr-patron.payment-confirmed .patron-thanks,
+  #nostr-patron.payment-confirmed .patron-paid-wing,
+  #nostr-patron.payment-confirmed .patron-paid-check {
+    animation: none;
   }
 }

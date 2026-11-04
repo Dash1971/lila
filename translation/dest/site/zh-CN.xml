@@ -1097,4 +1097,11 @@
   <string name="muteContactDetails">报告错误时，请附上页面网址，并说明发生了什么。账户或付款详情请仅通过私下沟通分享。</string>
   <string name="muteForumLabel">Mute Chess 论坛</string>
   <string name="muteNostrContactLabel">Nostr 上的 Mute Chess</string>
+  <string name="muteDonationPaid">付款已确认，谢谢！</string>
+  <string name="muteDonationWaiting">扫码付款，正在等待付款…</string>
+  <string name="muteDonationSignInAgain">请在此重新登录以创建付款请求。</string>
+  <string name="mutePatronThanks">你的翅膀已生效，谢谢！</string>
+  <string name="muteCopyProfileLink">复制个人资料的永久链接</string>
+  <string name="muteCopiedProfileLink">个人资料链接已复制</string>
+  <string name="muteCopyProfileLinkFailed">无法复制链接。请使用浏览器的复制链接功能。</string>
 </resources>

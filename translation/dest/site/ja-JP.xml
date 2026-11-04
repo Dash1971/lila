@@ -1098,4 +1098,11 @@
   <string name="muteContactDetails">不具合の報告には、ページのURLと、何が起きたかを書いてください。アカウントや支払いの詳細は、非公開のやり取りでのみ共有してください。</string>
   <string name="muteForumLabel">Mute Chessフォーラム</string>
   <string name="muteNostrContactLabel">NostrのMute Chess</string>
+  <string name="muteDonationPaid">お支払いを確認しました。ありがとうございます！</string>
+  <string name="muteDonationWaiting">スキャンしてお支払いください。お支払いを待っています…</string>
+  <string name="muteDonationSignInAgain">請求書を作成するには、ここでもう一度ログインしてください。</string>
+  <string name="mutePatronThanks">あなたのウィングが有効になりました。ありがとうございます！</string>
+  <string name="muteCopyProfileLink">プロフィールの固定リンクをコピー</string>
+  <string name="muteCopiedProfileLink">プロフィールのリンクをコピーしました</string>
+  <string name="muteCopyProfileLinkFailed">リンクをコピーできませんでした。ブラウザーのリンクをコピーする機能を使ってください。</string>
 </resources>

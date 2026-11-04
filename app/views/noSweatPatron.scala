@@ -1,6 +1,7 @@
 package views
 
 import lila.app.UiEnv.{ *, given }
+import lila.core.i18n.I18nKey
 
 object noSweatPatron:
   def apply(pubkey: Option[String])(using ctx: Context) =
@@ -17,7 +18,14 @@ object noSweatPatron:
         )
       )
       .headAppend(script(src := assetPath("nosweat/nostr.js?lightning=3"), defer)):
-        main(cls := "box box-pad", id := "nostr-patron", attr("data-pubkey") := pubkey.getOrElse(""))(
+        main(
+          cls := "box box-pad",
+          id := "nostr-patron",
+          attr("data-pubkey") := pubkey.getOrElse(""),
+          attr("data-paid-status") := I18nKey("muteDonationPaid").txt(),
+          attr("data-waiting") := I18nKey("muteDonationWaiting").txt(),
+          attr("data-signer-needed") := I18nKey("muteDonationSignInAgain").txt()
+        )(
           div(cls := "patron-heading")(
             h1("Support Mute Chess"),
             a(
@@ -35,16 +43,23 @@ object noSweatPatron:
             ". Donate to Mute Chess only if you really love our work integrating Maia with the Lichess experience."
           ),
           p(cls := "patron-intro")("Bitcoin over Lightning. Any amount helps."),
-          ctx.me
-            .exists(_.isPatron)
-            .option(p(cls := "patron-thanks")(iconTag(patronIconChar), " Your wings are active. Thank you!")),
+          p(
+            id := "patron-thanks",
+            cls := "patron-thanks",
+            (!ctx.me.exists(_.isPatron)).option(hidden)
+          )(
+            span(cls := "patron-paid-wing", attr("aria-hidden") := "true")(iconTag(patronIconChar)),
+            span(cls := "patron-paid-check", attr("aria-hidden") := "true")(iconTag(Icon.Checkmark)),
+            " ",
+            I18nKey("mutePatronThanks")()
+          ),
           pubkey.fold[Frag](
             p(
               a(href := "/login?referrer=/patron")("Sign in with Nostr"),
               " for 30-day patron wings, or donate directly below."
             )
           )(_ =>
-            frag(
+            div(id := "patron-form")(
               p("A confirmed donation gives you patron wings for 30 days."),
               div(cls := "patron-fields")(
                 div(cls := "patron-field")(
@@ -68,13 +83,7 @@ object noSweatPatron:
               ),
               p(id := "patron-quote", cls := "patron-note"),
               div(cls := "patron-actions")(
-                button(id := "patron-create", tpe := "button", cls := "button")("Create invoice"),
-                button(id := "patron-saved", tpe := "button", cls := "button button-metal", hidden)(
-                  "Use saved key"
-                )
-              ),
-              p(cls := "patron-note")(
-                "A browser signer is recommended. Pay the invoice with your Lightning wallet."
+                button(id := "patron-create", tpe := "button", cls := "button")("Create invoice")
               )
             )
           ),
@@ -92,12 +101,6 @@ object noSweatPatron:
             )
           ),
           p(id := "patron-status", role := "status", aria.live := "polite"),
-          div(cls := "patron-direct")(
-            a(href := "lightning:dash@walletofsatoshi.com")("dash@walletofsatoshi.com"),
-            a(href := "https://primal.net/p/npub1w6l8e4mqa4ruqs2vdvwhdxhp9ke9ax8kpncy2wy26tja3d7rzpgq06c9jl")(
-              "Zap Mute Chess on Nostr"
-            )
-          ),
           p(cls := "patron-note")(
             "For automatic wings, create your invoice here while signed in. ",
             a(href := "/about#credits")("Credits and source")

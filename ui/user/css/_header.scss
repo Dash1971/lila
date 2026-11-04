@@ -34,10 +34,6 @@
 .user-show__header--nostr {
   flex-wrap: wrap;
   gap: 0.5em 1em;
-
-  .user-show__handle {
-    margin-inline-start: auto;
-  }
 }
 
 .user-show__identity-info {
@@ -76,14 +72,16 @@
 }
 
 .user-show__nostr {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, max-content) auto minmax(4em, 1fr);
   align-items: baseline;
-  gap: 0.5em;
+  gap: 0.3em 0.5em;
   min-width: 0;
   padding: 0 1.5em 1em;
   background: $c-bg-zebra;
 
-  &-link {
+  &-link,
+  .user-show__handle {
     min-width: 0;
     display: inline-block;
     color: $c-font-dim;
@@ -92,9 +90,41 @@
     overflow-wrap: anywhere;
   }
 
-  &-feedback {
+  .user-show__handle {
+    grid-column: 1 / -1;
+    display: inline-flex;
+  }
+
+  .user-show__profile-link {
+    min-width: 0;
+    color: inherit;
+    overflow-wrap: anywhere;
+  }
+
+  .user-show__profile-feedback {
     flex: 0 0 4em;
+    font-size: 0.8rem;
+    color: $c-font-dim;
+  }
+
+  &-feedback {
+    min-width: 4em;
     color: $c-font-dim;
     font-size: 0.8em;
+  }
+}
+
+// Keep profile trophies in flow; the public identity sits below the heading.
+.user-show__header--nostr .trophies {
+  position: static;
+  flex: 0 0 auto;
+  height: auto;
+  margin-inline-start: auto;
+  align-self: center;
+
+  .trophy.patron {
+    width: 1em;
+    height: 1em;
+    margin: 0;
   }
 }

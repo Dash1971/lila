@@ -1138,4 +1138,11 @@ Deixe em branco para começar as partidas na posição inicial padrão.</string>
   <string name="muteContactDetails">Ao relatar um erro, inclua a URL da página e descreva o que aconteceu. Compartilhe dados da conta ou de pagamento apenas em particular.</string>
   <string name="muteForumLabel">Fórum do Mute Chess</string>
   <string name="muteNostrContactLabel">Mute Chess no Nostr</string>
+  <string name="muteDonationPaid">Pagamento confirmado. Obrigado!</string>
+  <string name="muteDonationWaiting">Escaneie para pagar. Aguardando o pagamento…</string>
+  <string name="muteDonationSignInAgain">Entre novamente aqui para criar uma fatura.</string>
+  <string name="mutePatronThanks">Suas asas estão ativas. Obrigado!</string>
+  <string name="muteCopyProfileLink">Copiar link permanente do perfil</string>
+  <string name="muteCopiedProfileLink">Link do perfil copiado</string>
+  <string name="muteCopyProfileLinkFailed">Não foi possível copiar o link. Use a opção de copiar links do seu navegador.</string>
 </resources>

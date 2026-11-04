@@ -107,17 +107,11 @@ object header:
               userDom(u)
             )
           case None => h1(userDom(u)),
-        if publicNpub.isDefined then
-          span(cls := "user-show__handle")(
-            s"@${u.username.value}",
-            identityInfo("handle", I18nKey("muteAboutHandle").txt())
-          )
-        else
-          u.profile
-            .flatMap(_.displayName)
-            .filter(_ != u.username.value)
-            .map(_ => span(cls := "user-show__handle")(s"@${u.username.value}"))
-        ,
+        u.profile
+          .filter(_ => publicNpub.isEmpty)
+          .flatMap(_.displayName)
+          .filter(_ != u.username.value)
+          .map(_ => span(cls := "user-show__handle")(s"@${u.username.value}")),
         div(cls := "trophies")(
           views.user.bits.perfTrophies(u, info.ranks),
           otherTrophies(info),
@@ -140,7 +134,20 @@ object header:
               ariaTitle(I18nKey("muteCopyNpub").txt())
             )(npub),
             identityInfo("npub", I18nKey("muteAboutNpub").txt()),
-            span(cls := "user-show__nostr-feedback", attr("role") := "status", attr("aria-live") := "polite")
+            span(cls := "user-show__nostr-feedback", attr("role") := "status", attr("aria-live") := "polite"),
+            span(cls := "user-show__handle")(
+              a(
+                cls := "user-show__profile-link",
+                href := userUrl(u.username),
+                ariaTitle(I18nKey("muteCopyProfileLink").txt())
+              )(s"@${u.username.value}"),
+              identityInfo("handle", I18nKey("muteAboutHandle").txt()),
+              span(
+                cls := "user-show__profile-feedback",
+                attr("role") := "status",
+                attr("aria-live") := "polite"
+              )
+            )
           ),
           identityHelp(u)
         ),

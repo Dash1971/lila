@@ -98,7 +98,14 @@ final class NoSweat(env: Env) extends LilaController(env):
           Ok.page(views.noSweatPatron(pubkey))
 
   def patronPending = Auth: context ?=>
-    me ?=> handle(club.patronPending(me.value).map(Ok(_)))
+    me ?=>
+      handle:
+        for
+          invoices <- club.patronPending(me.value)
+          paidAt <- club.patronLastPaidAt(me.value)
+        yield paidAt.fold(Ok(invoices))(at =>
+          Ok(invoices).withHeaders("X-Mute-Patron-Paid-At" -> at.toString)
+        )
 
   def patronInvoice = AuthBody(parse.tolerantText(8192)): context ?=>
     me ?=>

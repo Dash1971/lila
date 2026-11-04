@@ -148,6 +148,16 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
   def nostrPublicKey(user: UserModel): Fu[Option[String]] =
     env.user.repo.withColl(_.byId[Bdoc](user.id)).map(_.flatMap(_.getAsOpt[String]("nostr")))
 
+  def patronLastPaidAt(user: UserModel): Fu[Option[Long]] =
+    donations
+      .find(bdoc("userId" -> user.id, "paid" -> true))
+      .sort(sort.desc("patronUntil"))
+      .one[Bdoc]
+      .map(
+        _.flatMap(_.getAsOpt[java.time.Instant]("patronUntil"))
+          .map(_.minusSeconds(30L * 86400).getEpochSecond)
+      )
+
   def patronPending(user: UserModel): Fu[JsValue] =
     donations
       .find(bdoc("userId" -> user.id, "paid" -> false, "expiresAt" -> bdoc("$gt" -> nowInstant)))

@@ -968,4 +968,11 @@
   <string name="muteContactDetails">बग की रिपोर्ट में पेज का URL और क्या हुआ, इसका विवरण शामिल करें। खाते या भुगतान की जानकारी केवल निजी संदेश में साझा करें।</string>
   <string name="muteForumLabel">Mute Chess फ़ोरम</string>
   <string name="muteNostrContactLabel">Nostr पर Mute Chess</string>
+  <string name="muteDonationPaid">भुगतान की पुष्टि हो गई। धन्यवाद!</string>
+  <string name="muteDonationWaiting">भुगतान करने के लिए स्कैन करें। भुगतान की प्रतीक्षा है…</string>
+  <string name="muteDonationSignInAgain">इनवॉइस बनाने के लिए कृपया यहाँ फिर से साइन इन करें।</string>
+  <string name="mutePatronThanks">आपके पंख सक्रिय हैं। धन्यवाद!</string>
+  <string name="muteCopyProfileLink">प्रोफ़ाइल का स्थायी लिंक कॉपी करें</string>
+  <string name="muteCopiedProfileLink">प्रोफ़ाइल लिंक कॉपी हो गया</string>
+  <string name="muteCopyProfileLinkFailed">लिंक कॉपी नहीं हो सका। अपने ब्राउज़र के लिंक कॉपी करने वाले विकल्प का उपयोग करें।</string>
 </resources>

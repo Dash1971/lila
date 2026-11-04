@@ -1139,4 +1139,11 @@ Leer lassen, um Partien von der normalen Ausgangsstellung aus zu starten.</strin
   <string name="muteContactDetails">Gib bei einer Fehlermeldung die URL der Seite an und beschreibe, was passiert ist. Teile Konto- oder Zahlungsdetails nur privat.</string>
   <string name="muteForumLabel">Mute Chess-Forum</string>
   <string name="muteNostrContactLabel">Mute Chess auf Nostr</string>
+  <string name="muteDonationPaid">Zahlung bestätigt. Vielen Dank!</string>
+  <string name="muteDonationWaiting">Zum Bezahlen scannen. Warte auf die Zahlung…</string>
+  <string name="muteDonationSignInAgain">Bitte melde dich hier erneut an, um eine Rechnung zu erstellen.</string>
+  <string name="mutePatronThanks">Deine Flügel sind aktiv. Vielen Dank!</string>
+  <string name="muteCopyProfileLink">Dauerhaften Profillink kopieren</string>
+  <string name="muteCopiedProfileLink">Profillink kopiert</string>
+  <string name="muteCopyProfileLinkFailed">Der Link konnte nicht kopiert werden. Verwende die Funktion zum Kopieren von Links in deinem Browser.</string>
 </resources>
