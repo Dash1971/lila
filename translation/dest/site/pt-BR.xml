@@ -1145,4 +1145,7 @@ Deixe em branco para começar as partidas na posição inicial padrão.</string>
   <string name="muteCopyProfileLink">Copiar link permanente do perfil</string>
   <string name="muteCopiedProfileLink">Link do perfil copiado</string>
   <string name="muteCopyProfileLinkFailed">Não foi possível copiar o link. Use a opção de copiar links do seu navegador.</string>
+<string name="muteSiteTitle">Mute Chess — Continue humano. Jogue contra bots.</string>
+  <string name="muteSiteDescription">Xadrez gratuito e de código aberto com adversários Maia que jogam como humanos.</string>
+  <string name="mutePlayerNotFound">Este nome de usuário não corresponde a nenhum jogador do Mute Chess.</string>
 </resources>

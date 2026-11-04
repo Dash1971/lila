@@ -5,6 +5,7 @@ import play.api.libs.json.Json
 import lila.app.UiEnv.{ *, given }
 import lila.app.mashup.Preload.Homepage
 import lila.core.perf.UserWithPerfs
+import lila.core.i18n.I18nKey
 
 object home:
 
@@ -32,11 +33,11 @@ object home:
         OpenGraph(
           image = assetFullUrl(if env.noSweat.enabled then "nosweat/social.png"
           else "logo/lichess-tile-wide.png").some,
-          title = if env.noSweat.enabled then "Mute Chess — Stay human. Play bots."
+          title = if env.noSweat.enabled then I18nKey("muteSiteTitle").txt()
           else "The best free, adless Chess server",
           url = netBaseUrl.into(Url),
           description =
-            if env.noSweat.enabled then "Free, open-source chess with human-like Maia opponents."
+            if env.noSweat.enabled then I18nKey("muteSiteDescription").txt()
             else trans.site.siteDescription.txt()
         )
       )

@@ -1146,4 +1146,7 @@ Leer lassen, um Partien von der normalen Ausgangsstellung aus zu starten.</strin
   <string name="muteCopyProfileLink">Dauerhaften Profillink kopieren</string>
   <string name="muteCopiedProfileLink">Profillink kopiert</string>
   <string name="muteCopyProfileLinkFailed">Der Link konnte nicht kopiert werden. Verwende die Funktion zum Kopieren von Links in deinem Browser.</string>
+<string name="muteSiteTitle">Mute Chess — Bleib menschlich. Spiel gegen Bots.</string>
+  <string name="muteSiteDescription">Kostenloses Open-Source-Schach mit menschenähnlichen Maia-Gegnern.</string>
+  <string name="mutePlayerNotFound">Dieser Benutzername gehört zu keinem Spieler auf Mute Chess.</string>
 </resources>

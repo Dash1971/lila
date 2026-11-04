@@ -243,7 +243,8 @@ final class UserRepo(c: Coll)(using Executor) extends lila.core.user.UserRepo(c)
   // Nostr is an identity credential, never a password or an email recovery path.
   def byNostr(pubkey: String): Fu[Option[User]] = coll.one[User](bdoc("nostr" -> pubkey))
 
-  def createNostr(name: UserName, pubkey: String): Fu[Option[User]] =
+  def createNostr(pubkey: String, displayName: Option[String]): Fu[Option[User]] =
+    val name = NoSweatNostrIdentity.name(pubkey)
     val doc = newUser(
       name,
       HashedPassword(Array.emptyByteArray),
@@ -252,8 +253,8 @@ final class UserRepo(c: Coll)(using Executor) extends lila.core.user.UserRepo(c)
       false,
       None,
       KidMode.No
-    ) ++ bdoc("nostr" -> pubkey, "len" -> name.value.length)
-    coll.insert.one(doc).flatMap(_ => byNostr(pubkey))
+    )
+    coll.insert.one(NoSweatNostrIdentity.mark(doc, pubkey, displayName)).flatMap(_ => byNostr(pubkey))
 
   def createNoSweatBot(name: UserName, catalogIdentity: Option[String] = None): Fu[Option[User]] =
     val doc = newUser(
@@ -646,3 +647,20 @@ final class UserRepo(c: Coll)(using Executor) extends lila.core.user.UserRepo(c)
 private[user] object NoSweatBotIdentity:
   def mark(doc: Bdoc, catalogIdentity: Option[String]): Bdoc =
     doc ++ catalogIdentity.fold(BSONDocument.empty)(identity => bdoc("noSweatCatalogIdentity" -> identity))
+
+/** Commit the permanent key-derived identity and optional chosen name in one insert. */
+private[user] object NoSweatNostrIdentity:
+  def name(pubkey: String): UserName =
+    require(pubkey.matches("[0-9a-f]{64}"), "Invalid public key")
+    UserName("n" + pubkey.take(19))
+
+  def mark(doc: Bdoc, pubkey: String, displayName: Option[String]): Bdoc =
+    val canonical = name(pubkey)
+    require(doc.getAsOpt[String]("_id").contains(canonical.id.value))
+    require(doc.getAsOpt[String]("username").contains(canonical.value))
+    BSONDocument(doc.elements.filterNot(_.name == "nameKeys").map(e => e.name -> e.value)) ++ bdoc(
+      "nostr" -> pubkey,
+      "len" -> canonical.value.length,
+      "nameKeys" -> PublicNameKeys(canonical.id.value, displayName),
+      "profile" -> displayName.map(chosen => bdoc("displayName" -> chosen))
+    )

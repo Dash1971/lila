@@ -4,6 +4,7 @@ import scalalib.StringUtils.escapeHtmlRaw
 
 import lila.app.UiEnv.{ *, given }
 import lila.common.String.html.safeJsonValue
+import lila.core.i18n.I18nKey
 import lila.mon.extensions.*
 import lila.ui.{ PageFlags, RenderedPage }
 
@@ -47,6 +48,15 @@ object page:
       p.pageModule.so(module => esmPage(module.name)) ++
       ctx.needsFp.so(fingerprintTag) ++
       anonOnboarding.isDefined.so(esmInitBit("emailErrorCheck"))
+    val graph = p.openGraph.map: graph =>
+      if env.noSweat.enabled then
+        lila.web.ui.muteChessOpenGraph(
+          graph,
+          netBaseUrl,
+          assetFullUrl("nosweat/social.png"),
+          assetFullUrl("logo/lichess-tile-wide.png")
+        )
+      else graph
     val zenable = p.flags(PageFlags.zen)
     val playing = p.flags(PageFlags.playing)
     val preventIndexing =
@@ -75,14 +85,17 @@ object page:
           ctx.blind.option(cssTag("bits.blind")),
           p.cssKeys.map(cssTag),
           meta(
-            content := p.openGraph.fold(trans.site.siteDescription.txt())(o => o.description),
+            content := graph.fold(
+              if env.noSweat.enabled then I18nKey("muteSiteDescription").txt()
+              else trans.site.siteDescription.txt()
+            )(o => o.description),
             name := "description"
           ),
           maskIcon,
           favicons,
           preventIndexing.option(noRobots),
           noTranslate,
-          p.openGraph.map(lila.web.ui.openGraph),
+          graph.map(lila.web.ui.openGraph),
           atomLinkTag.tupled(p.atomLink | dailyNewsAtom),
           pref.isTransparentBg
             .option(pref.bgImgUrl)

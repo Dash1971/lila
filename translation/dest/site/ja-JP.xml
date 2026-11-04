@@ -1105,4 +1105,7 @@
   <string name="muteCopyProfileLink">プロフィールの固定リンクをコピー</string>
   <string name="muteCopiedProfileLink">プロフィールのリンクをコピーしました</string>
   <string name="muteCopyProfileLinkFailed">リンクをコピーできませんでした。ブラウザーのリンクをコピーする機能を使ってください。</string>
+<string name="muteSiteTitle">Mute Chess — 人間らしく。ボットと対局。</string>
+  <string name="muteSiteDescription">人間らしく指すMaiaと対局できる、無料のオープンソース・チェス。</string>
+  <string name="mutePlayerNotFound">このユーザー名に該当するMute Chessのプレイヤーはいません。</string>
 </resources>

@@ -6,6 +6,7 @@ import play.api.data.Form
 import lila.app.UiEnv.{ *, given }
 import lila.app.mashup.UserInfo
 import lila.core.data.SafeJsonStr
+import lila.core.i18n.I18nKey
 import lila.game.GameFilter
 import lila.rating.UserWithPerfs.titleUsernameWithBestRating
 
@@ -83,12 +84,15 @@ object page:
     info.ratingChart.map: rc =>
       PageModule("chart.ratingHistory", SafeJsonStr(s"""{"data":$rc}"""))
 
-  def deleted(canCreate: Boolean) =
+  def deleted(canCreate: Boolean)(using Context) =
     Page("No such player"):
       main(cls := "page-small box box-pad page")(
         h1(cls := "box__top")("No such player"),
         div(
-          p("This username doesn't match any Lichess player."),
+          p(
+            if env.noSweat.enabled then I18nKey("mutePlayerNotFound")()
+            else "This username doesn't match any Lichess player."
+          ),
           canCreate.not.option(p("It cannot be used to create a new account."))
         )
       )

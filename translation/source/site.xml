@@ -1148,4 +1148,7 @@ Leave empty to start games from the normal initial position.</string>
   <string name="muteCopyProfileLink">Copy permanent profile link</string>
   <string name="muteCopiedProfileLink">Profile link copied</string>
   <string name="muteCopyProfileLinkFailed">Could not copy the link. Use your browser’s Copy link action.</string>
+<string name="muteSiteTitle">Mute Chess — Stay human. Play bots.</string>
+  <string name="muteSiteDescription">Free, open-source chess with human-like Maia opponents.</string>
+  <string name="mutePlayerNotFound">This username doesn't match any Mute Chess player.</string>
 </resources>

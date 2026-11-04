@@ -234,7 +234,7 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
       .filter(100 >=)
   } | 80
 
-  val dailyNewsAtom = (routes.Feed.atom, "Lichess Updates Feed")
+  val dailyNewsAtom = (routes.Feed.atom, if isMuteChess then "mutechess.org" else "Lichess Updates Feed")
   def atomLinkTag(call: Call, title: String) =
     link(href := call, st.title := title, tpe := "application/atom+xml", rel := "alternate")
 

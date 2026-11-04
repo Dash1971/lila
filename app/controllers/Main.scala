@@ -70,7 +70,8 @@ final class Main(env: Env, assetsC: ExternalAssets) extends LilaController(env):
     .publicCache(1.hour)
 
   val manifest = Anon:
-    Ok(env.web.static.manifest).publicCache(1.hour)
+    if env.noSweat.enabled then Redirect("/assets/nosweat/manifest.json").publicCache(1.hour)
+    else Ok(env.web.static.manifest).publicCache(1.hour)
 
   def getFishnet = Open:
     pageHit

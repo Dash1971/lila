@@ -1104,4 +1104,7 @@ FEN 포지션을 생성하기 위해 %s를 사용할 수 있습니다.
   <string name="muteCopyProfileLink">프로필 고정 링크 복사</string>
   <string name="muteCopiedProfileLink">프로필 링크를 복사했습니다</string>
   <string name="muteCopyProfileLinkFailed">링크를 복사할 수 없습니다. 브라우저의 링크 복사 기능을 사용해 주세요.</string>
+<string name="muteSiteTitle">Mute Chess — 사람답게. 봇과 대국하세요.</string>
+  <string name="muteSiteDescription">사람처럼 두는 Maia 상대와 즐기는 무료 오픈 소스 체스.</string>
+  <string name="mutePlayerNotFound">이 사용자 이름에 해당하는 Mute Chess 플레이어가 없습니다.</string>
 </resources>

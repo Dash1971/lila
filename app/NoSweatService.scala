@@ -377,7 +377,8 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
             requireThat(user.enabled.yes && !user.isBot, 403, "Account unavailable")
             fuccess(user)
           case None =>
-            val name = requested.filter(_.nonEmpty).getOrElse("n" + pubkey.take(19))
+            val displayName = requested.filter(_.nonEmpty)
+            val name = displayName.getOrElse("n" + pubkey.take(19))
             requireThat(name.matches("[A-Za-z][A-Za-z0-9_-]{2,19}"), 400, "Use a 3–20 character username")
             val reserved = Set(
               "lichess",
@@ -409,7 +410,7 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
               .flatMap: occupied =>
                 requireThat(!occupied, 409, "Username already taken")
                 env.user.repo
-                  .createNostr(UserName(name), pubkey)
+                  .createNostr(pubkey, displayName)
                   .map:
                     _.getOrElse(throw NoSweatError(503, "Could not create identity"))
                   .recover(

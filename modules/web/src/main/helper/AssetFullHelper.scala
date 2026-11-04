@@ -23,7 +23,7 @@ trait AssetFullHelper:
 
   def assetVersion = lila.core.net.AssetVersion.current
 
-  def assetFullUrl(path: String): Url = Url(s"$netBaseUrl/${assetPath(path)}")
+  def assetFullUrl(path: String): Url = Url(s"${netBaseUrl.value.stripSuffix("/")}${assetPath(path)}")
 
   def assetPath(path: String): Path = Path:
     s"/assets/${manifest.hashed(path).getOrElse(s"_$assetVersion/$path")}"

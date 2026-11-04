@@ -1104,4 +1104,7 @@
   <string name="muteCopyProfileLink">复制个人资料的永久链接</string>
   <string name="muteCopiedProfileLink">个人资料链接已复制</string>
   <string name="muteCopyProfileLinkFailed">无法复制链接。请使用浏览器的复制链接功能。</string>
+<string name="muteSiteTitle">Mute Chess — 保持人性，与机器人对弈。</string>
+  <string name="muteSiteDescription">免费开源的国际象棋，与像人类一样下棋的 Maia 对手对弈。</string>
+  <string name="mutePlayerNotFound">没有 Mute Chess 玩家使用此用户名。</string>
 </resources>

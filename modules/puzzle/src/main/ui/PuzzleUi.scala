@@ -12,7 +12,8 @@ import lila.ui.ScalatagsTemplate.{ *, given }
 
 final class PuzzleUi(helpers: Helpers, val bits: PuzzleBits)(
     analyseCsp: Update[ContentSecurityPolicy],
-    externalEngineEndpoint: String
+    externalEngineEndpoint: String,
+    focused: Boolean = false
 ):
   import helpers.{ *, given }
 
@@ -64,7 +65,9 @@ final class PuzzleUi(helpers: Helpers, val bits: PuzzleBits)(
                 trans.puzzle.findTheBestMoveForWhite.txt(),
                 trans.puzzle.findTheBestMoveForBlack.txt()
               )
-              s"Lichess tactic trainer: $findMove. Played by ${puzzle.plays} players."
+              if focused then
+                s"mutechess.org • $findMove • ${trans.puzzle.playedXTimes.pluralTxt(puzzle.plays, puzzle.plays.localize)}"
+              else s"Lichess tactic trainer: $findMove. Played by ${puzzle.plays} players."
         )
       )
       .hrefLangs(langPath)

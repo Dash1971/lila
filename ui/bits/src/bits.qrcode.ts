@@ -5,12 +5,15 @@ export async function initModule(): Promise<void> {
     qr => qr.dataset.qrUrl,
   );
   await Promise.all(
-    qrs.map(qr =>
-      QRCode.toCanvas(qr, qr.dataset.qrUrl!, {
-        margin: 2,
-        width: qr.dataset.width ? parseInt(qr.dataset.width) : 320,
-      }),
-    ),
+    qrs.map(async qr => {
+      const width = qr.dataset.width ? parseInt(qr.dataset.width) : 320;
+      await QRCode.toCanvas(qr, qr.dataset.qrUrl!, {
+        margin: 4,
+        width: Math.round(width * Math.max(1, globalThis.devicePixelRatio || 1)),
+      });
+      qr.style.width = `${width}px`;
+      qr.style.height = 'auto';
+    }),
   );
 }
 

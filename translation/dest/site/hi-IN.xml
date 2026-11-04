@@ -975,4 +975,7 @@
   <string name="muteCopyProfileLink">प्रोफ़ाइल का स्थायी लिंक कॉपी करें</string>
   <string name="muteCopiedProfileLink">प्रोफ़ाइल लिंक कॉपी हो गया</string>
   <string name="muteCopyProfileLinkFailed">लिंक कॉपी नहीं हो सका। अपने ब्राउज़र के लिंक कॉपी करने वाले विकल्प का उपयोग करें।</string>
+<string name="muteSiteTitle">Mute Chess — इंसान बने रहें। बॉट्स से खेलें।</string>
+  <string name="muteSiteDescription">इंसानों की तरह खेलने वाले Maia प्रतिद्वंद्वियों के साथ मुफ़्त, ओपन-सोर्स शतरंज।</string>
+  <string name="mutePlayerNotFound">यह उपयोगकर्ता नाम किसी भी Mute Chess खिलाड़ी से मेल नहीं खाता।</string>
 </resources>

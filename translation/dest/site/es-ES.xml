@@ -1146,4 +1146,7 @@ Déjalo vacío para empezar las partidas desde la posición inicial habitual.</s
   <string name="muteCopyProfileLink">Copiar enlace permanente al perfil</string>
   <string name="muteCopiedProfileLink">Enlace al perfil copiado</string>
   <string name="muteCopyProfileLinkFailed">No se ha podido copiar el enlace. Usa la opción de copiar enlaces de tu navegador.</string>
+<string name="muteSiteTitle">Mute Chess — Sigue siendo humano. Juega contra bots.</string>
+  <string name="muteSiteDescription">Ajedrez gratuito y de código abierto con rivales Maia que juegan como humanos.</string>
+  <string name="mutePlayerNotFound">Este nombre de usuario no corresponde a ningún jugador de Mute Chess.</string>
 </resources>

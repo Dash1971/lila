@@ -1228,4 +1228,7 @@
   <string name="muteCopyProfileLink">Скопировать постоянную ссылку на профиль</string>
   <string name="muteCopiedProfileLink">Ссылка на профиль скопирована</string>
   <string name="muteCopyProfileLinkFailed">Не удалось скопировать ссылку. Используйте функцию копирования ссылки в браузере.</string>
+<string name="muteSiteTitle">Mute Chess — Оставайтесь людьми. Играйте с ботами.</string>
+  <string name="muteSiteDescription">Бесплатные шахматы с открытым исходным кодом и соперниками Maia, играющими как люди.</string>
+  <string name="mutePlayerNotFound">Это имя пользователя не принадлежит ни одному игроку Mute Chess.</string>
 </resources>
