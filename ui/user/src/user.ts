@@ -1,7 +1,7 @@
 import { myUserId } from 'lib';
 import { licon } from 'lib/licon';
 import { pubsub } from 'lib/pubsub';
-import { alert, makeLinkPopups } from 'lib/view';
+import { alert, domDialog, makeLinkPopups } from 'lib/view';
 import * as xhr from 'lib/xhr';
 
 const gamesAngle = document.querySelector<HTMLElement>('.games');
@@ -10,6 +10,21 @@ if (gamesAngle) gamesAngle.style.visibility = 'hidden'; // FOUC
 export async function initModule(): Promise<void> {
   makeLinkPopups($('.social_links'));
   makeLinkPopups($('.user-infos .bio'));
+
+  document.querySelectorAll<HTMLButtonElement>('[data-nostr-help]').forEach(button => {
+    button.addEventListener('click', () => {
+      const content = document.getElementById(button.dataset.nostrHelp!);
+      if (!content) return;
+      void domDialog({
+        htmlText: content.innerHTML,
+        class: 'nostr-identity-help',
+        attrs: { dialog: { 'aria-label': button.getAttribute('aria-label')! } },
+        modal: true,
+        show: true,
+        onClose: () => button.focus(),
+      });
+    });
+  });
 
   const npubLink = document.querySelector<HTMLAnchorElement>('.user-show__nostr-link');
   const npubFeedback = document.querySelector<HTMLElement>('.user-show__nostr-feedback');

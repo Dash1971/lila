@@ -25,15 +25,18 @@ object noSweatLogin:
           ),
           h1(I18nKey("muteSignInOrJoin").txt()),
           p(cls := "nostr-intro")(
-            "Your Nostr identity connects you to your profile and games. No email needed."
+            "Your ",
+            a(href := "https://nostr.org/", targetBlank, rel := "noopener noreferrer")("Nostr"),
+            " identity connects you to your profile and games. No email needed."
           ),
           details(cls := "nostr-guide")(
             summary("New to Nostr?"),
             p(
-              "Nostr is an open identity you can use across compatible apps. Your npub is public; your nsec is the private key you use to sign in."
+              a(href := "https://nostr.org/", targetBlank, rel := "noopener noreferrer")("Nostr"),
+              " is an open identity you can use across compatible apps. Your npub is public; your nsec is the private key you use to sign in."
             ),
             p(
-              "A signer keeps your key and approves sign-in for you. You can also create or import a key in this browser. Signing in here does not post to Nostr."
+              "A signer keeps your key and approves sign-in for you. You can also create or import a key in this browser."
             ),
             p(
               "To return on another device, use the same key or signer. Creating a new key creates a different identity."

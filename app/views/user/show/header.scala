@@ -15,6 +15,54 @@ object header:
   private val dataToints = attr("data-toints")
   private val dataTab = attr("data-tab")
 
+  private def identityInfo(kind: String, label: String) =
+    button(
+      tpe := "button",
+      cls := "button-empty user-show__identity-info",
+      dataIcon := Icon.InfoCircle,
+      attr("data-nostr-help") := s"nostr-help-$kind",
+      attr("aria-haspopup") := "dialog",
+      aria.label := label,
+      title := label
+    )
+
+  private def identityHelp(u: User) = frag(
+    div(id := "nostr-help-npub", cls := "none")(
+      h2("Your Nostr identity"),
+      p(
+        "Your npub is your public ",
+        a(href := "https://nostr.org/", targetBlank, rel := "noopener noreferrer")("Nostr"),
+        " key and your unique identity on Mute Chess. You can change your username, but your npub stays the same. Your npub is public and can be shared with anyone."
+      ),
+      p(
+        "Your npub and nsec form a key pair. Think of them as a username and password: the npub identifies you, and the nsec is your private key."
+      ),
+      p(
+        strong("Keep your nsec secret."),
+        " Someone who has it could sign in to your account here or post messages as you on Nostr."
+      ),
+      p(
+        "You can use the same identity anywhere Nostr is supported. For example, ",
+        a(href := "https://primal.net/", targetBlank, rel := "noopener noreferrer")("Primal"),
+        " is a social site similar to X, where you can follow people and be followed using your Nostr identity."
+      ),
+      p(
+        "We use Nostr to keep the personal information we ask for to a minimum. We don't want your email address. Please minimize the personal information you share in your public profile."
+      )
+    ),
+    div(id := "nostr-help-handle", cls := "none")(
+      h2("Your permanent account ID"),
+      p(
+        if u.nostrKey.exists(k => u.username.value.equalsIgnoreCase("n" + k.take(19))) then
+          "This account ID is made from a shortened hexadecimal form of your public key, with an n prefix."
+        else "This is your unique account ID on Mute Chess."
+      ),
+      p(
+        "It gives your profile a permanent link. You can change your username, and people with this link will still reach your profile."
+      )
+    )
+  )
+
   private def possibleSeoBot(u: User) =
     !u.isVerified && !u.hasTitle && u.count.game < 5 && u.profile.exists(_.hasLinks)
 
@@ -53,8 +101,13 @@ object header:
 
   def apply(u: User, info: UserInfo, angle: UserInfo.Angle, social: UserInfo.Social)(using ctx: Context) =
     val showLinks = !possibleSeoBot(u) || isGranted(_.Shadowban)
+    val publicNpub = u.nostrKey.filter(_ => u.noBot).flatMap(lila.core.NostrName.npub)
     frag(
-      div(cls := "box__top user-show__header")(
+      div(
+        cls := s"box__top user-show__header${
+            if publicNpub.isDefined then " user-show__header--nostr" else ""
+          }"
+      )(
         u.patronAndColor.match
           case Some(p) =>
             h1(cls := s"user-link ${if isOnline.exec(u.id) then "online" else "offline"}")(
@@ -62,10 +115,17 @@ object header:
               userDom(u)
             )
           case None => h1(userDom(u)),
-        u.profile
-          .flatMap(_.displayName)
-          .filter(_ != u.username.value)
-          .map(_ => span(cls := "user-show__handle")(s"@${u.username.value}")),
+        if publicNpub.isDefined then
+          span(cls := "user-show__handle")(
+            s"@${u.username.value}",
+            identityInfo("handle", "About this permanent account ID")
+          )
+        else
+          u.profile
+            .flatMap(_.displayName)
+            .filter(_ != u.username.value)
+            .map(_ => span(cls := "user-show__handle")(s"@${u.username.value}"))
+        ,
         div(cls := "trophies")(
           views.user.bits.perfTrophies(u, info.ranks),
           otherTrophies(info),
@@ -79,18 +139,19 @@ object header:
         ),
         u.enabled.no.option(span(cls := "closed")("CLOSED"))
       ),
-      u.nostrKey
-        .filter(_ => u.noBot)
-        .flatMap(lila.core.NostrName.npub)
-        .map: npub =>
+      publicNpub.map: npub =>
+        frag(
           div(cls := "user-show__nostr")(
             a(
               cls := "user-show__nostr-link",
               href := s"/@/$npub",
               ariaTitle("Copy public npub")
             )(npub),
+            identityInfo("npub", "About this public Nostr key"),
             span(cls := "user-show__nostr-feedback", attr("role") := "status", attr("aria-live") := "polite")
           ),
+          identityHelp(u)
+        ),
       div(cls := "user-show__social")(
         div(cls := "number-menu")(
           u.noBot.option(

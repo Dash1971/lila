@@ -23,6 +23,7 @@ object noSweatInfo:
       )
 
   private def contactLink = a(href := nostrUrl)("Mute Chess on Nostr")
+  private def forumLink = a(href := "/forum")("Mute Chess forum")
 
   private def content(key: String): Frag = key match
     case "about" =>
@@ -82,7 +83,7 @@ object noSweatInfo:
           a(href := "https://github.com/Dash1971/mute-chess")("browse GitHub"),
           "."
         ),
-        p(contactLink)
+        p(forumLink)
       )
     case "faq" =>
       frag(
@@ -137,15 +138,16 @@ object noSweatInfo:
           "Standard chess in desktop browsers is the focus. Other variants and a dedicated mobile app are not offered."
         ),
         h2("Need help?"),
-        p(contactLink)
+        p(forumLink)
       )
     case "contact" =>
       frag(
-        p("Contact the Mute Chess project on Nostr."),
-        p(contactLink),
-        p(code(npub)),
+        p("For questions, feedback or bug reports, post in the ", forumLink, "."),
+        p("Include the page URL and what happened. Keep personal information out of public posts."),
         p(
-          "For account, privacy, payment or security questions, use a private message. Never send your nsec, authenticator secret, recovery codes or wallet seed."
+          "For private account, privacy, payment or security matters, message ",
+          contactLink,
+          ". Never send your nsec, authenticator secret, recovery codes or wallet seed."
         ),
         p(
           "For a bug report, include the page URL and what happened. Share account or payment details only in private."
@@ -215,7 +217,7 @@ object noSweatInfo:
           a(href := "https://www.walletofsatoshi.com/privacy")("Wallet of Satoshi privacy")
         ),
         p(
-          "Stockfish and board analysis with Maia run locally in your browser after their assets download. Maia opponents run on our server and receive the position and move history needed to play. Links to Nostr clients, Flotilla and GitHub open independent services with their own policies."
+          "Stockfish and board analysis with Maia run locally in your browser after their assets download. Maia opponents run on our server and receive the position and move history needed to play. Links to Nostr clients and GitHub open independent services with their own policies."
         ),
         h2("Retention and requests"),
         p(

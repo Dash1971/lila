@@ -47,11 +47,7 @@ z-index: 99;
 
   val connectLinks: Frag = div(cls := "connect-links")(
     a(href := "https://github.com/Dash1971/mute-chess", targetBlank, noFollow)("GitHub"),
-    a(
-      href := "https://app.flotilla.social/spaces/mobilemaia.spaces.flotilla.social/foflaythin5",
-      targetBlank,
-      noFollow
-    )("Flotilla")
+    a(href := "/forum")("Forum")
   )
 
   val logo = raw:
