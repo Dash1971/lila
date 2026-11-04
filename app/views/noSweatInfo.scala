@@ -1,6 +1,7 @@
 package views
 
 import lila.app.UiEnv.{ *, given }
+import lila.core.i18n.I18nKey
 
 object noSweatInfo:
   private val npub = "npub1w6l8e4mqa4ruqs2vdvwhdxhp9ke9ax8kpncy2wy26tja3d7rzpgq06c9jl"
@@ -22,10 +23,10 @@ object noSweatInfo:
         content(key)
       )
 
-  private def contactLink = a(href := nostrUrl)("Mute Chess on Nostr")
-  private def forumLink = a(href := "/forum")("Mute Chess forum")
+  private def contactLink(using Context) = a(href := nostrUrl)(I18nKey("muteNostrContactLabel")())
+  private def forumLink(using Context) = a(href := "/forum")(I18nKey("muteForumLabel")())
 
-  private def content(key: String): Frag = key match
+  private def content(key: String)(using Context): Frag = key match
     case "about" =>
       frag(
         p(
@@ -142,16 +143,10 @@ object noSweatInfo:
       )
     case "contact" =>
       frag(
-        p("For questions, feedback or bug reports, post in the ", forumLink, "."),
-        p("Include the page URL and what happened. Keep personal information out of public posts."),
-        p(
-          "For private account, privacy, payment or security matters, message ",
-          contactLink,
-          ". Never send your nsec, authenticator secret, recovery codes or wallet seed."
-        ),
-        p(
-          "For a bug report, include the page URL and what happened. Share account or payment details only in private."
-        )
+        p(I18nKey("muteContactPublic")(forumLink)),
+        p(I18nKey("muteContactReport")()),
+        p(I18nKey("muteContactPrivate")(contactLink)),
+        p(I18nKey("muteContactDetails")())
       )
     case "terms-of-service" =>
       frag(

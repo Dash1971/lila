@@ -1,7 +1,7 @@
 package lila.web
 package ui
 
-import lila.core.i18n.Translate
+import lila.core.i18n.{ I18nKey, Translate }
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.*
 
@@ -45,9 +45,9 @@ z-index: 99;
   ):
     "This is an empty Lichess preview website, go to lichess.org instead"
 
-  val connectLinks: Frag = div(cls := "connect-links")(
+  def connectLinks(using Translate): Frag = div(cls := "connect-links")(
     a(href := "https://github.com/Dash1971/mute-chess", targetBlank, noFollow)("GitHub"),
-    a(href := "/forum")("Forum")
+    a(href := "/forum")(I18nKey.site.forum())
   )
 
   val logo = raw:

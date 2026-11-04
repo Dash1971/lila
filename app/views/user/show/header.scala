@@ -3,6 +3,7 @@ package show
 
 import lila.app.UiEnv.{ *, given }
 import lila.app.mashup.UserInfo
+import lila.core.i18n.I18nKey
 import lila.user.Plan.sinceDate
 import lila.user.PlayTime.*
 import lila.user.Profile.*
@@ -26,40 +27,31 @@ object header:
       title := label
     )
 
-  private def identityHelp(u: User) = frag(
+  private def identityHelp(u: User)(using Context) = frag(
     div(id := "nostr-help-npub", cls := "none")(
-      h2("Your Nostr identity"),
+      h2(I18nKey("muteNpubHelpTitle")()),
       p(
-        "Your npub is your public ",
-        a(href := "https://nostr.org/", targetBlank, rel := "noopener noreferrer")("Nostr"),
-        " key and your unique identity on Mute Chess. You can change your username, but your npub stays the same. Your npub is public and can be shared with anyone."
+        I18nKey("muteNpubHelpIdentity")(
+          a(href := "https://nostr.org/", targetBlank, rel := "noopener noreferrer")("Nostr")
+        )
       ),
+      p(I18nKey("muteNpubHelpPair")()),
+      p(strong(I18nKey("muteNpubHelpSecret")()), " ", I18nKey("muteNpubHelpWarning")()),
       p(
-        "Your npub and nsec form a key pair. Think of them as a username and password: the npub identifies you, and the nsec is your private key."
+        I18nKey("muteNpubHelpApps")(
+          a(href := "https://primal.net/", targetBlank, rel := "noopener noreferrer")("Primal")
+        )
       ),
-      p(
-        strong("Keep your nsec secret."),
-        " Someone who has it could sign in to your account here or post messages as you on Nostr."
-      ),
-      p(
-        "You can use the same identity anywhere Nostr is supported. For example, ",
-        a(href := "https://primal.net/", targetBlank, rel := "noopener noreferrer")("Primal"),
-        " is a social site similar to X, where you can follow people and be followed using your Nostr identity."
-      ),
-      p(
-        "We use Nostr to keep the personal information we ask for to a minimum. We don't want your email address. Please minimize the personal information you share in your public profile."
-      )
+      p(I18nKey("muteNpubHelpPrivacy")())
     ),
     div(id := "nostr-help-handle", cls := "none")(
-      h2("Your permanent account ID"),
+      h2(I18nKey("muteHandleHelpTitle")()),
       p(
         if u.nostrKey.exists(k => u.username.value.equalsIgnoreCase("n" + k.take(19))) then
-          "This account ID is made from a shortened hexadecimal form of your public key, with an n prefix."
-        else "This is your unique account ID on Mute Chess."
+          I18nKey("muteHandleHelpDerived")()
+        else I18nKey("muteHandleHelpGeneric")()
       ),
-      p(
-        "It gives your profile a permanent link. You can change your username, and people with this link will still reach your profile."
-      )
+      p(I18nKey("muteHandleHelpLink")())
     )
   )
 
@@ -118,7 +110,7 @@ object header:
         if publicNpub.isDefined then
           span(cls := "user-show__handle")(
             s"@${u.username.value}",
-            identityInfo("handle", "About this permanent account ID")
+            identityInfo("handle", I18nKey("muteAboutHandle").txt())
           )
         else
           u.profile
@@ -145,9 +137,9 @@ object header:
             a(
               cls := "user-show__nostr-link",
               href := s"/@/$npub",
-              ariaTitle("Copy public npub")
+              ariaTitle(I18nKey("muteCopyNpub").txt())
             )(npub),
-            identityInfo("npub", "About this public Nostr key"),
+            identityInfo("npub", I18nKey("muteAboutNpub").txt()),
             span(cls := "user-show__nostr-feedback", attr("role") := "status", attr("aria-live") := "polite")
           ),
           identityHelp(u)

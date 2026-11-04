@@ -4,7 +4,7 @@ package ui
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
-final class UblogPostUi(helpers: Helpers, ui: UblogUi)(connectLinks: Frag):
+final class UblogPostUi(helpers: Helpers, ui: UblogUi)(connectLinks: Context ?=> Frag):
   import helpers.{ *, given }
 
   def page(

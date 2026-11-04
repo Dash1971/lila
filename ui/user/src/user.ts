@@ -1,5 +1,6 @@
 import { myUserId } from 'lib';
 import { licon } from 'lib/licon';
+import { muteText } from 'lib/nosweat/i18n';
 import { pubsub } from 'lib/pubsub';
 import { alert, domDialog, makeLinkPopups } from 'lib/view';
 import * as xhr from 'lib/xhr';
@@ -35,15 +36,18 @@ export async function initModule(): Promise<void> {
       e.preventDefault();
       navigator.clipboard.writeText(npubLink.innerText.trim()).then(
         () => {
-          npubLink.title = 'Copied npub';
-          if (npubFeedback) npubFeedback.textContent = 'Copied';
+          npubLink.title = muteText('CopiedNpub', 'Copied npub');
+          if (npubFeedback) npubFeedback.textContent = muteText('Copied', 'Copied');
           clearTimeout(copiedTimer);
           copiedTimer = setTimeout(() => {
-            npubLink.title = 'Copy public npub';
+            npubLink.title = muteText('CopyNpub', 'Copy public npub');
             if (npubFeedback) npubFeedback.textContent = '';
           }, 900);
         },
-        () => alert('Could not copy the npub. You can select and copy the text instead.'),
+        () =>
+          alert(
+            muteText('CopyNpubFailed', 'Could not copy the npub. You can select and copy the text instead.'),
+          ),
       );
     });
 
