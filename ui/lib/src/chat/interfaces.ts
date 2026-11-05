@@ -43,7 +43,8 @@ export interface ChatData {
 }
 
 export interface Line {
-  u?: string; // username
+  u?: string; // canonical username: ownership, moderation and links
+  displayName?: string; // optional public label
   t: string; // text
   d: boolean; // deleted
   c?: Color;

@@ -79,6 +79,7 @@ object ChatJsonView:
       .add("r" -> l.troll)
       .add("d" -> l.deleted)
       .add("pc" -> u.patronAndColor.map(_.color))
+      .add("displayName" -> u.displayName.filter(_.nonEmpty))
       .add("f" -> u.flair)
       .add("title" -> u.title)
 
