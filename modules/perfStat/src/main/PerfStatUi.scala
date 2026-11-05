@@ -19,7 +19,8 @@ final class PerfStatUi(helpers: Helpers, focused: Boolean = false)(communityMenu
   ) =
     import data.{ user, stat }
     import stat.perfType
-    Page(s"${user.username} - ${trans.perfStat.perfStats.txt(perfType.trans)}")
+    val publicName = if focused then user.user.publicName else user.username.value
+    Page(s"$publicName - ${trans.perfStat.perfStats.txt(perfType.trans)}")
       .flag(_.noRobots)
       .js(Esm("user"))
       .js(ratingChart.map: rc =>
@@ -36,7 +37,7 @@ final class PerfStatUi(helpers: Helpers, focused: Boolean = false)(communityMenu
               div(cls := "box__top__title")(
                 perfTrophies,
                 h1(
-                  a(href := routes.User.show(user.username))(user.username),
+                  a(href := routes.User.show(user.username))(publicName),
                   span(tps.perfStats(perfType.trans))
                 )
               ),
@@ -61,7 +62,7 @@ final class PerfStatUi(helpers: Helpers, focused: Boolean = false)(communityMenu
       )
     else
       trans.site.userIsBetterThanPercentOfPerfTypePlayers(
-        a(href := routes.User.show(u.username))(u.username),
+        a(href := routes.User.show(u.username))(if focused then u.publicName else u.username.value),
         a(href := routes.User.ratingDistribution(pk, u.username.some))(
           strong(percentile, "%")
         ),
@@ -386,7 +387,7 @@ final class PerfStatUi(helpers: Helpers, focused: Boolean = false)(communityMenu
             "freq" -> data,
             "myRating" -> myVisiblePerfs.map(_(perfType).intRating),
             "otherRating" -> otherUser.ifTrue(ctx.pref.showRatings).map(_.perfs(perfType).intRating),
-            "otherPlayer" -> otherUser.map(_.username)
+            "otherPlayer" -> otherUser.map(u => if focused then u.user.publicName else u.username.value)
           )
         )
       ):
