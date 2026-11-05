@@ -1,4 +1,4 @@
-// Security-only alignment of transitive runtime dependencies (#232).
+// Security-only alignment of transitive runtime dependencies (#232, #279).
 // Overrides retain the existing dependency graph and native application behavior.
 ThisBuild / dependencyOverrides ++= {
   val nettyVersion = "4.2.19.Final"
@@ -26,5 +26,10 @@ ThisBuild / dependencyOverrides ++= {
     Seq("jackson-annotations", "jackson-core", "jackson-databind")
       .map("com.fasterxml.jackson.core" % _ % jacksonVersion) ++
     Seq("jackson-datatype-jdk8", "jackson-datatype-jsr310")
-      .map("com.fasterxml.jackson.datatype" % _ % jacksonVersion)
+      .map("com.fasterxml.jackson.datatype" % _ % jacksonVersion) ++
+    Seq(
+      "org.jsoup" % "jsoup" % "1.23.2",
+      "com.google.guava" % "guava" % "33.7.2-jre",
+      "com.sun.mail" % "jakarta.mail" % "1.6.8"
+    )
 }
