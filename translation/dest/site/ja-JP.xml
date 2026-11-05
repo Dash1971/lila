@@ -1121,4 +1121,6 @@
   <string name="muteDonationDismissHelp">この操作で依頼を非表示にします。ウォレットの請求書は有効期限まで支払い可能です。</string>
   <string name="muteDonationDismissed">請求書を非表示にしました。有効期限までは支払い可能で、確認された支払いは反映されます。</string>
   <string name="muteDonationDismissFailed">この請求書を非表示にできませんでした。支払いを確認してから、もう一度お試しください。</string>
+  <string name="muteRealTimeOnly">リアルタイム対局のみ対応しています。</string>
+  <string name="muteImportedGame">インポートした棋譜</string>
 </resources>

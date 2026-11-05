@@ -991,4 +991,6 @@
   <string name="muteDonationDismissHelp">इससे अनुरोध छिप जाता है। वॉलेट का इनवॉइस समाप्त होने तक उसका भुगतान किया जा सकता है।</string>
   <string name="muteDonationDismissed">इनवॉइस छिपा दिया गया है। समाप्त होने तक भुगतान किया जा सकता है; हर पुष्ट भुगतान गिना जाएगा।</string>
   <string name="muteDonationDismissFailed">यह इनवॉइस छिपाया नहीं जा सका। भुगतान जाँचें, फिर दोबारा कोशिश करें।</string>
+  <string name="muteRealTimeOnly">केवल रियल-टाइम खेल समर्थित हैं।</string>
+  <string name="muteImportedGame">आयात किया गया खेल</string>
 </resources>

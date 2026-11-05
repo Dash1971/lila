@@ -49,6 +49,8 @@ final class Env(
   private def admitNoSweat(game: lila.core.game.Game): Funit =
     import lila.db.dsl.{ *, given }
     if !noSweatOnly || !game.playable then funit
+    else if game.clock.isEmpty || game.daysPerTurn.isDefined then
+      fufail(NoSweatGameAdmission.RealTimeRequired)
     else if game.variant.standard && game.sourceIs(_.Friend) && game.userIds.distinct.size == 2 then
       // Native ChallengeJoiner and Rematcher enforce invitation ownership/consent.
       // Keep their Friend source path; human pool/lobby games still require Maia admission.

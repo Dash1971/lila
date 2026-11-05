@@ -592,7 +592,7 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
           )
           val mode = (data \ "timeMode").asOpt[String].getOrElse("realTime")
           requireThat(
-            Set("realTime", "correspondence", "unlimited").contains(mode),
+            mode == "realTime",
             400,
             "Invalid time control"
           )
@@ -601,17 +601,16 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
           requireThat(
             lila.setup.HookConfig.validateTime(minutes) &&
               lila.setup.HookConfig.validateIncrement(Clock.IncrementSeconds(increment)) &&
-              (mode != "realTime" || minutes * 60 + increment > 0),
+              minutes * 60 + increment > 0,
             400,
             "Invalid clock"
           )
-          val days = (data \ "days").asOpt[Int].getOrElse(2)
-          requireThat(Set(1, 2, 3, 5, 7, 10, 14).contains(days), 400, "Invalid correspondence time")
-          val clock = Option.when(mode == "realTime")(
-            Clock.Config(Clock.LimitSeconds((minutes * 60).toInt), Clock.IncrementSeconds(increment))
+          val clock = Clock.Config(
+            Clock.LimitSeconds((minutes * 60).toInt),
+            Clock.IncrementSeconds(increment)
           )
-          val perfKey = lila.rating.PerfType(chess.variant.Standard, chess.Speed(clock)).key
-          val rated = user.isDefined && mode != "unlimited" && (data \ "rated").asOpt[Boolean].getOrElse(true)
+          val perfKey = lila.rating.PerfType(chess.variant.Standard, chess.Speed(Some(clock))).key
+          val rated = user.isDefined && (data \ "rated").asOpt[Boolean].getOrElse(true)
           val busy = games.flatMap(g => occupied(g._1)).toSet ++ studyBusy._2
           for
             _ <- env.game.noSweatAdmission.check
@@ -636,14 +635,14 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
               .newGame(
                 chess = chess.Game(
                   position = chess.variant.Standard.initialPosition,
-                  clock = clock.map(_.toClock.start)
+                  clock = Some(clock.toClock.start)
                 ),
                 players =
                   ByColor(c => lila.game.Player.make(c, if c == humanColor then human else opponent.some)),
                 rated = Rated(rated),
                 source = Source.Pool,
                 pgnImport = None,
-                daysPerTurn = Option.when(mode == "correspondence")(scalalib.model.Days(days)),
+                daysPerTurn = None,
                 rules = Set(GameRule.noRematch, GameRule.noGiveTime, GameRule.noClaimWin)
               )
               .withId(id)
@@ -660,7 +659,7 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
                 "rated" -> rated,
                 "snapshot" -> Json.stringify(policy),
                 "createdAt" -> nowInstant,
-                "control" -> clock.fold(mode)(_.show),
+                "control" -> clock.show,
                 "matchedRating" -> rating,
                 "opponentRating" -> opponent.perf.intRating.value
               )

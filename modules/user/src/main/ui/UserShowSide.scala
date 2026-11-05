@@ -8,7 +8,7 @@ import lila.rating.UserWithPerfs.hasVariantRating
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
-final class UserShowSide(helpers: Helpers):
+final class UserShowSide(helpers: Helpers, focused: Boolean = false):
   import helpers.{ *, given }
 
   def apply(
@@ -79,7 +79,7 @@ final class UserShowSide(helpers: Helpers):
           showPerf(u.perfs.blitz, PerfKey.blitz),
           showPerf(u.perfs.rapid, PerfKey.rapid),
           showPerf(u.perfs.classical, PerfKey.classical),
-          showPerf(u.perfs.correspondence, PerfKey.correspondence),
+          (!focused).option(showPerf(u.perfs.correspondence, PerfKey.correspondence)),
           u.hasVariantRating.option(hr),
           showNonEmptyPerf(u.perfs.crazyhouse, PerfKey.crazyhouse),
           showNonEmptyPerf(u.perfs.chess960, PerfKey.chess960),
@@ -94,7 +94,7 @@ final class UserShowSide(helpers: Helpers):
               hr,
               showPerf(u.perfs.puzzle, PerfKey.puzzle),
               showStorm(u.perfs.storm, u),
-              showRacer(u.perfs.racer),
+              (!focused).option(showRacer(u.perfs.racer)),
               showStreak(u.perfs.streak)
             )
           )

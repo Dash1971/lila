@@ -1161,4 +1161,6 @@ Deixe em branco para começar as partidas na posição inicial padrão.</string>
   <string name="muteDonationDismissHelp">Isso oculta a solicitação. A fatura da carteira ainda pode ser paga até expirar.</string>
   <string name="muteDonationDismissed">Fatura ocultada. Ela ainda pode ser paga até expirar; qualquer pagamento confirmado será contabilizado.</string>
   <string name="muteDonationDismissFailed">Não foi possível ocultar esta fatura. Verifique o pagamento e tente novamente.</string>
+  <string name="muteRealTimeOnly">Apenas partidas em tempo real são compatíveis.</string>
+  <string name="muteImportedGame">Partida importada</string>
 </resources>

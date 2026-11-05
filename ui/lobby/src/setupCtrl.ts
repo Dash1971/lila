@@ -57,7 +57,7 @@ export default class SetupController {
     storedJsonProp<SetupStore>(this.storeKey(gameType), () => ({
       variant: 'standard',
       fen: '',
-      timeMode: gameType === 'hook' ? 'realTime' : 'unlimited',
+      timeMode: this.root.opts.noSweat || gameType === 'hook' ? 'realTime' : 'unlimited',
       time: 5,
       increment: 3,
       days: 2,
@@ -75,8 +75,11 @@ export default class SetupController {
     this.fen = this.propWithApply(forceOptions?.fen || storeProps.fen);
     const canChangeTimeMode = !!this.root.me || this.gameType !== 'hook' || !!this.root.opts.noSweat;
     this.timeControl = timeControlFromStoredValues(
-      propWithEffect(forceOptions?.timeMode || storeProps.timeMode, this.onDropdownChange),
-      canChangeTimeMode ? timeModes : ['realTime'],
+      propWithEffect(
+        this.root.opts.noSweat ? 'realTime' : forceOptions?.timeMode || storeProps.timeMode,
+        this.onDropdownChange,
+      ),
+      !this.root.opts.noSweat && canChangeTimeMode ? timeModes : ['realTime'],
       forceOptions?.time ?? storeProps.time,
       forceOptions?.increment ?? storeProps.increment,
       forceOptions?.days ?? storeProps.days,

@@ -45,7 +45,9 @@ final class Setup(
               destUser <- userId.so(env.user.api.enabledWithPerf(_, config.perfType))
               denied <- destUser.so(u => env.challenge.granter.isDenied(u.user, config.perfKey.some))
               result <-
-                if env.noSweat.enabled && (
+                if env.noSweat.enabled && config.makeClock.isEmpty then
+                  fuccess(JsonBadRequest(lila.core.i18n.I18nKey("muteRealTimeOnly").txt()))
+                else if env.noSweat.enabled && (
                     origUser.isEmpty || destUser.isEmpty || origUser.exists(_.user.isBot) ||
                       destUser.exists(_.user.isBot) || destUser.exists(u => ctx.is(u.user)) ||
                       config.variant != chess.variant.Standard

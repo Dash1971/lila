@@ -1120,4 +1120,6 @@ FEN 포지션을 생성하기 위해 %s를 사용할 수 있습니다.
   <string name="muteDonationDismissHelp">요청을 숨깁니다. 지갑의 청구서는 만료될 때까지 결제할 수 있습니다.</string>
   <string name="muteDonationDismissed">청구서를 숨겼습니다. 만료될 때까지 결제할 수 있으며, 확인된 결제는 모두 반영됩니다.</string>
   <string name="muteDonationDismissFailed">이 청구서를 숨길 수 없습니다. 결제를 확인한 후 다시 시도하세요.</string>
+  <string name="muteRealTimeOnly">실시간 대국만 지원합니다.</string>
+  <string name="muteImportedGame">가져온 기보</string>
 </resources>

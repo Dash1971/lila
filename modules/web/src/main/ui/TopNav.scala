@@ -29,10 +29,17 @@ final class TopNav(helpers: Helpers):
           )
         ),
         st.section(
+          linkTitle(routes.Learn.index.url, trans.site.learnMenu()),
+          div(role := "group")(
+            a(href := routes.Learn.index)(trans.site.chessBasics()),
+            a(href := routes.Practice.index)(trans.site.practice())
+          )
+        ),
+        st.section(
           linkTitle(routes.ForumCateg.index.url, trans.site.community()),
           div(role := "group")(a(href := routes.ForumCateg.index)(trans.site.forum()))
         ),
-        toolsMenu
+        toolsMenu(compact)
       )
     else
       st.nav(id := "topnav", cls := "hover")(
@@ -95,15 +102,15 @@ final class TopNav(helpers: Helpers):
               .option(a(cls := "community-patron", href := routes.Plan.index())(trans.patron.donate()))
           )
         ),
-        toolsMenu
+        toolsMenu(compact)
       )
 
-  private def toolsMenu(using Context) =
+  private def toolsMenu(compact: Boolean)(using Context) =
     st.section(
       linkTitle(routes.UserAnalysis.index.url, trans.site.tools()),
       div(role := "group")(
         a(href := routes.UserAnalysis.index)(trans.site.analysis()),
         a(href := routes.Editor.index)(trans.site.boardEditor()),
-        a(href := routes.Importer.importGame)(trans.site.importGame())
+        (!compact).option(a(href := routes.Importer.importGame)(trans.site.importGame()))
       )
     )

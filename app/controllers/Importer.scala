@@ -13,30 +13,24 @@ import lila.common.Json.given
 final class Importer(env: Env) extends LilaController(env):
 
   def importGame = OpenBody:
-    val pgn = ~get("pgn")
-    val data = lila.game.importer.ImportData(PgnStr(pgn), None)
-    Ok.page(views.game.ui.importer(lila.game.importer.form.fill(data)))
+    if env.noSweat.enabled then notFound
+    else
+      val pgn = ~get("pgn")
+      val data = lila.game.importer.ImportData(PgnStr(pgn), None)
+      Ok.page(views.game.ui.importer(lila.game.importer.form.fill(data)))
 
   def sendGame = OpenOrScopedBody(parse.anyContent)()(doSendGame)
   def apiSendGame = AnonOrScopedBody(parse.anyContent)()(doSendGame)
   private def doSendGame(using ctx: BodyContext[Any]) =
-    bindForm(lila.game.importer.form)(
-      err =>
-        negotiate(
-          BadRequest.page(views.game.ui.importer(err)),
-          jsonFormError(err)
-        ),
-      data =>
-        val nonStandard = chess.format.pgn.Parser
-          .tags(data.pgn)
-          .toOption
-          .flatMap(tags => tags(_.Variant))
-          .exists(v =>
-            !Set("standard", "chess", "normal", "fromposition")
-              .contains(v.toLowerCase.replaceAll("[\\s_-]", ""))
-          )
-        if env.noSweat.enabled && nonStandard then fuccess(BadRequest("Only standard chess is supported."))
-        else
+    if env.noSweat.enabled then notFound
+    else
+      bindForm(lila.game.importer.form)(
+        err =>
+          negotiate(
+            BadRequest.page(views.game.ui.importer(err)),
+            jsonFormError(err)
+          ),
+        data =>
           limit.gameImport(ctx.ip, () => rateLimited): () =>
             env.game.importer
               .importAsGame(data.pgn)
@@ -79,7 +73,7 @@ final class Importer(env: Env) extends LilaController(env):
                     BadRequest(jsonError(error))
                   )
               }
-    )
+      )
 
   def masterGame(id: GameId, orientation: Color) = Open:
     Found(env.explorer.importer(id)): game =>

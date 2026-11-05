@@ -40,7 +40,8 @@ def meta(
               views.bookmark.toggle(game, bookmarked),
               if game.sourceIs(_.Import) then
                 div(
-                  a(href := routes.Importer.importGame, title := trans.site.importGame.txt())("IMPORT"),
+                  if env.noSweat.enabled then span(lila.core.i18n.I18nKey("muteImportedGame")())
+                  else a(href := routes.Importer.importGame, title := trans.site.importGame.txt())("IMPORT"),
                   separator,
                   variantLink(game.variant, game.perfType, initialFen = initialFen, shortName = true)
                 )

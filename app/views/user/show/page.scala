@@ -14,7 +14,7 @@ lazy val ui = lila.user.ui.UserShow(helpers, bits, env.noSweat.enabled)
 
 object page:
 
-  lazy val side = lila.user.ui.UserShowSide(helpers)
+  lazy val side = lila.user.ui.UserShowSide(helpers, env.noSweat.enabled)
 
   private def indexable(u: User) = u.isVerified || u.count.game >= 10
 

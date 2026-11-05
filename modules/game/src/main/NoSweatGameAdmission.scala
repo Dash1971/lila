@@ -23,4 +23,5 @@ final class NoSweatGameAdmission(readPaused: () => Fu[Boolean], writePaused: Boo
   def pause(value: Boolean): Funit = serial(writePaused(value))
 
 object NoSweatGameAdmission:
+  case object RealTimeRequired extends RuntimeException
   case object Paused extends RuntimeException("Server maintenance: new games are temporarily paused")

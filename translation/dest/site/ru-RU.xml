@@ -1244,4 +1244,6 @@
   <string name="muteDonationDismissHelp">Запрос будет скрыт. Счёт в кошельке по-прежнему можно оплатить до истечения срока действия.</string>
   <string name="muteDonationDismissed">Счёт скрыт. Его можно оплатить до истечения срока действия; любой подтверждённый платёж будет учтён.</string>
   <string name="muteDonationDismissFailed">Не удалось скрыть этот счёт. Проверьте платёж и повторите попытку.</string>
+  <string name="muteRealTimeOnly">Поддерживаются только партии в реальном времени.</string>
+  <string name="muteImportedGame">Импортированная партия</string>
 </resources>

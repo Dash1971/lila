@@ -297,7 +297,7 @@ final class UserApi(userRepo: UserRepo, perfsRepo: UserPerfsRepo, cacheApi: Cach
   // A read-only directory of current site ratings, including managed players.
   // Competitive ranking eligibility and Glicko writes remain native.
   object currentPlayers:
-    val speeds = PerfType.standardWithUltra
+    val speeds = PerfType.standardWithUltra.filterNot(_ == PerfKey.correspondence)
 
     def apply(pk: PerfKey): Fu[List[lila.core.user.LightPerf]] =
       if speeds.contains(pk) then cache.get(pk) else fuccess(Nil)

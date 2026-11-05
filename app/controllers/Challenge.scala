@@ -97,21 +97,24 @@ final class Challenge(env: Env) extends LilaController(env):
   def accept(id: ChallengeId, color: Option[Color]) = Open:
     Found(api.byId(id)): c =>
       isForMe(c).so:
-        allow:
-          api
-            .accept(c, ctx.req.sid.map(_.value), color)
-            .flatMap:
-              _.fold("The Challenge has already been accepted".raise): pov =>
-                negotiateApi(
-                  html = Redirect(routes.Round.watcher(pov.gameId, color | Color.white)),
-                  api = _ => env.api.roundApi.player(pov, scalalib.data.Preload.none, none).map { Ok(_) }
-                )
-            .flatMap(withChallengeAnonCookie(ctx.isAnon, c, owner = false))
-        .rescue: err =>
-          negotiate(
-            Redirect(routes.Round.watcher(c.gameId, color | Color.white)),
-            notFoundJson(err)
-          )
+        if env.noSweat.enabled && (c.unlimited || c.daysPerTurn.isDefined) then
+          fuccess(JsonBadRequest(lila.core.i18n.I18nKey("muteRealTimeOnly").txt()))
+        else
+          allow:
+            api
+              .accept(c, ctx.req.sid.map(_.value), color)
+              .flatMap:
+                _.fold("The Challenge has already been accepted".raise): pov =>
+                  negotiateApi(
+                    html = Redirect(routes.Round.watcher(pov.gameId, color | Color.white)),
+                    api = _ => env.api.roundApi.player(pov, scalalib.data.Preload.none, none).map { Ok(_) }
+                  )
+              .flatMap(withChallengeAnonCookie(ctx.isAnon, c, owner = false))
+          .rescue: err =>
+            negotiate(
+              Redirect(routes.Round.watcher(c.gameId, color | Color.white)),
+              notFoundJson(err)
+            )
 
   private def eitherBotLimitResponse(l: lila.bot.EitherBotLimit) = fuccess:
     l match

@@ -201,21 +201,24 @@ final class NoSweat(env: Env) extends LilaController(env):
                 )
               )
       setup.flatMap: data =>
-        env.security.lilaCookie.ensureAndGet: sid =>
-          club
-            .play(context.user, sid.value, data)
-            .map: game =>
-              val result = Ok(game)
-              if (game \ "anonymous").as[Boolean] then
-                result.withCookies(
-                  env.security.lilaCookie.cookie(
-                    lila.game.AnonCookie.name,
-                    (game \ "url").as[String].takeRight(4),
-                    maxAge = lila.game.AnonCookie.maxAge.some,
-                    httpOnly = false.some
+        if (data \ "timeMode").asOpt[String].exists(_ != "realTime") then
+          fuccess(BadRequest(Json.obj("error" -> lila.core.i18n.I18nKey("muteRealTimeOnly").txt())))
+        else
+          env.security.lilaCookie.ensureAndGet: sid =>
+            club
+              .play(context.user, sid.value, data)
+              .map: game =>
+                val result = Ok(game)
+                if (game \ "anonymous").as[Boolean] then
+                  result.withCookies(
+                    env.security.lilaCookie.cookie(
+                      lila.game.AnonCookie.name,
+                      (game \ "url").as[String].takeRight(4),
+                      maxAge = lila.game.AnonCookie.maxAge.some,
+                      httpOnly = false.some
+                    )
                   )
-                )
-              else result
+                else result
 
   def experimentStatus = Anon:
     handle:

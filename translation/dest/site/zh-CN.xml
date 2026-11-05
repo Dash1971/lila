@@ -1120,4 +1120,6 @@
   <string name="muteDonationDismissHelp">此操作会隐藏请求。在到期前，钱包账单仍可支付。</string>
   <string name="muteDonationDismissed">账单已隐藏。到期前仍可支付；任何已确认的付款都会计入。</string>
   <string name="muteDonationDismissFailed">无法隐藏此账单。请检查付款状态，然后重试。</string>
+  <string name="muteRealTimeOnly">仅支持实时对局。</string>
+  <string name="muteImportedGame">已导入的棋局</string>
 </resources>

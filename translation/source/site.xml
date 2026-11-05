@@ -1164,4 +1164,6 @@ Leave empty to start games from the normal initial position.</string>
   <string name="muteDonationDismissHelp">This hides the request. The wallet invoice can still be paid until it expires.</string>
   <string name="muteDonationDismissed">Invoice dismissed. It can still be paid until expiry; any confirmed payment will count.</string>
   <string name="muteDonationDismissFailed">Could not dismiss this invoice. Check payment, then try again.</string>
+  <string name="muteRealTimeOnly">Only real-time games are supported.</string>
+  <string name="muteImportedGame">Imported game</string>
 </resources>

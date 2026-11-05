@@ -1161,4 +1161,6 @@ Laissez vide pour commencer les parties à partir de la position initiale normal
   <string name="muteDonationDismissHelp">Cela masque la demande. La facture du portefeuille peut encore être payée jusqu’à son expiration.</string>
   <string name="muteDonationDismissed">Facture masquée. Elle peut encore être payée avant son expiration ; tout paiement confirmé sera pris en compte.</string>
   <string name="muteDonationDismissFailed">Impossible de masquer cette facture. Vérifiez le paiement, puis réessayez.</string>
+  <string name="muteRealTimeOnly">Seules les parties en temps réel sont prises en charge.</string>
+  <string name="muteImportedGame">Partie importée</string>
 </resources>

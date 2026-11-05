@@ -1162,4 +1162,6 @@ Leer lassen, um Partien von der normalen Ausgangsstellung aus zu starten.</strin
   <string name="muteDonationDismissHelp">Dies blendet die Anfrage aus. Die Wallet-Rechnung kann bis zu ihrem Ablauf weiterhin bezahlt werden.</string>
   <string name="muteDonationDismissed">Rechnung ausgeblendet. Sie kann bis zum Ablauf weiterhin bezahlt werden; jede bestätigte Zahlung wird angerechnet.</string>
   <string name="muteDonationDismissFailed">Diese Rechnung konnte nicht ausgeblendet werden. Prüfe die Zahlung und versuche es erneut.</string>
+  <string name="muteRealTimeOnly">Es werden nur Echtzeitpartien unterstützt.</string>
+  <string name="muteImportedGame">Importierte Partie</string>
 </resources>

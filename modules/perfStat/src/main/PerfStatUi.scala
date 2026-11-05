@@ -401,7 +401,8 @@ final class PerfStatUi(helpers: Helpers, focused: Boolean = false)(communityMenu
                   lila.ui.bits.mselect(
                     "variant-stats",
                     span(perfType.trans),
-                    (if focused then lila.rating.PerfType.standardWithUltra
+                    (if focused then
+                       lila.rating.PerfType.standardWithUltra.filterNot(_ == PerfKey.correspondence)
                      else lila.rating.PerfType.leaderboardable)
                       .map(PerfType(_))
                       .map: pt =>
