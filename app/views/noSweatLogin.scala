@@ -9,7 +9,7 @@ object noSweatLogin:
     Page(I18nKey("muteSignIn").txt())
       .css("bits.auth")
       .headAppend(link(rel := "stylesheet", href := s"${assetPath("nosweat/nostr.css")}?v=key-backup2"))
-      .headAppend(script(src := s"${assetPath("nosweat/nostr.js")}?v=key-backup2", defer)):
+      .headAppend(script(src := s"${assetPath("nosweat/nostr.js")}?v=key-copy3", defer)):
         main(cls := "auth auth-login box box-pad")(
           div(cls := "auth__brand")(
             img(
@@ -54,7 +54,13 @@ object noSweatLogin:
                 aria.label := "Your new Nostr secret key"
               ),
               div(cls := "nostr-key-actions")(
-                button(id := "nostr-copy", cls := "button button-metal")(I18nKey("muteCopyKey").txt()),
+                button(
+                  id := "nostr-copy",
+                  cls := "button button-metal",
+                  aria.live := "polite",
+                  attr("data-copied") := I18nKey("muteCopied").txt(),
+                  attr("data-copy-failed") := I18nKey("muteCopyKeyFailed").txt()
+                )(I18nKey("muteCopyKey").txt()),
                 button(id := "nostr-download", cls := "button button-metal")(
                   I18nKey("muteDownloadKey").txt()
                 ),
@@ -85,7 +91,13 @@ object noSweatLogin:
                 summary("Back up your saved key"),
                 p("Copy it to your password manager or download a private .txt copy."),
                 div(cls := "nostr-key-actions")(
-                  button(id := "nostr-copy-saved", cls := "button button-metal")(
+                  button(
+                    id := "nostr-copy-saved",
+                    cls := "button button-metal",
+                    aria.live := "polite",
+                    attr("data-copied") := I18nKey("muteCopied").txt(),
+                    attr("data-copy-failed") := I18nKey("muteCopyKeyFailed").txt()
+                  )(
                     I18nKey("muteCopyKey").txt()
                   ),
                   button(id := "nostr-download-saved", cls := "button button-metal")(

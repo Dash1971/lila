@@ -1123,4 +1123,5 @@
   <string name="muteDonationDismissFailed">この請求書を非表示にできませんでした。支払いを確認してから、もう一度お試しください。</string>
   <string name="muteRealTimeOnly">リアルタイム対局のみ対応しています。</string>
   <string name="muteImportedGame">インポートした棋譜</string>
+  <string name="muteCopyKeyFailed">鍵をコピーできませんでした。代わりにダウンロードしてください。</string>
 </resources>

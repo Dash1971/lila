@@ -1164,4 +1164,5 @@ Leer lassen, um Partien von der normalen Ausgangsstellung aus zu starten.</strin
   <string name="muteDonationDismissFailed">Diese Rechnung konnte nicht ausgeblendet werden. Prüfe die Zahlung und versuche es erneut.</string>
   <string name="muteRealTimeOnly">Es werden nur Echtzeitpartien unterstützt.</string>
   <string name="muteImportedGame">Importierte Partie</string>
+  <string name="muteCopyKeyFailed">Der Schlüssel konnte nicht kopiert werden. Verwende stattdessen „Herunterladen“.</string>
 </resources>

@@ -993,4 +993,5 @@
   <string name="muteDonationDismissFailed">यह इनवॉइस छिपाया नहीं जा सका। भुगतान जाँचें, फिर दोबारा कोशिश करें।</string>
   <string name="muteRealTimeOnly">केवल रियल-टाइम खेल समर्थित हैं।</string>
   <string name="muteImportedGame">आयात किया गया खेल</string>
+  <string name="muteCopyKeyFailed">कुंजी कॉपी नहीं हो सकी। इसके बजाय डाउनलोड करें।</string>
 </resources>

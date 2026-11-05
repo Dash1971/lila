@@ -1246,4 +1246,5 @@
   <string name="muteDonationDismissFailed">Не удалось скрыть этот счёт. Проверьте платёж и повторите попытку.</string>
   <string name="muteRealTimeOnly">Поддерживаются только партии в реальном времени.</string>
   <string name="muteImportedGame">Импортированная партия</string>
+  <string name="muteCopyKeyFailed">Не удалось скопировать ключ. Используйте «Скачать».</string>
 </resources>

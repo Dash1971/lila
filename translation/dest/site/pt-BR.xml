@@ -1163,4 +1163,5 @@ Deixe em branco para começar as partidas na posição inicial padrão.</string>
   <string name="muteDonationDismissFailed">Não foi possível ocultar esta fatura. Verifique o pagamento e tente novamente.</string>
   <string name="muteRealTimeOnly">Apenas partidas em tempo real são compatíveis.</string>
   <string name="muteImportedGame">Partida importada</string>
+  <string name="muteCopyKeyFailed">Não foi possível copiar a chave. Use Baixar.</string>
 </resources>

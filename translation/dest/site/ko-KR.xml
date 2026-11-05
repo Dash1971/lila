@@ -1122,4 +1122,5 @@ FEN 포지션을 생성하기 위해 %s를 사용할 수 있습니다.
   <string name="muteDonationDismissFailed">이 청구서를 숨길 수 없습니다. 결제를 확인한 후 다시 시도하세요.</string>
   <string name="muteRealTimeOnly">실시간 대국만 지원합니다.</string>
   <string name="muteImportedGame">가져온 기보</string>
+  <string name="muteCopyKeyFailed">키를 복사하지 못했습니다. 대신 다운로드하세요.</string>
 </resources>

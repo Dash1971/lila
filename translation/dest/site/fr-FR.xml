@@ -1163,4 +1163,5 @@ Laissez vide pour commencer les parties à partir de la position initiale normal
   <string name="muteDonationDismissFailed">Impossible de masquer cette facture. Vérifiez le paiement, puis réessayez.</string>
   <string name="muteRealTimeOnly">Seules les parties en temps réel sont prises en charge.</string>
   <string name="muteImportedGame">Partie importée</string>
+  <string name="muteCopyKeyFailed">Impossible de copier la clé. Utilisez Télécharger.</string>
 </resources>

@@ -1166,4 +1166,5 @@ Leave empty to start games from the normal initial position.</string>
   <string name="muteDonationDismissFailed">Could not dismiss this invoice. Check payment, then try again.</string>
   <string name="muteRealTimeOnly">Only real-time games are supported.</string>
   <string name="muteImportedGame">Imported game</string>
+  <string name="muteCopyKeyFailed">Could not copy the key. Use Download instead.</string>
 </resources>
