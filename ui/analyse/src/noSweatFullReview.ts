@@ -109,7 +109,9 @@ export class FullGameClassifier {
       // A complete earlier-iteration window is already corroboration. Only an
       // unsupported award consumes Mobile Maia's six-search check allowance.
       if ((provisional === '!!' || provisional === '!') && result.withheld) {
-        const start = provisional === '!' && i > 1 ? i - 2 : i - 1;
+        // Both standout policies use prior-position evidence when available.
+        // Confirm the same complete window rather than dropping that context.
+        const start = Math.max(0, i - 2);
         const cost = i - start + 1;
         if (cost > confirmationBudget) continue;
         confirmationBudget -= cost;

@@ -465,7 +465,7 @@ export function evaluateBrilliantForest(input: BrilliantForestInput, h: Brillian
   }
   const awarded =
     confidenceSufficient &&
-    (['current', 'previous'] as const).every(w => windows[w].eligible && scores[w] >= 5 / 6);
+    (['current', 'previous'] as const).every(w => windows[w].eligible && scores[w] >= 0.83);
   return {
     awarded,
     windowScores: scores,

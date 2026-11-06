@@ -330,7 +330,7 @@ export function classify(input: ClassificationInput, evaluateMaterial = naiveMat
     !!forest &&
     !forest.diagnostics.physicalUnknown &&
     forest.windows.current.eligible &&
-    forest.windowScores.current >= 5 / 6;
+    forest.windowScores.current >= 0.83;
   const offers = new Map<string, boolean>();
   const sacrificeForMove = (uci: string): boolean => {
     if (!offers.has(uci))
@@ -362,7 +362,7 @@ export function classify(input: ClassificationInput, evaluateMaterial = naiveMat
       return muteAnnotation(p?.lines[0], b, a.lines[0], color, move, sacrifice, sacrificeForMove, context);
     const original = annotation(p?.lines[0], b, a.lines[0], color, move, sacrifice);
     if (!forest || original === '??' || original === '?' || original === '?!') return original;
-    if (forestCandidate && forest.windows[which].eligible && forest.windowScores[which] >= 5 / 6) return '!!';
+    if (forestCandidate && forest.windows[which].eligible && forest.windowScores[which] >= 0.83) return '!!';
     // The model controls only Brilliant eligibility. Preserve the EC meanings of
     // other judgments, including their normal full-window corroboration.
     if ((original === '!!' || original === '!?') && !sacrificeForMove(move)) return '';

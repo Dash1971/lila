@@ -201,3 +201,57 @@ test('summary counts the actual moving side, including games from a nonzero init
   assert.deepEqual(classificationCounts(nodes, 'white'), [1, 0, 1, 0, 0, 0]);
   assert.deepEqual(classificationCounts(nodes, 'black'), [0, 0, 0, 1, 0, 0]);
 });
+
+test('Brilliant confirmation retains the prior position and spends at most six searches', async () => {
+  const nodes = [node(16), node(17), node(18), node(19), node(20)];
+  const calls: { fen: string; depth: number; session?: symbol }[] = [];
+  const confirmed: number[] = [];
+  const classifier = new FullGameClassifier({
+    search: async (fen, _signal, depth, _time, session) => {
+      calls.push({ fen, depth, session });
+      return nativeReview(nodes.find(n => n.fen === fen)!)!;
+    },
+    classify: async input => {
+      const base = { symbol: '', accuracy: 100, cpLoss: 0, withheld: false, version: 'test' } as const;
+      if (input.positions.length < 3) return base;
+      if (!input.confirmation) return { ...base, provisional: '!!', withheld: true };
+      assert.equal(input.confirmation.length, input.positions.length);
+      assert.equal(input.confirmation.length, 3);
+      assert.deepEqual(input.confirmation[0].current, input.reviews[0].current);
+      assert.equal(input.confirmation[0].quality, input.reviews[0].quality);
+      confirmed.push(input.positions.length);
+      return { ...base, symbol: '!!' };
+    },
+  });
+  const results = await classifier.run(nodes, new AbortController().signal, () => true, () => {});
+  assert.deepEqual(confirmed, [3, 3]);
+  assert.equal(results.get(18), '!!');
+  assert.equal(results.get(19), '!!');
+  assert.equal(results.has(20), false, 'a third confirmation cannot exceed the six-search cap');
+  assert.equal(calls.length, nodes.length + 6);
+  for (let n = 0; n < 2; n++) {
+    const batch = calls.slice(nodes.length + n * 3, nodes.length + n * 3 + 3);
+    assert.deepEqual(batch.map(c => c.fen), nodes.slice(n, n + 3).map(n => n.fen));
+    assert.ok(batch.every(c => c.depth === 14 && c.session === batch[0].session));
+    assert.notEqual(batch[0].session, calls[0].session);
+  }
+  assert.notEqual(calls[nodes.length].session, calls[nodes.length + 3].session);
+});
+
+test('cancellation during the prior-position Brilliant confirmation publishes no result', async () => {
+  const nodes = [node(17), node(18), node(19)];
+  const controller = new AbortController();
+  let calls = 0;
+  const classifier = new FullGameClassifier({
+    search: async fen => {
+      if (++calls === nodes.length + 1) controller.abort();
+      return nativeReview(nodes.find(n => n.fen === fen)!)!;
+    },
+    classify: async input => ({
+      symbol: '', accuracy: 100, cpLoss: 0, withheld: input.positions.length === 3,
+      provisional: input.positions.length === 3 ? '!!' : undefined, version: 'test',
+    }),
+  });
+  await assert.rejects(classifier.run(nodes, controller.signal, () => true, () => {}), /Cancelled/);
+  assert.equal(calls, nodes.length + 1);
+});

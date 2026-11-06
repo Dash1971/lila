@@ -26,7 +26,7 @@ test('the fixed model reproduces saved sacrifices, rejections and disclosed disa
       .update(readFileSync(new URL('../src/noSweatBrilliantForestModel.json', import.meta.url)))
       .digest('hex'),
     fixture.model_sha256,
-    'the published model is the same one frozen before the fresh labels',
+    'the installed model is the approved artifact frozen before fresh validation',
   );
   for (const c of cases) {
     const actual = classify(c.input);
@@ -44,14 +44,16 @@ test('the fixed model reproduces saved sacrifices, rejections and disclosed disa
   assert.equal(cases.find(c => c.san === 'Ndxe5')!.expected_forest, false);
   assert.equal(
     cases.find(c => c.san === 'Nxd5')!.expected_forest,
-    false,
-    'the real Brilliant miss is disclosed',
+    true,
+    'the updated model recovers the recorded Brilliant',
   );
   assert.equal(
     cases.find(c => c.san === 'Rxd7+')!.observed_label,
     'excellent',
-    'the remaining extra award is retained',
+    'the independently observed ordinary label is retained',
   );
+  assert.equal(cases.find(c => c.san === 'Rxd7+')!.expected_forest, false);
+  assert.equal(cases.find(c => c.san === 'Bg2')!.expected_forest, true);
 });
 
 test('one completed model window cannot publish a Brilliant without corroboration', () => {

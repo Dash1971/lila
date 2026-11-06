@@ -1,6 +1,6 @@
 {
-  "source": "Frozen SF18/300k evidence and independently scored fixed forest; known model misses and disagreement explicitly retained. No classifier tuning from these fixtures.",
-  "model_sha256": "44704ac06378d3f671a4eed959e21959f759c0437c71af1f9119d1081293c0b7",
+  "source": "Recorded SF18/300k engine inputs and observed Chess.com labels. Frozen selective-model regression decisions; these reused examples are not an independent accuracy test.",
+  "model_sha256": "1a7150fbe52f440922d94d3ae2af337383d63f370b52d0379aeee22d581d056c",
   "cases": [
     {
       "key": "167741829524:33",
@@ -68,7 +68,15 @@
               "lines": [
                 {
                   "cp": 56,
-                  "moves": ["e6e5", "f4d2", "h7h6", "a1d1", "f6e7", "c3c4", "d7f6"]
+                  "moves": [
+                    "e6e5",
+                    "f4d2",
+                    "h7h6",
+                    "a1d1",
+                    "f6e7",
+                    "c3c4",
+                    "d7f6"
+                  ]
                 },
                 {
                   "cp": 58,
@@ -318,7 +326,7 @@
       "key": "172662051055:73",
       "san": "Rxd7+",
       "observed_label": "excellent",
-      "expected_forest": true,
+      "expected_forest": false,
       "expected_ec": "!?",
       "input": {
         "positions": [
@@ -333,11 +341,29 @@
               "lines": [
                 {
                   "mate": 4,
-                  "moves": ["c8b8", "e3e8", "d7c8", "e8c8", "b8b7", "a5b6", "b7c8", "d1d8"]
+                  "moves": [
+                    "c8b8",
+                    "e3e8",
+                    "d7c8",
+                    "e8c8",
+                    "b8b7",
+                    "a5b6",
+                    "b7c8",
+                    "d1d8"
+                  ]
                 },
                 {
                   "mate": 4,
-                  "moves": ["c8b7", "a5b6", "b7a8", "e3e8", "d7e8", "d1d8", "f4b8", "b6b8"]
+                  "moves": [
+                    "c8b7",
+                    "a5b6",
+                    "b7a8",
+                    "e3e8",
+                    "d7e8",
+                    "d1d8",
+                    "f4b8",
+                    "b6b8"
+                  ]
                 }
               ],
               "reported_nodes": 283365
@@ -347,11 +373,29 @@
               "lines": [
                 {
                   "mate": 4,
-                  "moves": ["c8b8", "e3e8", "d7c8", "e8c8", "b8b7", "a5b6", "b7c8", "d1d8"]
+                  "moves": [
+                    "c8b8",
+                    "e3e8",
+                    "d7c8",
+                    "e8c8",
+                    "b8b7",
+                    "a5b6",
+                    "b7c8",
+                    "d1d8"
+                  ]
                 },
                 {
                   "mate": 4,
-                  "moves": ["c8b7", "a5b6", "b7a8", "e3e8", "d7e8", "d1d8", "f4b8", "b6b8"]
+                  "moves": [
+                    "c8b7",
+                    "a5b6",
+                    "b7a8",
+                    "e3e8",
+                    "d7e8",
+                    "d1d8",
+                    "f4b8",
+                    "b6b8"
+                  ]
                 }
               ],
               "reported_nodes": 256807
@@ -365,7 +409,15 @@
               "lines": [
                 {
                   "mate": 4,
-                  "moves": ["a5b6", "b7a8", "e3e8", "d7e8", "d1d8", "f4b8", "b6b8"]
+                  "moves": [
+                    "a5b6",
+                    "b7a8",
+                    "e3e8",
+                    "d7e8",
+                    "d1d8",
+                    "f4b8",
+                    "b6b8"
+                  ]
                 },
                 {
                   "mate": 6,
@@ -391,7 +443,15 @@
               "lines": [
                 {
                   "mate": 4,
-                  "moves": ["a5b6", "b7a8", "e3e8", "d7e8", "d1d8", "f4b8", "b6b8"]
+                  "moves": [
+                    "a5b6",
+                    "b7a8",
+                    "e3e8",
+                    "d7e8",
+                    "d1d8",
+                    "f4b8",
+                    "b6b8"
+                  ]
                 },
                 {
                   "mate": 6,
@@ -421,11 +481,31 @@
               "lines": [
                 {
                   "mate": 5,
-                  "moves": ["b7c6", "d7d6", "f4d6", "a5b6", "c6d7", "b6d6", "d7c8", "e3e8", "c8b7", "d6b6"]
+                  "moves": [
+                    "b7c6",
+                    "d7d6",
+                    "f4d6",
+                    "a5b6",
+                    "c6d7",
+                    "b6d6",
+                    "d7c8",
+                    "e3e8",
+                    "c8b7",
+                    "d6b6"
+                  ]
                 },
                 {
                   "mate": 4,
-                  "moves": ["f7d7", "a5b6", "b7a8", "e3e8", "d7d8", "e8d8", "f4b8", "d8b8"]
+                  "moves": [
+                    "f7d7",
+                    "a5b6",
+                    "b7a8",
+                    "e3e8",
+                    "d7d8",
+                    "e8d8",
+                    "f4b8",
+                    "d8b8"
+                  ]
                 }
               ],
               "reported_nodes": 275698
@@ -435,11 +515,31 @@
               "lines": [
                 {
                   "mate": 5,
-                  "moves": ["b7c6", "d7d6", "f4d6", "a5b6", "c6d7", "b6d6", "d7c8", "e3e8", "c8b7", "d6b6"]
+                  "moves": [
+                    "b7c6",
+                    "d7d6",
+                    "f4d6",
+                    "a5b6",
+                    "c6d7",
+                    "b6d6",
+                    "d7c8",
+                    "e3e8",
+                    "c8b7",
+                    "d6b6"
+                  ]
                 },
                 {
                   "mate": 4,
-                  "moves": ["f7d7", "a5b6", "b7a8", "e3e8", "d7d8", "e8d8", "f4b8", "d8b8"]
+                  "moves": [
+                    "f7d7",
+                    "a5b6",
+                    "b7a8",
+                    "e3e8",
+                    "d7d8",
+                    "e8d8",
+                    "f4b8",
+                    "d8b8"
+                  ]
                 }
               ],
               "reported_nodes": 239143
@@ -801,7 +901,7 @@
       "key": "186567991235:53",
       "san": "Bg2",
       "observed_label": "!!",
-      "expected_forest": false,
+      "expected_forest": true,
       "expected_ec": null,
       "input": {
         "positions": [
@@ -1029,7 +1129,16 @@
                 },
                 {
                   "cp": 144,
-                  "moves": ["d6b6", "b1b3", "c7d7", "h2h3", "a8a7", "a1d1", "e5c4", "e3f4"]
+                  "moves": [
+                    "d6b6",
+                    "b1b3",
+                    "c7d7",
+                    "h2h3",
+                    "a8a7",
+                    "a1d1",
+                    "e5c4",
+                    "e3f4"
+                  ]
                 }
               ],
               "reported_nodes": 212671
@@ -1061,7 +1170,17 @@
                 },
                 {
                   "cp": 129,
-                  "moves": ["c5b6", "b1b3", "c7c8", "h2h3", "h7h5", "e3g5", "e5c4", "a1d1", "c4a5"]
+                  "moves": [
+                    "c5b6",
+                    "b1b3",
+                    "c7c8",
+                    "h2h3",
+                    "h7h5",
+                    "e3g5",
+                    "e5c4",
+                    "a1d1",
+                    "c4a5"
+                  ]
                 }
               ],
               "reported_nodes": 135214
@@ -2043,7 +2162,7 @@
       "key": "186305472636:18",
       "san": "Nxd5",
       "observed_label": "Brilliant",
-      "expected_forest": false,
+      "expected_forest": true,
       "outside_benchmark": true,
       "input": {
         "positions": [
