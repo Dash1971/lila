@@ -1,3 +1,4 @@
+import { moveClassTheme } from 'lib/nosweat/moveClasses';
 import type { TreeNode } from 'lib/tree/types';
 import { type LooseVNodes, hl, type VNode } from 'lib/view';
 
@@ -12,16 +13,23 @@ export function renderColumnView(ctrl: AnalyseCtrl, concealOf: ConcealOf = () =>
   const node = ctrl.tree.root;
   const commentTags = renderer.commentNodes(node);
   const blackStarts = (node.ply & 1) === 1;
-  return hl('div.tview2.tview2-column', { class: { hidden: ctrl.treeView.hidden } }, [
-    commentTags.length > 0 && hl('interrupt', commentTags),
-    blackStarts && [renderIndex(node.ply, false), hl('move.empty', '...')],
-    renderer.renderNodes(ctrl.visibleChildren(node), {
-      parentPath: '',
-      parentDisclose: ctrl.idbTree.discloseOf(node, true),
-      parentNode: node,
-      isMainline: true,
-    }),
-  ]);
+  return hl(
+    'div.tview2.tview2-column',
+    {
+      class: { hidden: ctrl.treeView.hidden },
+      attrs: { style: moveClassTheme() },
+    },
+    [
+      commentTags.length > 0 && hl('interrupt', commentTags),
+      blackStarts && [renderIndex(node.ply, false), hl('move.empty', '...')],
+      renderer.renderNodes(ctrl.visibleChildren(node), {
+        parentPath: '',
+        parentDisclose: ctrl.idbTree.discloseOf(node, true),
+        parentNode: node,
+        isMainline: true,
+      }),
+    ],
+  );
 }
 
 class ColumnView extends InlineView {

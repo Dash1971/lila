@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { annotationShapes } from '../src/game/glyphs';
-import { moveClasses } from '../src/nosweat/moveClasses';
+import { moveClasses, moveClassTheme } from '../src/nosweat/moveClasses';
 import type { TreeNode } from '../src/tree/types';
 
 const nativeGlyphs = cgGlyphs.glyphToSvg(4);
@@ -35,6 +35,26 @@ function svg(html: string): SVGSVGElement {
   return element;
 }
 
+test('Mute tree annotation colors use the badge palette independently of engine availability', () => {
+  withBrand('mutechess', () => {
+    const tree = document.createElement('div');
+    const theme = moveClassTheme();
+    assert.notEqual(theme, false);
+    tree.setAttribute('style', theme as string);
+    const nativeClasses = ['good', 'mistake', 'brilliant', 'blunder', 'interesting', 'inaccuracy'];
+    for (const category of moveClasses) {
+      assert.equal(category.treeClass, nativeClasses[category.id - 1]);
+      assert.equal(tree.style.getPropertyValue(`--c-${category.treeClass}`), category.color);
+      assert.equal(
+        svg(badge(category.symbol, 0)).querySelector('circle')!.getAttribute('fill'),
+        category.color,
+      );
+    }
+    assert.equal(tree.style.getPropertyValue('--c-primary'), '');
+    assert.equal(tree.style.getPropertyValue('--c-font'), '');
+  });
+});
+
 test('Mute Chess board badges match every summary color at each native stack position', () => {
   withBrand('mutechess', () => {
     for (const category of moveClasses) {
@@ -56,6 +76,7 @@ test('Mute Chess board badges match every summary color at each native stack pos
 test('unbranded and non-Mute boards retain the exact upstream classification SVGs', () => {
   for (const brand of [undefined, '', 'lichess']) {
     withBrand(brand, () => {
+      assert.equal(moveClassTheme(), false);
       for (const category of moveClasses)
         for (let stack = 0; stack < 4; stack++)
           assert.equal(badge(category.symbol, stack), nativeGlyphs[category.symbol](stack));
@@ -81,6 +102,7 @@ test('glyph rendering without a document retains upstream SVGs', () => {
   const original = Object.getOwnPropertyDescriptor(globalThis, 'document')!;
   try {
     Reflect.deleteProperty(globalThis, 'document');
+    assert.equal(moveClassTheme(), false);
     for (const category of moveClasses)
       assert.equal(badge(category.symbol, 0), nativeGlyphs[category.symbol](0));
   } finally {

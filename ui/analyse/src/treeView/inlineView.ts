@@ -2,6 +2,7 @@ import type { Classes } from 'snabbdom';
 
 import { isSafari } from 'lib/device';
 import { playable } from 'lib/game';
+import { moveClassTheme } from 'lib/nosweat/moveClasses';
 import { enrichText, innerHTML } from 'lib/richText';
 import { ops as treeOps, path as treePath } from 'lib/tree/tree';
 import type { TreeNode, TreePath } from 'lib/tree/types';
@@ -19,7 +20,10 @@ export function renderInlineView(ctrl: AnalyseCtrl): VNode {
   const parentDisclose = ctrl.idbTree.discloseOf(parentNode, true);
   return hl(
     'div.tview2.tview2-inline',
-    { class: { hidden: ctrl.treeView.hidden, anchor: !!parentDisclose } },
+    {
+      class: { hidden: ctrl.treeView.hidden, anchor: !!parentDisclose },
+      attrs: { style: moveClassTheme() },
+    },
     [
       renderer.commentNodes(parentNode),
       renderer.renderNodes(ctrl.visibleChildren(parentNode), {
