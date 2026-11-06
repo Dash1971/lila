@@ -37,7 +37,8 @@ object InsightChart:
   )
 
   def fromAnswer[X](
-      getLightUser: LightUser.Getter
+      getLightUser: LightUser.Getter,
+      focused: Boolean = false
   )(answer: Answer[X])(using Translate, Executor): Fu[InsightChart] =
 
     import answer.*, question.*
@@ -107,7 +108,7 @@ object InsightChart:
       player.userId.so(getLightUser).map { lu =>
         Json
           .obj("rating" -> player.rating)
-          .add("name", lu.map(_.name))
+          .add("name", lu.map(u => if focused then u.publicName else u.name.value))
           .add("title", lu.map(_.title))
       }
 

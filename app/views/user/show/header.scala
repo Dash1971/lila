@@ -304,8 +304,10 @@ object header:
               info.insightVisible.option(
                 a(cls := "insight", href := routes.Insight.index(u.username), dataIcon := Icon.Target):
                   span(
-                    strong("Chess Insights"),
-                    em("Analytics from ", if ctx.is(u) then "your" else s"${u.username}'s", " games")
+                    strong(if env.noSweat.enabled then lila.insight.NoSweatInsights.text("Title")
+                    else "Chess Insights"),
+                    if env.noSweat.enabled then em(lila.insight.NoSweatInsights.text("ProfileAnalytics"))
+                    else em("Analytics from ", if ctx.is(u) then "your" else s"${u.username}'s", " games")
                   )
               )
             )

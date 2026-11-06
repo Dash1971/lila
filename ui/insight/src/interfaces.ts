@@ -1,4 +1,4 @@
-import type { Chart } from 'chart.js';
+import type { Chart } from "chart.js";
 
 export interface Vm {
   metric: Metric;
@@ -7,7 +7,7 @@ export interface Vm {
   loading: boolean;
   broken: boolean;
   answer: InsightData | null;
-  panel: 'filter' | 'preset';
+  panel: "filter" | "preset";
   view: ViewTab;
 }
 
@@ -26,6 +26,7 @@ export interface EnvUser {
   name: string;
   title?: string;
   patron?: boolean;
+  displayName?: string;
   nbGames: number;
   shareId: number;
   stale: boolean;
@@ -43,6 +44,7 @@ export interface UI {
   dimensionCategs: Categ<Dimension>[];
   metricCategs: Categ<Metric>[];
   asMod?: boolean;
+  focused?: boolean;
 }
 
 export interface Categ<T> {
@@ -71,9 +73,9 @@ export interface Dimension extends Metric {
   }[];
 }
 
-export type ViewTab = 'combined' | 'presets' | 'filters' | 'insights';
+export type ViewTab = "combined" | "presets" | "filters" | "insights";
 
-export interface InsightChart extends Chart<'bar'> {
+export interface InsightChart extends Chart<"bar"> {
   updateData(d: InsightData): void;
 }
 

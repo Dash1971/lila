@@ -5,6 +5,7 @@ GET /$key<about|faq|contact|terms-of-service|privacy> controllers.NoSweat.info(k
 
 # Lobby
 GET   /club                            controllers.NoSweat.home
+GET   /club/unsupported                 controllers.NoSweat.unsupported
 GET   /club/me                         controllers.NoSweat.me
 GET   /club/roster                     controllers.NoSweat.roster
 POST  /club/challenge                  controllers.NoSweat.challenge

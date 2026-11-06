@@ -1,15 +1,19 @@
-import { h } from 'snabbdom';
+import { text } from "./text";
+import { h } from "snabbdom";
 
-import type Ctrl from './ctrl';
+import type Ctrl from "./ctrl";
 
 export default function (ctrl: Ctrl) {
-  return h('div.help.box', [
-    h('div.top', 'Definitions'),
+  return h("div.help.box", [
+    h("div.top", text(ctrl, "Definitions", "Definitions")),
     h(
-      'div.content',
-      (['metric', 'dimension'] as const).map(type => {
+      "div.content",
+      (["metric", "dimension"] as const).map((type) => {
         const data = ctrl.vm[type];
-        return h('section.' + type, [h('h3', data.name), h('p', data.description)]);
+        return h("section." + type, [
+          h("h3", data.name),
+          h("p", data.description),
+        ]);
       }),
     ),
   ]);

@@ -1,23 +1,36 @@
-import { h, type VNodeData } from 'snabbdom';
+import { text } from "./text";
+import { h, type VNodeData } from "snabbdom";
 
-import { optgroup } from 'lib/view';
+import { optgroup } from "lib/view";
 
-import type Ctrl from './ctrl';
-import type { Dimension, Metric } from './interfaces';
+import type Ctrl from "./ctrl";
+import type { Dimension, Metric } from "./interfaces";
 
-const selectData = (onClick: (v: { value: string }) => void, getValue: () => string): VNodeData => ({
+const selectData = (
+  onClick: (v: { value: string }) => void,
+  getValue: () => string,
+): VNodeData => ({
   hook: {
-    insert: vnode => $(vnode.elm).multipleSelect({ width: 'var(---drop-menu-width)', single: true, onClick }),
-    update: vnode => $(vnode.elm).multipleSelect('setSelects', [getValue()]),
+    insert: (vnode) =>
+      $(vnode.elm).multipleSelect({
+        width: "var(---drop-menu-width)",
+        single: true,
+        onClick,
+      }),
+    update: (vnode) => $(vnode.elm).multipleSelect("setSelects", [getValue()]),
   },
 });
 
-const option = (ctrl: Ctrl, item: Metric | Dimension, axis: 'metric' | 'dimension') =>
+const option = (
+  ctrl: Ctrl,
+  item: Metric | Dimension,
+  axis: "metric" | "dimension",
+) =>
   h(
-    'option',
+    "option",
     {
       attrs: {
-        title: item.description.replace(/<a[^>]*>[^>]+<\/a[^>]*>/, ''),
+        title: item.description.replace(/<a[^>]*>[^>]+<\/a[^>]*>/, ""),
         value: item.key,
         selected: ctrl.vm[axis].key === item.key,
         // was commented out:
@@ -31,27 +44,31 @@ const option = (ctrl: Ctrl, item: Metric | Dimension, axis: 'metric' | 'dimensio
   );
 
 export default function (ctrl: Ctrl, attrs: VNodeData | null = null) {
-  return h('div.axis-form', attrs, [
+  return h("div.axis-form", attrs, [
     h(
-      'select.ms.metric',
+      "select.ms.metric",
       selectData(
-        v => ctrl.setMetric(v.value),
+        (v) => ctrl.setMetric(v.value),
         () => ctrl.vm.metric.key,
       ),
-      ctrl.ui.metricCategs.map(categ =>
-        optgroup(categ.name)(categ.items.map(item => option(ctrl, item, 'metric'))),
+      ctrl.ui.metricCategs.map((categ) =>
+        optgroup(categ.name)(
+          categ.items.map((item) => option(ctrl, item, "metric")),
+        ),
       ),
     ),
-    h('span.by', 'by'),
+    h("span.by", text(ctrl, "By", "by")),
     h(
-      'select.ms.dimension',
+      "select.ms.dimension",
       selectData(
-        v => ctrl.setDimension(v.value),
+        (v) => ctrl.setDimension(v.value),
         () => ctrl.vm.dimension.key,
       ),
-      ctrl.ui.dimensionCategs.map(categ =>
+      ctrl.ui.dimensionCategs.map((categ) =>
         optgroup(categ.name)(
-          categ.items.map(item => (item.key !== 'period' ? option(ctrl, item, 'dimension') : undefined)),
+          categ.items.map((item) =>
+            item.key !== "period" ? option(ctrl, item, "dimension") : undefined,
+          ),
         ),
       ),
     ),

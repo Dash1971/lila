@@ -1,21 +1,31 @@
-import { h } from 'snabbdom';
+import { text } from "./text";
+import { h } from "snabbdom";
 
-import { licon } from 'lib/licon';
-import { bind, dataIcon } from 'lib/view';
+import { licon } from "lib/licon";
+import { bind, dataIcon } from "lib/view";
 
-import type Ctrl from './ctrl';
-import type { Preset } from './interfaces';
+import type Ctrl from "./ctrl";
+import type { Preset } from "./interfaces";
 
 export default function (ctrl: Ctrl) {
   return h(
-    'div.box.presets',
-    (ctrl.ui.asMod ? modPresets : basePresets).map(p =>
+    "div.box.presets",
+    (ctrl.ui.focused
+      ? basicPresets(ctrl)
+      : ctrl.ui.asMod
+        ? modPresets
+        : basePresets
+    ).map((p) =>
       h(
-        'a.preset.text',
+        "a.preset.text",
         {
-          class: { active: ctrl.makeUrl(p.dimension, p.metric, p.filters) === ctrl.makeCurrentUrl() },
+          class: {
+            active:
+              ctrl.makeUrl(p.dimension, p.metric, p.filters) ===
+              ctrl.makeCurrentUrl(),
+          },
           attrs: dataIcon(licon.Target),
-          hook: bind('click', () => ctrl.setQuestion(p)),
+          hook: bind("click", () => ctrl.setQuestion(p)),
         },
         p.name,
       ),
@@ -25,107 +35,128 @@ export default function (ctrl: Ctrl) {
 
 const basePresets: Preset[] = [
   {
-    name: 'Do I gain more rating points against weaker or stronger opponents?',
-    dimension: 'opponentStrength',
-    metric: 'ratingDiff',
+    name: "Do I gain more rating points against weaker or stronger opponents?",
+    dimension: "opponentStrength",
+    metric: "ratingDiff",
     filters: {},
   },
   {
-    name: 'How quickly do I move each piece in bullet and blitz games?',
-    dimension: 'piece',
-    metric: 'movetime',
+    name: "How quickly do I move each piece in bullet and blitz games?",
+    dimension: "piece",
+    metric: "movetime",
     filters: {
-      variant: ['bullet', 'blitz'],
+      variant: ["bullet", "blitz"],
     },
   },
   {
-    name: 'What is the Win-Rate of my favourite openings as white?',
-    dimension: 'openingVariation',
-    metric: 'result',
+    name: "What is the Win-Rate of my favourite openings as white?",
+    dimension: "openingVariation",
+    metric: "result",
     filters: {
-      variant: ['bullet', 'blitz', 'rapid', 'classical', 'correspondence'],
-      color: ['white'],
+      variant: ["bullet", "blitz", "rapid", "classical", "correspondence"],
+      color: ["white"],
     },
   },
   {
-    name: 'How often do I punish blunders made by my opponent during each game phase?',
-    dimension: 'phase',
-    metric: 'awareness',
+    name: "How often do I punish blunders made by my opponent during each game phase?",
+    dimension: "phase",
+    metric: "awareness",
     filters: {},
   },
   {
     name: "Do I gain rating when I don't castle kingside?",
-    dimension: 'myCastling',
-    metric: 'ratingDiff',
+    dimension: "myCastling",
+    metric: "ratingDiff",
     filters: {
-      myCastling: ['2', '3'],
+      myCastling: ["2", "3"],
     },
   },
   {
-    name: 'When I trade queens, how do games end?',
-    dimension: 'queenTrade',
-    metric: 'result',
+    name: "When I trade queens, how do games end?",
+    dimension: "queenTrade",
+    metric: "result",
     filters: {
-      queenTrade: ['true'],
+      queenTrade: ["true"],
     },
   },
   {
-    name: 'What is the average rating of my opponents across each variant?',
-    dimension: 'variant',
-    metric: 'opponentRating',
+    name: "What is the average rating of my opponents across each variant?",
+    dimension: "variant",
+    metric: "opponentRating",
     filters: {},
   },
   {
-    name: 'How well do I move each piece in the opening?',
-    dimension: 'piece',
-    metric: 'accuracy',
+    name: "How well do I move each piece in the opening?",
+    dimension: "piece",
+    metric: "accuracy",
     filters: {
-      phase: ['1'],
+      phase: ["1"],
     },
   },
 ];
 
 const modPresets: Preset[] = [
   {
-    name: 'ACPL by date',
-    dimension: 'date',
-    metric: 'acpl',
+    name: "ACPL by date",
+    dimension: "date",
+    metric: "acpl",
     filters: {},
   },
   {
-    name: 'Blurs by date',
-    dimension: 'date',
-    metric: 'blurs',
+    name: "Blurs by date",
+    dimension: "date",
+    metric: "blurs",
     filters: {},
   },
   {
-    name: 'ACPL by blur',
-    dimension: 'blur',
-    metric: 'acpl',
+    name: "ACPL by blur",
+    dimension: "blur",
+    metric: "acpl",
     filters: {},
   },
   {
-    name: 'Blurs by result',
-    dimension: 'result',
-    metric: 'blurs',
+    name: "Blurs by result",
+    dimension: "result",
+    metric: "blurs",
     filters: {},
   },
   {
-    name: 'ACPL by time variance',
-    dimension: 'timeVariance',
-    metric: 'acpl',
+    name: "ACPL by time variance",
+    dimension: "timeVariance",
+    metric: "acpl",
     filters: {},
   },
   {
-    name: 'Blur by time variance',
-    dimension: 'timeVariance',
-    metric: 'blurs',
+    name: "Blur by time variance",
+    dimension: "timeVariance",
+    metric: "blurs",
     filters: {},
   },
   {
-    name: 'Time variance by date',
-    dimension: 'date',
-    metric: 'timeVariance',
+    name: "Time variance by date",
+    dimension: "date",
+    metric: "timeVariance",
+    filters: {},
+  },
+];
+
+const basicPresets = (ctrl: Ctrl): Preset[] => [
+  {
+    name: text(ctrl, "OpeningPreset", ""),
+    dimension: "openingFamily",
+    metric: "result",
+    filters: {},
+  },
+  {
+    name: text(ctrl, "ColorPreset", ""),
+    dimension: "color",
+    metric: "result",
+    filters: {},
+  },
+  {
+    name: text(ctrl, "RatingPreset", ""),
+    dimension: "variant",
+    metric: "ratingDiff",
     filters: {},
   },
 ];

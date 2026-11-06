@@ -35,6 +35,9 @@ final class NoSweat(env: Env) extends LilaController(env):
   def info(key: String) = Open:
     if club.enabled then Ok.page(views.noSweatInfo(key)) else fuccess(NotFound)
 
+  def unsupported = Open:
+    if club.enabled then NotImplemented.page(views.noSweatUnsupported()) else fuccess(NotFound)
+
   def home = Open:
     fuccess(Redirect("/"))
 

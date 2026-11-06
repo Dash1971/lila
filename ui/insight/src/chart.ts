@@ -1,4 +1,11 @@
-import { gridColor, tooltipBgColor, fontFamily, maybeChart, colorSeries } from 'chart';
+import { text } from "./text";
+import {
+  gridColor,
+  tooltipBgColor,
+  fontFamily,
+  maybeChart,
+  colorSeries,
+} from "chart";
 import {
   Chart,
   type ChartDataset,
@@ -10,35 +17,37 @@ import {
   LinearScale,
   Tooltip,
   type ChartOptions,
-} from 'chart.js';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { h, type VNode } from 'snabbdom';
+} from "chart.js";
+import ChartDataLabels from "chartjs-plugin-datalabels";
+import { h, type VNode } from "snabbdom";
 
-import { currentTheme } from 'lib/device';
-import { licon } from 'lib/licon';
-import { icon, spinnerHtml } from 'lib/view';
+import { currentTheme } from "lib/device";
+import { licon } from "lib/licon";
+import { icon, spinnerHtml } from "lib/view";
 
-import type Ctrl from './ctrl';
-import type { InsightChart, InsightData } from './interfaces';
-import { formatNumber } from './table';
+import type Ctrl from "./ctrl";
+import type { InsightChart, InsightData } from "./interfaces";
+import { formatNumber } from "./table";
 
-Chart.register(BarController, CategoryScale, LinearScale, BarElement, Tooltip, Legend, ChartDataLabels);
+Chart.register(
+  BarController,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+  ChartDataLabels,
+);
 Chart.defaults.font = fontFamily();
 
-const light = currentTheme() === 'light';
+const light = currentTheme() === "light";
 
-const resultColors = {
-  Victory: '#759900',
-  Draw: '#007599',
-  Defeat: '#dc322f',
-};
-
-const sizeColor = 'rgb(120 120 120 / 0.2)';
-const tooltipFontColor = light ? '#4d4d4d' : '#cccccc';
+const sizeColor = "rgb(120 120 120 / 0.2)";
+const tooltipFontColor = light ? "#4d4d4d" : "#cccccc";
 
 function insightChart(el: HTMLCanvasElement, data: InsightData) {
-  const config: ChartConfiguration<'bar'> = {
-    type: 'bar',
+  const config: ChartConfiguration<"bar"> = {
+    type: "bar",
     data: {
       labels: labelBuilder(data),
       datasets: datasetBuilder(data),
@@ -48,25 +57,25 @@ function insightChart(el: HTMLCanvasElement, data: InsightData) {
       maintainAspectRatio: false,
       animation: false,
       interaction: {
-        mode: 'index',
+        mode: "index",
         intersect: false,
       },
       plugins: {
         legend: {
           labels: { color: tooltipFontColor },
           display: true,
-          position: 'bottom',
+          position: "bottom",
         },
         tooltip: {
-          filter: tooltipItem => (tooltipItem.raw as number) !== 0,
+          filter: (tooltipItem) => (tooltipItem.raw as number) !== 0,
           itemSort: (a, b) => b.datasetIndex - a.datasetIndex,
           backgroundColor: tooltipBgColor,
           borderColor: gridColor,
           borderWidth: 1,
-          position: 'average',
-          xAlign: 'center',
-          yAlign: 'bottom',
-          titleFont: fontFamily(14, 'bold'),
+          position: "average",
+          xAlign: "center",
+          yAlign: "bottom",
+          titleFont: fontFamily(14, "bold"),
           titleColor: tooltipFontColor,
           bodyFont: fontFamily(13),
           bodyColor: tooltipFontColor,
@@ -86,38 +95,39 @@ function insightChart(el: HTMLCanvasElement, data: InsightData) {
 }
 
 function datasetBuilder(d: InsightData) {
-  const color = (i: number, name: string, stack: boolean) => {
-    if (d.valueYaxis.name === 'Game result') return resultColors[name as 'Victory' | 'Draw' | 'Defeat'];
-    else if (!stack && light) return '#7cb5ec';
+  const color = (i: number, stack: boolean) => {
+    if (d.question.metric === "result")
+      return ["#759900", "#007599", "#dc322f"][i];
+    else if (!stack && light) return "#7cb5ec";
     return colorSeries[i % colorSeries.length];
   };
   return [
     ...d.series.map((serie, i) =>
-      barBuilder(serie, 'y1', color(i, serie.name, !!serie.stack), { stack: serie.stack }),
+      barBuilder(serie, "y1", color(i, !!serie.stack), { stack: serie.stack }),
     ),
-    barBuilder(d.sizeSerie, 'y2', sizeColor),
+    barBuilder(d.sizeSerie, "y2", sizeColor),
   ];
 }
 
 function barBuilder(
-  serie: InsightData['sizeSerie'],
+  serie: InsightData["sizeSerie"],
   id: string,
   color: string,
   opts?: { stack?: string },
-): ChartDataset<'bar'> {
-  const percent = serie.dataType === 'percent';
+): ChartDataset<"bar"> {
+  const percent = serie.dataType === "percent";
   return {
     label: serie.name,
-    data: serie.data.map(nb => nb / (serie.dataType === 'percent' ? 100 : 1)),
+    data: serie.data.map((nb) => nb / (serie.dataType === "percent" ? 100 : 1)),
     borderWidth: 1.5,
     yAxisID: id,
     backgroundColor: color,
-    borderColor: light ? '#9a9a9a' : '#4a4a4a',
+    borderColor: light ? "#9a9a9a" : "#4a4a4a",
     borderRadius: 4,
     stack: opts?.stack,
     minBarLength: !percent ? 5 : undefined,
     datalabels:
-      id === 'y2'
+      id === "y2"
         ? { display: false }
         : {
             color: tooltipFontColor,
@@ -125,25 +135,27 @@ function barBuilder(
             textShadowBlur: 10,
             textShadowColor: tooltipBgColor,
             textStrokeWidth: 1.2,
-            font: fontFamily(12, 'bold'),
-            formatter: val =>
-              val === 0 && percent ? '' : formatNumber(serie.dataType, val * (percent ? 100 : 1)),
+            font: fontFamily(12, "bold"),
+            formatter: (val) =>
+              val === 0 && percent
+                ? ""
+                : formatNumber(serie.dataType, val * (percent ? 100 : 1)),
           },
   };
 }
 
 function labelBuilder(d: InsightData) {
-  return d.xAxis.categories.map(ts =>
-    d.xAxis.dataType === 'date' ? new Date(ts * 1000).toLocaleDateString() : ts,
+  return d.xAxis.categories.map((ts) =>
+    d.xAxis.dataType === "date" ? new Date(ts * 1000).toLocaleDateString() : ts,
   );
 }
 
-function scaleBuilder(d: InsightData): ChartOptions<'bar'>['scales'] {
+function scaleBuilder(d: InsightData): ChartOptions<"bar">["scales"] {
   const stacked = !!d.series[0].stack;
-  const percent = stacked || d.valueYaxis.dataType === 'percent';
+  const percent = stacked || d.valueYaxis.dataType === "percent";
   return {
     x: {
-      type: 'category',
+      type: "category",
       ticks: { color: tooltipFontColor },
       grid: {
         color: gridColor,
@@ -157,7 +169,7 @@ function scaleBuilder(d: InsightData): ChartOptions<'bar'>['scales'] {
       ticks: {
         color: tooltipFontColor,
         format: {
-          style: percent ? 'percent' : undefined,
+          style: percent ? "percent" : undefined,
           maximumFractionDigits: percent ? 1 : 2,
         },
       },
@@ -169,7 +181,7 @@ function scaleBuilder(d: InsightData): ChartOptions<'bar'>['scales'] {
       stacked,
     },
     y2: {
-      position: 'right',
+      position: "right",
       ticks: { color: tooltipFontColor },
       grid: { display: false },
       title: {
@@ -182,7 +194,7 @@ function scaleBuilder(d: InsightData): ChartOptions<'bar'>['scales'] {
   };
 }
 function empty(txt: string) {
-  return h('div.chart.empty', [icon(licon.Target)(), txt]);
+  return h("div.chart.empty", [icon(licon.Target)(), txt]);
 }
 
 let chart: InsightChart;
@@ -197,13 +209,17 @@ function chartHook(vnode: VNode, ctrl: Ctrl) {
 }
 
 export default function (ctrl: Ctrl) {
-  if (!ctrl.validCombinationCurrent()) return empty('Invalid dimension/metric combination');
-  if (!ctrl.vm.answer?.series.length) return empty('No data. Try widening or clearing the filters.');
+  if (!ctrl.validCombinationCurrent())
+    return empty(text(ctrl, "Invalid", "Invalid dimension/metric combination"));
+  if (!ctrl.vm.answer?.series.length)
+    return empty(
+      text(ctrl, "NoData", "No data. Try widening or clearing the filters."),
+    );
   return h(
-    'div.chart',
-    h('canvas.chart', {
+    "div.chart",
+    h("canvas.chart", {
       hook: {
-        insert: vnode => chartHook(vnode, ctrl),
+        insert: (vnode) => chartHook(vnode, ctrl),
         update: (_oldVnode, newVnode) => chartHook(newVnode, ctrl),
       },
     }),

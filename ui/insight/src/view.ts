@@ -1,20 +1,26 @@
-import { thunk } from 'snabbdom';
+import { text } from "./text";
+import { thunk } from "snabbdom";
 
-import { debounce } from 'lib/async';
-import { licon } from 'lib/licon';
-import { bind, dataIcon, hl, icon } from 'lib/view';
+import { debounce } from "lib/async";
+import { licon } from "lib/licon";
+import { bind, dataIcon, hl, icon } from "lib/view";
 
-import axis from './axis';
-import boards from './boards';
-import chart from './chart';
-import type Ctrl from './ctrl';
-import filters from './filters';
-import help from './help';
-import { info, tutor } from './info';
-import type { ViewTab } from './interfaces';
-import presets from './presets';
-import { vert } from './table';
-import { isAtLeastSmall, isAtLeastXSmall, isAtLeastXXSmall, isLandscapeLayout } from './util';
+import axis from "./axis";
+import boards from "./boards";
+import chart from "./chart";
+import type Ctrl from "./ctrl";
+import filters from "./filters";
+import help from "./help";
+import { info, tutor } from "./info";
+import type { ViewTab } from "./interfaces";
+import presets from "./presets";
+import { vert } from "./table";
+import {
+  isAtLeastSmall,
+  isAtLeastXSmall,
+  isAtLeastXXSmall,
+  isLandscapeLayout,
+} from "./util";
 
 let forceRender = false;
 
@@ -25,10 +31,10 @@ export function view(ctrl: Ctrl) {
     ctrl.redraw();
   }, 33);
   if (isLandscapeLayout()) {
-    ctrl.vm.view = 'combined';
+    ctrl.vm.view = "combined";
     return landscapeView(ctrl);
-  } else if (ctrl.vm.view === 'combined') {
-    ctrl.vm.view = 'insights';
+  } else if (ctrl.vm.view === "combined") {
+    ctrl.vm.view = "insights";
   }
   return portraitView(ctrl);
 }
@@ -44,82 +50,129 @@ const cacheKey = (ctrl: Ctrl) => {
 };
 
 const renderMain = (ctrl: Ctrl, _cacheKey: string | boolean) => {
-  if (!ctrl.vm.answer) {
-    return hl('div'); // returning undefined breaks snabbdom's thunks
+  if (!ctrl.vm.answer && !ctrl.vm.broken) {
+    return hl("div"); // returning undefined breaks snabbdom's thunks
   } else if (ctrl.vm.broken) {
-    return hl('div.broken', [
+    return hl("div.broken", [
       icon(licon.DiscBig)(),
-      'Insights are unavailable.',
-      hl('br'),
-      'Please try again later.',
+      text(
+        ctrl,
+        "Unavailable",
+        "Insights are unavailable. Please try again later.",
+      ),
     ]);
   }
   const sizer = widthStyle(mainW());
-  return hl('div', sizer, [chart(ctrl), vert(ctrl, sizer), boards(ctrl, sizer)]);
+  return hl("div", sizer, [
+    chart(ctrl),
+    vert(ctrl, sizer),
+    boards(ctrl, sizer),
+  ]);
 };
 
-const panelTabData = (ctrl: Ctrl, panel: 'filter' | 'preset') => ({
+const panelTabData = (ctrl: Ctrl, panel: "filter" | "preset") => ({
   class: { active: ctrl.vm.panel === panel },
-  attrs: { 'data-panel': panel },
-  hook: bind('click', () => ctrl.setPanel(panel)),
+  attrs: { "data-panel": panel },
+  hook: bind("click", () => ctrl.setPanel(panel)),
 });
 
 const viewTabData = (ctrl: Ctrl, view: ViewTab) => ({
   class: { active: ctrl.vm.view === view },
-  hook: bind('click', () => ctrl.setView(view)),
+  hook: bind("click", () => ctrl.setView(view)),
 });
 
 function header(ctrl: Ctrl) {
-  return hl('header', widthStyle(mainW()), [
+  return hl("header", widthStyle(mainW()), [
     isAtLeastXSmall(mainW())
-      ? hl('h2.text', { attrs: dataIcon(licon.Target) }, 'Chess Insights')
+      ? hl(
+          "h2.text",
+          { attrs: dataIcon(licon.Target) },
+          text(ctrl, "Title", "Chess Insights"),
+        )
       : isAtLeastXXSmall(mainW())
-        ? hl('h2.text', { attrs: dataIcon(licon.Target) }, 'Insights')
-        : mainW() >= 460 && hl('h2.text', 'Insights'),
-    axis(ctrl, mainW() < 460 ? { attrs: { style: 'justify-content: space-evenly;' } } : null),
+        ? hl(
+            "h2.text",
+            { attrs: dataIcon(licon.Target) },
+            text(ctrl, "Short", "Insights"),
+          )
+        : mainW() >= 460 && hl("h2.text", text(ctrl, "Short", "Insights")),
+    axis(
+      ctrl,
+      mainW() < 460
+        ? { attrs: { style: "justify-content: space-evenly;" } }
+        : null,
+    ),
   ]);
 }
 
 function landscapeView(ctrl: Ctrl) {
-  return hl('main#insight', containerStyle(), [
-    hl('div', { attrs: { class: ctrl.vm.loading ? 'loading' : 'ready' } }, [
-      hl('div', widthStyle(sideW()), [
+  return hl("main#insight", containerStyle(), [
+    hl("div", { attrs: { class: ctrl.vm.loading ? "loading" : "ready" } }, [
+      hl("div", widthStyle(sideW()), [
         info(ctrl),
-        tutor(),
-        hl('div.panel-tabs', [
-          hl('a.tab.preset', panelTabData(ctrl, 'preset'), 'Presets'),
-          hl('a.tab.filter', panelTabData(ctrl, 'filter'), 'Filters'),
+        !ctrl.ui.focused && tutor(),
+        hl("div.panel-tabs", [
+          hl(
+            "a.tab.preset",
+            panelTabData(ctrl, "preset"),
+            text(ctrl, "Presets", "Presets"),
+          ),
+          hl(
+            "a.tab.filter",
+            panelTabData(ctrl, "filter"),
+            text(ctrl, "Filters", "Filters"),
+          ),
           !!Object.keys(ctrl.vm.filters).length && clearBtn(ctrl),
         ]),
-        ctrl.vm.panel === 'filter' && filters(ctrl),
-        ctrl.vm.panel === 'preset' && presets(ctrl),
+        ctrl.vm.panel === "filter" && filters(ctrl),
+        ctrl.vm.panel === "preset" && presets(ctrl),
         help(ctrl),
       ]),
       spacer(),
-      hl('div', widthStyle(mainW()), [
+      hl("div", widthStyle(mainW()), [
         header(ctrl),
-        thunk('div.insight__main.box', renderMain, [ctrl, cacheKey(ctrl)]),
+        thunk("div.insight__main.box", renderMain, [ctrl, cacheKey(ctrl)]),
       ]),
     ]),
   ]);
 }
 
 function portraitView(ctrl: Ctrl) {
-  return hl('main#insight', containerStyle(), [
-    hl('div.view-tabs', [
-      hl('div.tab', viewTabData(ctrl, 'presets'), 'Presets'),
-      hl('div.tab', viewTabData(ctrl, 'filters'), 'Filters'),
-      hl('div.tab', viewTabData(ctrl, 'insights'), 'Insights'),
+  return hl("main#insight", containerStyle(), [
+    hl("div.view-tabs", [
+      hl(
+        "div.tab",
+        viewTabData(ctrl, "presets"),
+        text(ctrl, "Presets", "Presets"),
+      ),
+      hl(
+        "div.tab",
+        viewTabData(ctrl, "filters"),
+        text(ctrl, "Filters", "Filters"),
+      ),
+      hl(
+        "div.tab",
+        viewTabData(ctrl, "insights"),
+        text(ctrl, "Short", "Insights"),
+      ),
     ]),
     hl(
-      'div',
-      { attrs: { class: ctrl.vm.loading ? 'loading' : 'ready', style: 'display: block' } },
-      ctrl.vm.view === 'insights'
-        ? [header(ctrl), thunk('div.insight__main.box', renderMain, [ctrl, cacheKey(ctrl)])]
-        : hl('div.left-side', [
+      "div",
+      {
+        attrs: {
+          class: ctrl.vm.loading ? "loading" : "ready",
+          style: "display: block",
+        },
+      },
+      ctrl.vm.view === "insights"
+        ? [
+            header(ctrl),
+            thunk("div.insight__main.box", renderMain, [ctrl, cacheKey(ctrl)]),
+          ]
+        : hl("div.left-side", [
             info(ctrl),
-            ctrl.vm.view === 'filters' && clearBtn(ctrl),
-            ctrl.vm.view === 'presets' ? presets(ctrl) : filters(ctrl),
+            ctrl.vm.view === "filters" && clearBtn(ctrl),
+            ctrl.vm.view === "presets" ? presets(ctrl) : filters(ctrl),
           ]),
     ),
   ]);
@@ -128,14 +181,17 @@ function portraitView(ctrl: Ctrl) {
 function clearBtn(ctrl: Ctrl) {
   const btn = () =>
     hl(
-      'a.clear',
+      "a.clear",
       {
-        attrs: { title: 'Clear all filters', 'data-icon': licon.X },
-        hook: bind('click', ctrl.clearFilters.bind(ctrl)),
+        attrs: {
+          title: text(ctrl, "Clear", "Clear all filters"),
+          "data-icon": licon.X,
+        },
+        hook: bind("click", ctrl.clearFilters.bind(ctrl)),
       },
-      isLandscapeLayout() ? 'CLEAR' : 'CLEAR FILTERS',
+      text(ctrl, "Clear", isLandscapeLayout() ? "CLEAR" : "CLEAR FILTERS"),
     );
-  return isLandscapeLayout() ? btn() : hl('div.center-clear', btn());
+  return isLandscapeLayout() ? btn() : hl("div.center-clear", btn());
 }
 
 type Point = { x: number; y: number }; // y = f(x), not necessarily a point onscreen
@@ -152,17 +208,24 @@ const availW = () => totalW() - (isAtLeastSmall() ? 2 * vw() : 0); // edge gaps 
 
 const sideW = () =>
   // width of the side in landscape layout, no side in portrait
-  isLandscapeLayout() ? interpolateBetween(totalW(), { x: 400, y: 160 }, { x: 800, y: 280 }) : 0;
+  isLandscapeLayout()
+    ? interpolateBetween(totalW(), { x: 400, y: 160 }, { x: 800, y: 280 })
+    : 0;
 
 const gapW = () =>
   // width of the spacer between side & main in landscape, no gap in portrait
-  isLandscapeLayout() ? interpolateBetween(totalW(), { x: 480, y: vw() }, { x: 800, y: 2 * vw() }) : 0;
+  isLandscapeLayout()
+    ? interpolateBetween(totalW(), { x: 480, y: vw() }, { x: 800, y: 2 * vw() })
+    : 0;
 
 const mainW = () => availW() - (!isLandscapeLayout() ? 0 : sideW() + gapW());
 
-const spacer = () => (isLandscapeLayout() ? hl('span', widthStyle(gapW())) : null); // between side & main
+const spacer = () =>
+  isLandscapeLayout() ? hl("span", widthStyle(gapW())) : null; // between side & main
 
-const widthStyle = (width: number) => ({ attrs: { style: `width: ${width}px;` } });
+const widthStyle = (width: number) => ({
+  attrs: { style: `width: ${width}px;` },
+});
 
 const containerStyle = () => ({
   attrs: {
