@@ -643,7 +643,7 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
                 source = Source.Pool,
                 pgnImport = None,
                 daysPerTurn = None,
-                rules = Set(GameRule.noRematch, GameRule.noGiveTime, GameRule.noClaimWin)
+                rules = Set(GameRule.noRematch, GameRule.noGiveTime)
               )
               .withId(id)
               .start
@@ -848,7 +848,7 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
           .traverse: (doc, game) =>
             env.bot.jsonView
               .gameState(WithInitialFen(game, None))
-              .map: state =>
+              .flatMap: state =>
                 val isAutomatic = automatic(doc)
                 val bot = if isAutomatic then game.player.userId.get else doc.getAsOpt[UserId]("bot").get
                 val colors = if isAutomatic then Color.all.toSet else Set(game.player(bot).get.color)
@@ -859,21 +859,26 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
                     )
                 val snapshot = Json.parse(doc.getAsOpt[String]("snapshot").get)
                 val policy = if isAutomatic then (snapshot \ game.turnColor.name).as[JsObject] else snapshot
-                Json.obj(
-                  "id" -> game.id.value,
-                  "ply" -> game.ply.value,
-                  "botToMove" -> (isAutomatic || game.player.userId.contains(bot)),
-                  "automatic" -> isAutomatic,
-                  "botColor" -> game.player(bot).get.color.name,
-                  "policy" -> policy,
-                  "clock" -> game.clock.map(c =>
+                val healthyPoll = pollingInstance.isDefined && !restarted && botIds(bot)
+                val claimBot = Option.when(healthyPoll && !isAutomatic)(bot)
+                env.round
+                  .noSweatCheckGame(game, claimBot, healthyPoll)
+                  .map: _ =>
                     Json.obj(
-                      "initial" -> c.config.limitSeconds.value,
-                      "increment" -> c.config.incrementSeconds.value
+                      "id" -> game.id.value,
+                      "ply" -> game.ply.value,
+                      "botToMove" -> (isAutomatic || game.player.userId.contains(bot)),
+                      "automatic" -> isAutomatic,
+                      "botColor" -> game.player(bot).get.color.name,
+                      "policy" -> policy,
+                      "clock" -> game.clock.map(c =>
+                        Json.obj(
+                          "initial" -> c.config.limitSeconds.value,
+                          "increment" -> c.config.incrementSeconds.value
+                        )
+                      ),
+                      "state" -> state
                     )
-                  ),
-                  "state" -> state
-                )
           .map(Json.toJson(_))
 
   def move(id: GameId, ply: Int, uci: String, timing: JsObject): Funit =

@@ -157,6 +157,16 @@ final class Env(
   val getSocketStatus: Game => Future[SocketStatus] = (game: Game) =>
     roundSocket.rounds.ask[SocketStatus](game.id)(GetSocketStatus.apply)
 
+  def noSweatCheckGame(game: Game, managedBot: Option[UserId], healthyPoll: Boolean): Funit =
+    NoSweatAbandon(
+      game,
+      managedBot,
+      healthyPoll,
+      getSocketStatus,
+      pov => lila.common.Bus.pub(lila.core.round.Tell(pov.gameId, RoundBus.ResignForce(pov.playerId))),
+      game => lila.common.Bus.pub(lila.core.round.Tell(game.id, RoundBus.QuietFlagCheck))
+    )
+
   private def isUserPresent(game: Game, userId: UserId): Fu[Boolean] =
     roundSocket.rounds.askIfPresentOrZero[Boolean](game.id)(RoundAsyncActor.HasUserId(userId, _))
 
