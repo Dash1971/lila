@@ -311,7 +311,7 @@ final class Form3(formHelper: FormHelper & I18nHelper & AssetHelper, flairApi: F
           cls := "flair-picker none",
           (!Granter.opt(_.LichessTeam) && !anyFlair).option(exceptEmojis)
         )(
-          button(cls := "button button-metal emoji-remove")("clear")
+          button(cls := "button button-metal emoji-remove", tpe := "button")("clear")
         )
       )
     )
