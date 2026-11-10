@@ -542,7 +542,7 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
         )
       ).map(ok => requireThat(ok, 409, "Security settings changed. Reload this page."))
 
-  def currentGames: Fu[List[GameModel]] = current().map(_.map(_._2).take(15))
+  def currentGames: Fu[List[GameModel]] = current().map(_.map(_._2).take(normalCapacity))
 
   private[app] def current(): Fu[List[(Bdoc, GameModel)]] =
     records
@@ -681,14 +681,17 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
   private def activityPaused: Fu[Boolean] =
     env.game.noSweatAdmission.paused
 
+  private def activeGameCount: Fu[Int] =
+    env.game.gameRepo.count(q =>
+      q.notFinished ++ bdoc(lila.game.Game.BSONFields.source -> bdoc("$ne" -> Source.Import.id))
+    )
+
   def activityStatus: Fu[JsObject] =
     for
       _ <- ready
       paused <- activityPaused
       games <- current()
-      nativeActive <- env.game.gameRepo.count(q =>
-        q.notFinished ++ bdoc(lila.game.Game.BSONFields.source -> bdoc("$ne" -> Source.Import.id))
-      )
+      nativeActive <- activeGameCount
       poolPending <- records.countSel(bdoc("state" -> bdoc("$in" -> List("reserved", "active"))))
       studyPending <- env.mongo
         .mainDb(CollName("nosweat_study_game"))
@@ -723,8 +726,9 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
         for
           paused <- activityPaused
           games <- current()
+          totalGames <- activeGameCount
           _ <-
-            if !lila.bot.PublicBotActivity.canAdmit(paused, games.count(g => automatic(g._1)), games.size)
+            if !lila.bot.PublicBotActivity.canAdmit(paused, games.count(g => automatic(g._1)), totalGames)
             then funit
             else
               val busy = games.flatMap(g => occupied(g._1)).toSet
