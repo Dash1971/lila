@@ -292,3 +292,11 @@ Line 2""")
     val render: Markdown => Html =
       new MarkdownRender(removeHtmlEntities = false)("test")
     assertEquals(render(Markdown("&#128512;")), Html("<p>&#128512;</p>\n"))
+
+  test("parser stack overflow fallback escapes untrusted HTML"):
+    val raw =
+      """<meta http-equiv="refresh" content="0;url=https://example.com"><div>unsafe & text</div>
+[a][b]
+
+[b]: <https://example.com/""" + ("A" * 19000) + ">\n"
+    assertEquals(render(Markdown(raw)), Html(scalalib.StringUtils.escapeHtmlRaw(raw)))
