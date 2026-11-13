@@ -9,7 +9,8 @@ final private class StartedOrganizer(
     playerRepo: PlayerRepo,
     pairingRepo: PairingRepo,
     waitingUsersApi: WaitingUsersApi,
-    socket: TournamentSocket
+    socket: TournamentSocket,
+    noSweatArena: NoSweatArena
 )(using Executor, Scheduler, org.apache.pekko.stream.Materializer):
 
   var runCounter = 0
@@ -41,6 +42,7 @@ final private class StartedOrganizer(
     else if api.killSchedule contains tour.id then
       api.killSchedule.remove(tour.id)
       api.finish(tour)
+    else if noSweatArena.ownerEvent(tour) then startPairing(tour)
     else if tour.nbPlayers < 2 then funit
     else if tour.nbPlayers < 30 then
       playerRepo.nbActivePlayers(tour.id).flatMap { nb =>

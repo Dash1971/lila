@@ -11,6 +11,7 @@ import lila.core.game.{ GameRule, Source, WithInitialFen }
 import lila.core.perf.PerfKey
 import lila.db.dsl.{ *, given }
 import lila.user.BSONFields as UserFields
+import lila.common.config.given
 
 final case class NoSweatError(status: Int, reason: String, code: Option[String] = None)
     extends RuntimeException(reason)
@@ -30,12 +31,16 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
     !activityEnabled || !env.config.getOptional[Boolean]("nosweat.study.enabled").getOrElse(false),
     "Automatic public play and bounded studies cannot run together"
   )
-  val normalCapacity = if activityEnabled then lila.bot.PublicBotActivity.capacity else 2
+  val normalCapacity =
+    if activityEnabled || env.config.getOptional[List[String]]("nosweat.arena.hosts").exists(_.nonEmpty) then
+      lila.bot.PublicBotActivity.capacity
+    else 2
   private val activityState = env.mongo.mainDb(CollName("nosweat_activity"))
   private val nextActivityAdmission = AtomicLong(0)
   private def automatic(doc: Bdoc): Boolean = doc.getAsOpt[Boolean]("automatic").contains(true)
   private def occupied(doc: Bdoc): Set[UserId] =
-    if automatic(doc) then List("white", "black").flatMap(doc.getAsOpt[UserId]).toSet
+    if doc.getAsOpt[TourId]("arena").isDefined then doc.getAsOpt[List[UserId]]("managed").getOrElse(Nil).toSet
+    else if automatic(doc) then List("white", "black").flatMap(doc.getAsOpt[UserId]).toSet
     else doc.getAsOpt[UserId]("bot").toSet
   private def disconnectBot(id: GameId): Unit =
     Option(connectedBots.remove(id)).foreach: colors =>
@@ -115,7 +120,7 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
             case _ =>
               ratingCatalog.update(id, Map.empty)
               pick(excluded + id, retries - 1)
-    pick(busy, 4)
+    env.tournament.noSweatArena.reservedBots.flatMap(reserved => pick(busy ++ reserved, 4))
   private def requireThat(ok: Boolean, status: Int, message: String): Unit =
     if !ok then throw NoSweatError(status, message)
 
@@ -356,10 +361,29 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
           .list(100)
           .flatMap: docs =>
             docs.foldLeft(funit)((prev, doc) =>
-              prev.flatMap(_ => failGame(doc.getAsOpt[GameId]("_id").get, "application_restart"))
+              prev.flatMap: _ =>
+                val id = doc.getAsOpt[GameId]("_id").get
+                doc
+                  .getAsOpt[TourId]("arena")
+                  .fold(funit): tour =>
+                    env.round.proxyRepo
+                      .game(id)
+                      .flatMap:
+                        case Some(_) => funit
+                        case None =>
+                          env.mongo
+                            .mainDb(CollName("tournament_pairing"))
+                            .delete
+                            .one(
+                              bdoc("_id" -> id, "tid" -> tour, "s" -> chess.Status.Created.id)
+                            )
+                            .void
+                  .flatMap(_ => failGame(id, "application_restart"))
             )
 
   val ready: Funit = if enabled then initialize() else funit
+
+  if enabled then env.tournament.noSweatArena.admit = reserveArenaPairings
 
   if enabled then
     lila.common.Bus.sub[lila.core.game.FinishGame]: finish =>
@@ -583,7 +607,9 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
         )
       result <- existing match
         case Some((doc, game)) =>
-          fuccess(playerLink(game, Color.fromWhite(doc.getAsOpt[String]("humanColor").contains("white"))))
+          val color = user.fold(Color.fromWhite(doc.getAsOpt[String]("humanColor").contains("white"))):
+            account => game.player(account.id).get.color
+          fuccess(playerLink(game, color))
         case None =>
           requireThat(
             games.size + studyBusy._1 < capacity,
@@ -700,7 +726,7 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
       "enabled" -> activityEnabled,
       "scope" -> "all-games",
       "paused" -> paused,
-      "active" -> games.count(g => automatic(g._1)),
+      "active" -> games.count(g => automatic(g._1) && g._1.getAsOpt[TourId]("arena").isEmpty),
       "target" -> lila.bot.PublicBotActivity.target,
       "totalActive" -> nativeActive,
       "poolPending" -> poolPending,
@@ -726,9 +752,14 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
         for
           paused <- activityPaused
           games <- current()
+          arenaSuppressed <- env.tournament.noSweatArena.suppressed
           totalGames <- activeGameCount
           _ <-
-            if !lila.bot.PublicBotActivity.canAdmit(paused, games.count(g => automatic(g._1)), totalGames)
+            if arenaSuppressed || !lila.bot.PublicBotActivity.canAdmit(
+                paused,
+                games.count(g => automatic(g._1) && g._1.getAsOpt[TourId]("arena").isEmpty),
+                totalGames
+              )
             then funit
             else
               val busy = games.flatMap(g => occupied(g._1)).toSet
@@ -841,6 +872,8 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
     ready
       .map(_ => pollingInstance.foreach(_ => env.bot.onlineApiUsers.setManagedOnline(botIds)))
       .flatMap(_ => recover)
+      .flatMap(_ => current())
+      .flatMap(_ => env.tournament.noSweatArena.reconcileLifecycle(id => arenaHasGames(id)))
       .flatMap(_ => replenishActivity())
       .flatMap(_ => current())
       .flatMap: games =>
@@ -850,15 +883,21 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
               .gameState(WithInitialFen(game, None))
               .flatMap: state =>
                 val isAutomatic = automatic(doc)
+                val isArena = doc.getAsOpt[TourId]("arena").isDefined
+                val managed = occupied(doc)
                 val bot = if isAutomatic then game.player.userId.get else doc.getAsOpt[UserId]("bot").get
-                val colors = if isAutomatic then Color.all.toSet else Set(game.player(bot).get.color)
+                val colors = if isArena then managed.flatMap(id => game.player(id).map(_.color))
+                else if isAutomatic then Color.all.toSet
+                else Set(game.player(bot).get.color)
                 if Option(connectedBots.putIfAbsent(game.id, colors)).isEmpty then
                   colors.foreach: color =>
                     lila.common.Bus.pub(
                       lila.core.round.Tell(game.id, lila.core.round.RoundBus.BotConnected(color, true))
                     )
                 val snapshot = Json.parse(doc.getAsOpt[String]("snapshot").get)
-                val policy = if isAutomatic then (snapshot \ game.turnColor.name).as[JsObject] else snapshot
+                val policy = if isArena || isAutomatic then
+                  (snapshot \ game.turnColor.name).asOpt[JsObject].getOrElse(Json.obj())
+                else snapshot
                 val healthyPoll = pollingInstance.isDefined && !restarted && botIds(bot)
                 val claimBot = Option.when(healthyPoll && !isAutomatic)(bot)
                 env.round
@@ -869,6 +908,7 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
                       "ply" -> game.ply.value,
                       "botToMove" -> (isAutomatic || game.player.userId.contains(bot)),
                       "automatic" -> isAutomatic,
+                      "arena" -> isArena,
                       "botColor" -> game.player(bot).get.color.name,
                       "policy" -> policy,
                       "clock" -> game.clock.map(c =>
@@ -895,7 +935,7 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
       p = pov.getOrElse(throw NoSweatError(404, "No bot seat"))
       _ = requireThat(
         doc.getAsOpt[String]("state").contains("active") && p.game.playable &&
-          p.game.ply.value == ply && p.isMyTurn && bot.exists(_.isBot),
+          p.game.ply.value == ply && p.isMyTurn && bot.exists(_.isBot) && occupied(doc)(botId),
         409,
         "Game position changed"
       )
@@ -930,6 +970,170 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
                   .one(bid(id), set("state" -> "service_failure", "failure" -> reason.take(80)))
                   .void
 
+  private def arenaHasGames(id: TourId): Fu[Boolean] =
+    env.game.gameRepo
+      .count(q => q.notFinished ++ bdoc(lila.game.Game.BSONFields.tournamentId -> id))
+      .map(_ > 0)
+
+  def arenaStatus(tour: lila.tournament.Tournament): Fu[JsObject] =
+    for
+      scope <- env.tournament.noSweatArena.scope(tour)
+      games <- current()
+    yield Json.obj(
+      "prepared" -> scope.isDefined,
+      "ready" -> (scope.isDefined && !games
+        .exists(g => automatic(g._1) && g._1.getAsOpt[TourId]("arena").isEmpty)),
+      "bots" -> scope.fold(0)(lila.tournament.NoSweatArena.rosterOf(_).size)
+    )
+
+  def prepareArena(tour: lila.tournament.Tournament): Fu[JsObject] = queue:
+    for
+      _ <- ready
+      _ = requireThat(
+        env.tournament.noSweatArena.ownerEvent(tour) && tour.isCreated,
+        403,
+        "Arena preparation unavailable"
+      )
+      _ = requireThat(
+        !env.config.getOptional[Boolean]("nosweat.study.enabled").getOrElse(false),
+        409,
+        "Study active"
+      )
+      previous <- env.tournament.noSweatArena.current
+      same = previous.exists(d =>
+        d.getAsOpt[TourId]("tour").contains(tour.id) && !d.getAsOpt[String]("state").contains("idle")
+      )
+      _ = requireThat(
+        same || previous.forall(_.getAsOpt[String]("state").contains("idle")),
+        409,
+        "Another Arena is prepared"
+      )
+      _ <-
+        if same then funit
+        else
+          for
+            games <- current()
+            perfs <- env.user.perfsRepo.idsMap(botIds.toList, _.pri)
+            busy = games.flatMap(g => occupied(g._1)).toSet
+            candidates = perfs.toList.filter((id, ps) =>
+              !busy(id) && ps(tour.perfType.key).intRating.value >= 1200 && ps(
+                tour.perfType.key
+              ).intRating.value <= 1700
+            )
+            chosen = lila.app.NoSweatArenaRoster.select(
+              candidates.map((id, ps) => id -> ps(tour.perfType.key).intRating.value)
+            )
+            _ = requireThat(chosen.size == 10, 409, "Not enough Arena bots")
+            bots <- chosen.traverse(id => env.user.api.byIdWithPerf(id, tour.perfType.key))
+            _ = requireThat(
+              bots.flatten.size == 10 && bots.flatten.forall(b => b.user.isBot && b.user.enabled.yes),
+              409,
+              "Arena roster unavailable"
+            )
+            _ <- env.tournament.noSweatArena.register(tour, bots.flatten)
+          yield ()
+      status <- arenaStatus(tour)
+    yield status
+
+  private def reserveArenaPairings(
+      tour: lila.tournament.Tournament,
+      pairs: List[lila.tournament.NoSweatArena.Seats],
+      commit: List[GameId] => Funit
+  ): Funit = queue:
+    val work = for
+      _ <- ready
+      scope <- env.tournament.noSweatArena.scope(tour)
+      _ = requireThat(
+        scope.isDefined && tour.isStarted && !tour.secondsToFinish.isZero,
+        409,
+        "Arena is not prepared"
+      )
+      _ <- env.game.noSweatAdmission.check
+      games <- current()
+      studyBusy <- env.noSweatStudy.busy
+      roster = lila.tournament.NoSweatArena.rosterOf(scope.get).toSet
+      occupiedBots = games.flatMap(g => occupied(g._1)).toSet ++ studyBusy._2
+      free = (normalCapacity - games.size - studyBusy._1).max(0)
+      withBots = pairs.filter(p => p.users.exists(botIds))
+      backgroundDraining = games.exists(g => automatic(g._1) && g._1.getAsOpt[TourId]("arena").isEmpty)
+      eligible = withBots
+        .filter(_ => !backgroundDraining)
+        .filter(p => p.users.filter(botIds).forall(id => roster(id) && !occupiedBots(id)))
+        .take(free)
+      // Keep native human/human pairings even when managed inference slots are full.
+      accepted = pairs.filterNot(p => p.users.exists(botIds)) ++ eligible
+      _ <- eligible.sequentiallyVoid: pair =>
+        val managed = pair.users.filter(botIds)
+        managed
+          .traverse: id =>
+            val color = if pair.white == id then "white" else "black"
+            val opponent = if pair.white == id then pair.black else pair.white
+            env.user.api
+              .byIdWithPerf(opponent, tour.perfType.key)
+              .flatMap: other =>
+                requireThat(other.isDefined, 409, "Arena opponent unavailable")
+                adapter(
+                  "/freeze-arena",
+                  Json.obj("bot" -> (botsById(id) \ "id").as[String], "rated" -> tour.rated.yes) ++
+                    Option
+                      .when(!botIds(opponent))(Json.obj("opponentRating" -> other.get.perf.intRating.value))
+                      .getOrElse(Json.obj()),
+                  1.second
+                )
+                  .map(color -> _)
+          .flatMap: policies =>
+            records.insert
+              .one(
+                bdoc(
+                  "_id" -> pair.id,
+                  "arena" -> tour.id,
+                  "managed" -> managed,
+                  "white" -> pair.white,
+                  "black" -> pair.black,
+                  "bot" -> managed.head,
+                  "human" -> pair.users.find(id => !botIds(id)),
+                  "humanColor" -> Option.when(managed.size == 1)(if botIds(pair.white) then "black"
+                  else "white"),
+                  "automatic" -> (managed.size == 2),
+                  "state" -> "reserved",
+                  "rated" -> tour.rated.yes,
+                  "snapshot" -> Json.stringify(JsObject(policies)),
+                  "createdAt" -> nowInstant
+                )
+              )
+              .void
+      _ <- commit(accepted.map(_.id))
+      _ <- eligible.sequentiallyVoid(p => records.update.one(bid(p.id), set("state" -> "active")).void)
+    yield ()
+    work.recoverWith: error =>
+      // Starts are sequential for this small managed batch. Keep any game that
+      // actually started; remove only unpublished pairings with no native game.
+      pairs
+        .sequentiallyVoid: pair =>
+          env.round.proxyRepo
+            .game(pair.id)
+            .flatMap:
+              case Some(game) =>
+                records.update
+                  .one(bid(pair.id), set("state" -> (if game.playable then "active" else "finished")))
+                  .void
+              case None =>
+                for
+                  _ <- records.update.one(bid(pair.id), set("state" -> "finished")).void
+                  _ <- env.mongo
+                    .mainDb(CollName("tournament_pairing"))
+                    .delete
+                    .one(bdoc("_id" -> pair.id, "tid" -> tour.id, "s" -> chess.Status.Created.id))
+                    .void
+                yield ()
+        .flatMap(_ => fufail(error))
+
+  private def publicArenaPolicy(value: JsValue): JsValue = value match
+    case obj: JsObject =>
+      JsObject(obj.fields.filterNot(_._1 == "samplingSeed").map((k, v) => k -> publicArenaPolicy(v)))
+    case JsArray(values) => JsArray(values.map(publicArenaPolicy))
+    case other => other
+
   def details(id: GameId, user: UserModel): Fu[Option[JsValue]] =
     records
       .one[Bdoc](bid(id) ++ bdoc("human" -> user.id))
@@ -938,5 +1142,5 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
           "id" -> id.value,
           "state" -> doc.getAsOpt[String]("state"),
           "failure" -> doc.getAsOpt[String]("failure"),
-          "policy" -> (Json.parse(doc.getAsOpt[String]("snapshot").get).as[JsObject] - "samplingSeed")
+          "policy" -> publicArenaPolicy(Json.parse(doc.getAsOpt[String]("snapshot").get))
         )

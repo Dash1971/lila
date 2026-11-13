@@ -15,7 +15,7 @@ export const player = (
 ) => {
   const profileHref = profileUrl(p.name);
   return h(
-    'a.ulpt.user-link.online' + (((p.title || '') + p.name).length > 15 ? '.long' : ''),
+    'a.ulpt.user-link.online' + (((p.title || '') + (p.displayName || p.name)).length > 15 ? '.long' : ''),
     {
       attrs: asLink || 'ontouchstart' in window ? { href: profileHref } : { 'data-href': profileHref },
       hook: { destroy: vnode => $.powerTip.destroy(vnode.elm) },
@@ -33,6 +33,6 @@ export const player = (
 
 export const fullName = (p: LightUserNoId & { realName?: string }): MaybeVNodes => [
   userTitle(p),
-  ...(p.realName ? [p.realName, h('br'), h('span.username-low', `(${p.name})`)] : [p.name]),
+  ...(p.realName ? [p.realName, h('br'), h('span.username-low', `(${p.displayName || p.name})`)] : [p.displayName || p.name]),
   userFlair(p),
 ];

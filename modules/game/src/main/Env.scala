@@ -51,6 +51,31 @@ final class Env(
     if !noSweatOnly || !game.playable then funit
     else if game.clock.isEmpty || game.daysPerTurn.isDefined then
       fufail(NoSweatGameAdmission.RealTimeRequired)
+    else if game.sourceIs(_.Arena) then
+      for
+        scope <- db(CollName("nosweat_arena")).byId[Bdoc]("current")
+        pairing <- db(CollName("tournament_pairing")).byId[Bdoc](game.id)
+        users <- userApi.byIds(game.userIds)
+        record <- noSweatGames.byId[Bdoc](game.id)
+        bots = users.filter(_.isBot).map(_.id).toSet
+        hosts = NoSweatArenaAdmission.hosts(appConfig)
+        allowed = game.variant.standard && game.userIds.distinct.size == 2 && users.size == 2 && users.forall(
+          _.enabled.yes
+        ) &&
+          game.tournamentId.exists(tour =>
+            NoSweatArenaAdmission.allows(
+              tour,
+              game.whitePlayer.userId.get,
+              game.blackPlayer.userId.get,
+              bots,
+              hosts,
+              scope,
+              pairing,
+              record
+            )
+          )
+        _ <- if allowed then funit else fufail("No authorized Arena pairing")
+      yield ()
     else if game.variant.standard && game.sourceIs(_.Friend) && game.userIds.distinct.size == 2 then
       // Native ChallengeJoiner and Rematcher enforce invitation ownership/consent.
       // Keep their Friend source path; human pool/lobby games still require Maia admission.

@@ -1217,4 +1217,10 @@ Déjalo vacío para empezar las partidas desde la posición inicial habitual.</s
   <string name="muteInsightOpeningFamilyHelp">La apertura general de la partida.</string>
   <string name="muteInsightOpeningHelp">La variante de apertura jugada en la partida.</string>
   <string name="muteInsightLastDay">Últimas 24 horas</string>
+  <string name="muteArenaPrepare">Preparar los bots de la arena</string>
+  <string name="muteArenaReady">Los bots de la arena están listos.</string>
+  <string name="muteArenaDraining">Esperando a que terminen las partidas de bots en segundo plano. Actualiza la página para comprobarlo.</string>
+  <string name="muteArenaUnavailable">No se pudieron preparar los bots. Puede haber otro evento activo o menos de diez bots disponibles que cumplan los requisitos.</string>
+  <string name="muteArenaHelp">Los bots de 1200–1700 completan el grupo hasta diez participantes activos. No hay límite de participantes humanos; las partidas en curso terminan con normalidad.</string>
+  <string name="muteArenaSettings">Usa ajedrez estándar, la posición inicial normal y permite bots. Las batallas por equipos y los premios no están disponibles.</string>
 </resources>

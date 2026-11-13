@@ -29,6 +29,7 @@ export interface TournamentOpts {
   userId?: string;
   chat?: any;
   showRatings: boolean;
+  allowDownloads?: boolean;
 }
 
 export interface TournamentData {

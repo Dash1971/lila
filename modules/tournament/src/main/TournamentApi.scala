@@ -48,7 +48,8 @@ final class TournamentApi(
     cacheApi: lila.memo.CacheApi,
     lightUserApi: lila.core.user.LightUserApi,
     ircApi: lila.core.irc.IrcApi,
-    teamApi: lila.core.team.TeamApi
+    teamApi: lila.core.team.TeamApi,
+    noSweatArena: NoSweatArena
 )(using scheduler: Scheduler)(using
     Executor,
     org.apache.pekko.actor.ActorSystem,
@@ -148,18 +149,17 @@ final class TournamentApi(
       users: WaitingUsers,
       smallTourNbActivePlayers: Option[Int]
   ): Funit =
-    (users.size > 1 && (
-      !hadPairings.get(forTour.id) ||
-        users.haveWaitedEnough ||
-        smallTourNbActivePlayers.exists(_ <= users.size * 1.5)
-    )).so(Parallel(forTour.id, "makePairings")(cached.tourCache.started): tour =>
+    Parallel(forTour.id, "makePairings")(cached.tourCache.started): tour =>
       for
+        eligible <- noSweatArena.waiting(tour, users)
         ranking <- cached.ranking(tour).mon(lila.mon.tournament.pairing.createRanking)
         playing <- pairingRepo.playingUserIds(tour.id)
-        idle = users.removePairedUsers(playing)
-        _ <- (idle.size > 1)
+        idle = eligible.removePairedUsers(playing)
+        _ <- (idle.size > 1 && (!hadPairings.get(
+          tour.id
+        ) || eligible.haveWaitedEnough || smallTourNbActivePlayers.exists(_ <= idle.size * 1.5)))
           .so:
-            if users != idle
+            if eligible != idle
             then logger.warn(s"Almost paired a playing player in ${forTour.id}")
             pairingSystem
               .createPairings(tour, idle, ranking, smallTourNbActivePlayers)
@@ -167,27 +167,31 @@ final class TournamentApi(
               .flatMap:
                 case Nil => funit
                 case pairings =>
-                  pairingRepo.insert(pairings.map(_.pairing)) >>
-                    pairings
-                      .parallelVoid: pairing =>
-                        autoPairing(tour, pairing, ranking.ranking)
-                          .mon(lila.mon.tournament.pairing.createAutoPairing)
-                          .map { socket.startGame(tour.id, _) }
-                      .mon(lila.mon.tournament.pairing.createInserts)
-                      .andDo:
-                        lila.mon.tournament.pairing.batchSize.record(pairings.size)
-                        waitingUsers.registerPairedUsers(
-                          tour.id,
-                          pairings.view.flatMap(_.pairing.users).toSet
-                        )
-                        socket.reload(tour.id)
-                        hadPairings.put(tour.id)
-                        featureOneOf(tour, pairings, ranking.ranking) // do outside of queue
-          .monSuccess(lila.mon.tournament.pairing.create)
-          .chronometer
-          .logIfSlow(100, logger)(_ => s"Pairings for https://lichess.org/tournament/${tour.id}")
-          .result
-      yield ())
+                  noSweatArena.commit(tour, pairings): accepted =>
+                    pairingRepo.insert(accepted.map(_.pairing)) >>
+                      {
+                        def start(p: Pairing.WithPlayers): Funit =
+                          autoPairing(tour, p, ranking.ranking)
+                            .mon(lila.mon.tournament.pairing.createAutoPairing)
+                            .map(socket.startGame(tour.id, _))
+                        if noSweatArena.focused then accepted.sequentiallyVoid(start)
+                        else accepted.parallelVoid(start)
+                      }
+                        .mon(lila.mon.tournament.pairing.createInserts)
+                        .andDo:
+                          lila.mon.tournament.pairing.batchSize.record(accepted.size)
+                          waitingUsers.registerPairedUsers(
+                            tour.id,
+                            accepted.view.flatMap(_.pairing.users).toSet
+                          )
+                          socket.reload(tour.id)
+                          hadPairings.put(tour.id)
+                          featureOneOf(tour, accepted, ranking.ranking) // do outside of queue
+              .monSuccess(lila.mon.tournament.pairing.create)
+              .chronometer
+              .logIfSlow(100, logger)(_ => s"Pairings for https://lichess.org/tournament/${tour.id}")
+              .result
+      yield ()
 
   private def featureOneOf(tour: Tournament, pairings: List[Pairing.WithPlayers], ranking: Ranking): Funit =
     tour.featured

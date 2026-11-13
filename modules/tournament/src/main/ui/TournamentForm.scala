@@ -24,7 +24,8 @@ extension (f: Form[?])
 
 final class TournamentForm(val helpers: Helpers, showUi: TournamentShow)(
     modMenu: Context ?=> Frag,
-    val translatedVariantChoicesWithVariants: Translate ?=> List[(String, String, Option[String])]
+    val translatedVariantChoicesWithVariants: Translate ?=> List[(String, String, Option[String])],
+    focused: Boolean = false
 ):
   import helpers.{ *, given }
 
@@ -101,7 +102,8 @@ final class TournamentForm(val helpers: Helpers, showUi: TournamentShow)(
       ),
       form3.fieldset(trans.site.games(), toggle = true.some, disabled = fields.frozen)(
         fields.clock,
-        form3.split(fields.variant, fields.startPosition)
+        if focused then frag(form3.hidden(form.prefix("variant")), form3.hidden(form.prefix("position")))
+        else form3.split(fields.variant, fields.startPosition)
       ),
       fields.waitStart,
       conditionFields(form, fields, teams = leaderTeams, tour = none),
@@ -120,7 +122,8 @@ final class TournamentForm(val helpers: Helpers, showUi: TournamentShow)(
       ),
       form3.fieldset(trans.site.games(), toggle = false.some, disabled = fields.frozen)(
         fields.clock,
-        form3.split(fields.variant, fields.startPosition)
+        if focused then frag(form3.hidden(form.prefix("variant")), form3.hidden(form.prefix("position")))
+        else form3.split(fields.variant, fields.startPosition)
       ),
       fields.waitStart,
       conditionFields(form, fields, teams = myTeams, tour = tour.some),
@@ -401,11 +404,11 @@ final class TourFields(tourForm: TournamentForm)(form: Form[?], tour: Option[Tou
   def minutes =
     form3.group(form.prefix("minutes"), trans.site.duration(), half = true):
       if tour.forall(t => lila.tournament.TournamentForm.minutes contains t.minutes)
-      then form3.select(_, TournamentForm.minuteChoicesKeepingCustom(tour))
+      then form3.select(_, lila.tournament.TournamentForm.minuteChoicesKeepingCustom(tour))
       else form3.input(_)(tpe := "number")
   def waitMinutes =
     form3.group(form.prefix("waitMinutes"), trans.site.timeBeforeTournamentStarts(), half = true):
-      form3.select(_, TournamentForm.waitMinuteChoices)
+      form3.select(_, lila.tournament.TournamentForm.waitMinuteChoices)
   def waitStart =
     form3.fieldset(trans.arena.startDate(), toggle = tour.forall(_.isCreated).some, disabled = frozen)(
       form3.split(waitMinutes, startDate)

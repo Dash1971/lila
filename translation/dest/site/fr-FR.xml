@@ -1216,4 +1216,10 @@ Laissez vide pour commencer les parties à partir de la position initiale normal
   <string name="muteInsightOpeningFamilyHelp">L’ouverture générale jouée dans la partie.</string>
   <string name="muteInsightOpeningHelp">La variante d’ouverture jouée dans la partie.</string>
   <string name="muteInsightLastDay">Les dernières 24 heures</string>
+  <string name="muteArenaPrepare">Préparer les bots de l’arène</string>
+  <string name="muteArenaReady">Les bots de l’arène sont prêts.</string>
+  <string name="muteArenaDraining">En attente de la fin des parties de bots en arrière-plan. Actualisez pour vérifier.</string>
+  <string name="muteArenaUnavailable">Impossible de préparer les bots. Un autre événement est peut-être actif ou moins de dix bots admissibles sont disponibles.</string>
+  <string name="muteArenaHelp">Des bots classés de 1200 à 1700 complètent le groupe jusqu’à dix participants actifs. Le nombre de participants humains est illimité ; les parties en cours se terminent normalement.</string>
+  <string name="muteArenaSettings">Utilisez les échecs standards, la position initiale normale et autorisez les bots. Les batailles par équipes et les prix ne sont pas disponibles.</string>
 </resources>

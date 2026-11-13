@@ -1046,4 +1046,10 @@
   <string name="muteInsightOpeningFamilyHelp">बाज़ी में खेली गई मुख्य ओपनिंग।</string>
   <string name="muteInsightOpeningHelp">बाज़ी में खेली गई ओपनिंग की शाखा।</string>
   <string name="muteInsightLastDay">पिछले 24 घंटे</string>
+  <string name="muteArenaPrepare">एरीना बॉट तैयार करें</string>
+  <string name="muteArenaReady">एरीना बॉट तैयार हैं।</string>
+  <string name="muteArenaDraining">पृष्ठभूमि में चल रही बॉट बाज़ियों के समाप्त होने की प्रतीक्षा है। तैयारी जाँचने के लिए पेज ताज़ा करें।</string>
+  <string name="muteArenaUnavailable">एरीना बॉट तैयार नहीं हो सके। कोई दूसरा आयोजन सक्रिय हो सकता है या दस से कम उपयुक्त बॉट उपलब्ध हैं।</string>
+  <string name="muteArenaHelp">1200–1700 रेटिंग वाले बॉट सक्रिय प्रतिभागियों की संख्या दस तक पूरी करते हैं। मानव प्रतिभागियों की कोई सीमा नहीं है; चल रही बाज़ियाँ सामान्य रूप से समाप्त होंगी।</string>
+  <string name="muteArenaSettings">मानक शतरंज, सामान्य शुरुआती स्थिति का उपयोग करें और बॉट को अनुमति दें। टीम मुकाबले और पुरस्कार उपलब्ध नहीं हैं।</string>
 </resources>

@@ -24,7 +24,9 @@ final class TournamentShow(helpers: Helpers, gathering: GatheringUi)(
       shieldOwner: Option[UserId],
       data: JsObject,
       chat: Option[(Frag, JsObject)],
-      streamers: Frag
+      streamers: Frag,
+      arenaControls: Option[Frag] = None,
+      allowDownloads: Boolean = true
   )(using ctx: Context) =
     val extraCls = tour.scheduleData.so: (freq, speed) =>
       s" tour-sched tour-sched-${freq.name} tour-speed-${speed.name} tour-variant-${tour.variant.key} tour-id-${tour.id}"
@@ -36,13 +38,14 @@ final class TournamentShow(helpers: Helpers, gathering: GatheringUi)(
             "data" -> data,
             "userId" -> ctx.userId,
             "chat" -> chat._2F,
-            "showRatings" -> ctx.pref.showRatings
+            "showRatings" -> ctx.pref.showRatings,
+            "allowDownloads" -> allowDownloads
           )
         )
       .csp(_.withLilaHttp):
         main(cls := s"tour variant-${tour.variant.key}$extraCls")(
           st.aside(cls := "tour__side"):
-            side(tour, verdicts, shieldOwner, chat._1F, streamers)
+            frag(side(tour, verdicts, shieldOwner, chat._1F, streamers), arenaControls)
           ,
           div(cls := "tour__main")(div(cls := "box")),
           tour.isCreated.option(div(cls := "tour__faq"):

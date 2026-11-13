@@ -13,7 +13,9 @@ import lila.core.perm.Granter
 import lila.core.team.LightTeam
 import lila.gathering.GatheringClock
 
-final class TournamentForm:
+final class TournamentForm(appConfig: play.api.Configuration):
+
+  private val focused = appConfig.getOptional[Boolean]("nosweat.enabled").getOrElse(false)
 
   import TournamentForm.*
   import GatheringClock.*
@@ -26,16 +28,18 @@ final class TournamentForm:
   private[tournament] def empty(teamBattleId: Option[TeamId] = None, forClas: Boolean)(using me: Me) =
     TournamentSetup(
       name = teamBattleId.isEmpty.option(me.titleUsername),
-      clockTime = if forClas then 5d else timeDefault,
-      clockIncrement = incrementDefault,
-      minutes = minuteDefault,
+      clockTime = if focused then 15d else if forClas then 5d else timeDefault,
+      clockIncrement = if focused then IncrementSeconds(10) else incrementDefault,
+      minutes = if focused then 120 else minuteDefault,
       waitMinutes = waitMinuteDefault.some,
       startDate = none,
       variant = chess.variant.Standard.id.toString.some,
       position = None,
       password = None,
       rated = Rated.Yes.some,
-      conditions = TournamentCondition.All.empty,
+      conditions =
+        if focused then TournamentCondition.All.empty.copy(bots = Some(lila.gathering.Condition.Bots(true)))
+        else TournamentCondition.All.empty,
       teamBattleByTeam = teamBattleId,
       berserkable = forClas.not.some,
       streakable = forClas.not.some,
@@ -120,6 +124,11 @@ final class TournamentForm:
       "payouts" -> (if manager then optional(cleanNonEmptyText.into[Payouts]) else ignored(none)),
       "hasChat" -> optional(boolean)
     )(TournamentSetup.apply)(unapply)
+      .verifying(
+        "muteArenaSettings",
+        d =>
+          !focused || (d.realVariant.standard && d.position.isEmpty && d.teamBattleByTeam.isEmpty && d.conditions.allowsBots && d.payouts.isEmpty)
+      )
       .verifying("Invalid clock", _.validClock(prev))
       .verifying("Invalid clock for bot games", _.validClockForBots(prev))
       .verifying("15s and 0+1 variant games cannot be rated", _.validRatedVariant(prev))

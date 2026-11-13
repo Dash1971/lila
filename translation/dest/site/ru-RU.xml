@@ -1299,4 +1299,10 @@
   <string name="muteInsightOpeningFamilyHelp">Основной дебют, разыгранный в партии.</string>
   <string name="muteInsightOpeningHelp">Вариант дебюта, разыгранный в партии.</string>
   <string name="muteInsightLastDay">Последние 24 часа</string>
+  <string name="muteArenaPrepare">Подготовить ботов арены</string>
+  <string name="muteArenaReady">Боты арены готовы.</string>
+  <string name="muteArenaDraining">Ожидание завершения фоновых партий ботов. Обновите страницу для проверки готовности.</string>
+  <string name="muteArenaUnavailable">Не удалось подготовить ботов. Возможно, уже идёт другое событие или доступно менее десяти подходящих ботов.</string>
+  <string name="muteArenaHelp">Боты с рейтингом 1200–1700 дополняют состав до десяти активных участников. Число участников-людей не ограничено; текущие партии завершаются обычным образом.</string>
+  <string name="muteArenaSettings">Используйте стандартные шахматы, обычную начальную позицию и разрешите ботов. Командные битвы и призы недоступны.</string>
 </resources>

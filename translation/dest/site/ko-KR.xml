@@ -1175,4 +1175,10 @@ FEN 포지션을 생성하기 위해 %s를 사용할 수 있습니다.
   <string name="muteInsightOpeningFamilyHelp">경기에서 사용한 기본 오프닝입니다.</string>
   <string name="muteInsightOpeningHelp">경기에서 사용한 오프닝 변형입니다.</string>
   <string name="muteInsightLastDay">최근 24시간</string>
+  <string name="muteArenaPrepare">아레나 봇 준비</string>
+  <string name="muteArenaReady">아레나 봇이 준비되었습니다.</string>
+  <string name="muteArenaDraining">백그라운드 봇 대국이 끝나기를 기다리는 중입니다. 새로고침하여 준비 상태를 확인하세요.</string>
+  <string name="muteArenaUnavailable">아레나 봇을 준비하지 못했습니다. 다른 이벤트가 진행 중이거나 조건에 맞는 봇이 열 개 미만일 수 있습니다.</string>
+  <string name="muteArenaHelp">레이팅 1200–1700의 봇이 활성 참가자 수를 최대 열 명까지 채웁니다. 사람 참가자 수에는 제한이 없으며 진행 중인 대국은 정상적으로 끝납니다.</string>
+  <string name="muteArenaSettings">표준 체스와 기본 시작 포지션을 사용하고 봇을 허용하세요. 팀 대항전과 상품은 지원하지 않습니다.</string>
 </resources>

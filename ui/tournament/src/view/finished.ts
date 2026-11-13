@@ -44,28 +44,30 @@ function stats(ctrl: TournamentController): VNode | undefined {
   return h('div.tour__stats', [
     h('h2', i18n.site.tournamentComplete),
     h('table', tableData),
-    h('div.tour__stats__downloads', [
-      ...(data.teamBattle
-        ? [
-            h(
-              'a',
-              { attrs: { href: `/tournament/${data.id}/teams` } },
-              i18n.arena.viewAllXTeams(Object.keys(data.teamBattle.teams).length),
-            ),
-            h('br'),
-          ]
-        : []),
-      toggleBox(i18n.site.download, [
-        downloadLink(`/api/tournament/${data.id}/games`, [i18n.site.downloadAllGames, ' (PGN)']),
-        data.me &&
-          downloadLink(`/api/tournament/${data.id}/games?player=${ctrl.opts.userId}`, [
-            i18n.site.downloadMyGames,
-            ' (PGN)',
+    ctrl.opts.allowDownloads !== false
+      ? h('div.tour__stats__downloads', [
+          ...(data.teamBattle
+            ? [
+                h(
+                  'a',
+                  { attrs: { href: `/tournament/${data.id}/teams` } },
+                  i18n.arena.viewAllXTeams(Object.keys(data.teamBattle.teams).length),
+                ),
+                h('br'),
+              ]
+            : []),
+          toggleBox(i18n.site.download, [
+            downloadLink(`/api/tournament/${data.id}/games`, [i18n.site.downloadAllGames, ' (PGN)']),
+            data.me &&
+              downloadLink(`/api/tournament/${data.id}/games?player=${ctrl.opts.userId}`, [
+                i18n.site.downloadMyGames,
+                ' (PGN)',
+              ]),
+            downloadLink(`/api/tournament/${data.id}/results`, [i18n.site.downloadResults, ' (NDJSON)']),
+            downloadLink(`/api/tournament/${data.id}/results?as=csv`, [i18n.site.downloadResults, ' (CSV)']),
           ]),
-        downloadLink(`/api/tournament/${data.id}/results`, [i18n.site.downloadResults, ' (NDJSON)']),
-        downloadLink(`/api/tournament/${data.id}/results?as=csv`, [i18n.site.downloadResults, ' (CSV)']),
-      ]),
-    ]),
+        ])
+      : null,
   ]);
 }
 

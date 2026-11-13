@@ -24,7 +24,8 @@ export showUi.faq.page as faq
 
 lazy val form = TournamentForm(helpers, showUi)(
   modMenu = views.mod.ui.menu("tour"),
-  views.setup.translatedVariantChoicesWithVariantsById
+  views.setup.translatedVariantChoicesWithVariantsById,
+  focused = env.noSweat.enabled
 )
 
 def show(
@@ -33,7 +34,8 @@ def show(
     data: play.api.libs.json.JsObject,
     chatOption: Option[lila.chat.UserChat.Mine],
     streamers: List[UserId],
-    shieldOwner: Option[UserId]
+    shieldOwner: Option[UserId],
+    arena: Option[play.api.libs.json.JsObject] = None
 )(using ctx: Context) =
   val chat = chatOption.map: c =>
     views.chat.frag -> views.chat.json(
@@ -46,6 +48,15 @@ def show(
       localMod = ctx.userId.has(tour.createdBy),
       writeable = !c.locked
     )
-  showUi(tour, verdicts, shieldOwner, data, chat, views.streamer.bits.contextual(streamers))
+  showUi(
+    tour,
+    verdicts,
+    shieldOwner,
+    data,
+    chat,
+    views.streamer.bits.contextual(streamers),
+    arena.map(views.noSweatArenaControls(tour, _)),
+    allowDownloads = !env.noSweat.enabled
+  )
 
 export showUi.restricted

@@ -1217,4 +1217,10 @@ Leer lassen, um Partien von der normalen Ausgangsstellung aus zu starten.</strin
   <string name="muteInsightOpeningFamilyHelp">Die grundlegende Eröffnung der Partie.</string>
   <string name="muteInsightOpeningHelp">Die in der Partie gespielte Eröffnungsvariante.</string>
   <string name="muteInsightLastDay">Letzte 24 Stunden</string>
+  <string name="muteArenaPrepare">Arena-Bots vorbereiten</string>
+  <string name="muteArenaReady">Die Arena-Bots sind bereit.</string>
+  <string name="muteArenaDraining">Die laufenden Bot-Spiele werden beendet. Aktualisiere die Seite, um die Bereitschaft zu prüfen.</string>
+  <string name="muteArenaUnavailable">Die Arena-Bots konnten nicht vorbereitet werden. Möglicherweise läuft ein anderes Ereignis oder es sind weniger als zehn geeignete Bots verfügbar.</string>
+  <string name="muteArenaHelp">Bots mit einer Wertung von 1200–1700 ergänzen das Feld auf bis zu zehn aktive Teilnehmer. Menschen können ohne Teilnehmerlimit beitreten; laufende Partien werden regulär beendet.</string>
+  <string name="muteArenaSettings">Verwende Standardschach mit der normalen Ausgangsstellung und erlaube Bots. Mannschaftskämpfe und Preise sind nicht verfügbar.</string>
 </resources>

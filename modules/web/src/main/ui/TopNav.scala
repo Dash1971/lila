@@ -37,7 +37,10 @@ final class TopNav(helpers: Helpers):
         ),
         st.section(
           linkTitle(routes.ForumCateg.index.url, trans.site.community()),
-          div(role := "group")(a(href := routes.ForumCateg.index)(trans.site.forum()))
+          div(role := "group")(
+            a(href := routes.ForumCateg.index)(trans.site.forum()),
+            a(href := routes.Tournament.home)(trans.arena.arenaTournaments())
+          )
         ),
         toolsMenu(compact)
       )

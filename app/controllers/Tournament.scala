@@ -25,7 +25,18 @@ final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Mat
   def home = Open(serveHome)
   def homeLang = LangPage(routes.Tournament.home)(serveHome)
 
-  private def serveHome(using ctx: Context) = NoBot:
+  private def serveHome(using ctx: Context): Fu[Result] =
+    if env.noSweat.enabled then
+      env.tournament.noSweatArena.events.flatMap: events =>
+        Ok.page(
+          views.noSweatArenaHome(
+            events.filter(t => !t.isPrivate || ctx.is(t.createdBy)),
+            ctx.userId.exists(env.tournament.noSweatArena.hostAllowed)
+          )
+        )
+    else serveNativeHome
+
+  private def serveNativeHome(using ctx: Context) = NoBot:
     for
       teamIds <- ctx.userId.so(env.team.cached.teamIdsList)
       (scheduled, visible) <- env.tournament.featuring.tourIndex.get(teamIds)
@@ -98,7 +109,13 @@ final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Mat
                 env.team.cached.preloadSet(b.teams)
               streamers <- streamerCache.get(tour.id)
               shieldOwner <- env.tournament.shieldApi.currentOwner(tour)
-              page <- renderPage(views.tournament.show(tour, verdicts, json, chat, streamers, shieldOwner))
+              arena <-
+                if env.noSweat.enabled && ctx.is(tour.createdBy) then
+                  env.noSweat.arenaStatus(tour).map(Some(_))
+                else fuccess(None)
+              page <- renderPage(
+                views.tournament.show(tour, verdicts, json, chat, streamers, shieldOwner, arena)
+              )
             yield
               env.tournament.lilaHttp.hit(tour)
               Ok(page).noCache
@@ -220,10 +237,23 @@ final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Mat
   }
 
   def form = Auth { ctx ?=> me ?=>
-    NoBot:
-      env.team.api.lightsByTourLeader(me).flatMap { teams =>
-        Ok.page(views.tournament.form.create(forms.create(teams, forClas = getBool("clas")), teams))
-      }
+    if env.noSweat.enabled && !env.tournament.noSweatArena.hostAllowed(me.userId) then fuccess(Forbidden)
+    else
+      NoBot:
+        env.team.api.lightsByTourLeader(me).flatMap { teams =>
+          Ok.page(views.tournament.form.create(forms.create(teams, forClas = getBool("clas")), teams))
+        }
+  }
+
+  def prepare(id: TourId) = Auth { ctx ?=> me ?=>
+    WithEditableTournament(id): tour =>
+      if !env.noSweat.enabled then fuccess(NotFound)
+      else
+        env.noSweat
+          .prepareArena(tour)
+          .map(_ => Redirect(routes.Tournament.show(id)))
+          .recover:
+            case _: NoSweatError => BadRequest(lila.core.i18n.I18nKey("muteArenaUnavailable").txt())
   }
 
   def teamBattleForm(teamId: TeamId) = Auth { _ ?=> me ?=>
@@ -246,7 +276,11 @@ final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Mat
   def webCreate = AuthBody(_ ?=> _ ?=> create)
   def apiCreate = ScopedBody(_.Tournament.Write)(_ ?=> _ ?=> create)
 
-  private def create(using BodyContext[?])(using me: Me) = NoBot:
+  private def create(using BodyContext[?])(using me: Me): Fu[Result] =
+    if env.noSweat.enabled && !env.tournament.noSweatArena.hostAllowed(me.userId) then fuccess(Forbidden)
+    else createNative
+
+  private def createNative(using BodyContext[?])(using me: Me) = NoBot:
     env.team.api
       .lightsByTourLeader(me)
       .flatMap: teams =>
@@ -453,8 +487,10 @@ final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Mat
       f: Tour => Fu[Result]
   )(using ctx: Context, me: Me): Fu[Result] =
     WithVisibleTournament(id): t =>
-      if isGranted(_.ManageTournament) || (t.createdBy.is(me) && (!t.isFinished || ctx.req.method == "GET"))
-      then f(t)
+      val canEdit =
+        if env.noSweat.enabled then env.tournament.noSweatArena.hostAllowed(me.userId) && t.createdBy.is(me)
+        else isGranted(_.ManageTournament) || t.createdBy.is(me)
+      if canEdit && (!t.isFinished || ctx.req.method == "GET") then f(t)
       else Redirect(routes.Tournament.show(t.id))
 
   private def WithVisibleTournament(id: TourId)(
@@ -463,6 +499,7 @@ final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Mat
     def nope = negotiate(tournamentNotFound, notFoundJson("No such tournament"))
     cachedTour(id).flatMap:
       case None => nope
+      case Some(tour) if env.noSweat.enabled && !env.tournament.noSweatArena.ownerEvent(tour) => nope
       case Some(tour) =>
         tour.singleTeamId
           .fold(fuTrue)(env.team.api.clasMemberCheck)

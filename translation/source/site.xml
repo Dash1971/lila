@@ -1219,4 +1219,10 @@ Leave empty to start games from the normal initial position.</string>
   <string name="muteInsightOpeningFamilyHelp">The general opening played in the game.</string>
   <string name="muteInsightOpeningHelp">The opening variation played in the game.</string>
   <string name="muteInsightLastDay">Last 24 hours</string>
+  <string name="muteArenaPrepare">Prepare Arena bots</string>
+  <string name="muteArenaReady">Arena bots are ready.</string>
+  <string name="muteArenaDraining">Waiting for background bot games to finish. Refresh to check readiness.</string>
+  <string name="muteArenaUnavailable">Arena bots could not be prepared. Another event may be active, or fewer than ten eligible bots are available.</string>
+  <string name="muteArenaHelp">Bots rated 1200–1700 fill up to ten active participants. Humans can join without a participant limit; existing games finish normally.</string>
+  <string name="muteArenaSettings">Use standard chess, the normal starting position and allow bots. Team battles and prizes are unavailable.</string>
 </resources>

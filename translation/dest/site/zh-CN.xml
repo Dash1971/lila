@@ -1175,4 +1175,10 @@
   <string name="muteInsightOpeningFamilyHelp">对局中采用的基本开局。</string>
   <string name="muteInsightOpeningHelp">对局中采用的开局变例。</string>
   <string name="muteInsightLastDay">最近24小时</string>
+  <string name="muteArenaPrepare">准备竞技场机器人</string>
+  <string name="muteArenaReady">竞技场机器人已就绪。</string>
+  <string name="muteArenaDraining">正在等待后台机器人对局结束。请刷新页面查看准备状态。</string>
+  <string name="muteArenaUnavailable">无法准备竞技场机器人。可能有其他赛事正在进行，或符合条件的机器人不足十个。</string>
+  <string name="muteArenaHelp">评分为1200–1700的机器人将活跃参赛人数补足至十人。人类参赛人数不设上限；正在进行的对局会正常结束。</string>
+  <string name="muteArenaSettings">请使用标准国际象棋和正常初始局面，并允许机器人参加。暂不支持团队赛和奖品。</string>
 </resources>

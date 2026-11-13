@@ -1176,4 +1176,10 @@
   <string name="muteInsightOpeningFamilyHelp">対局で指されたオープニングの系統。</string>
   <string name="muteInsightOpeningHelp">対局で指されたオープニングの変化。</string>
   <string name="muteInsightLastDay">過去24時間</string>
+  <string name="muteArenaPrepare">アリーナのボットを準備</string>
+  <string name="muteArenaReady">アリーナのボットの準備ができました。</string>
+  <string name="muteArenaDraining">バックグラウンドのボット対局の終了を待っています。ページを更新して準備状況を確認してください。</string>
+  <string name="muteArenaUnavailable">ボットを準備できませんでした。別のイベントが進行中か、条件に合うボットが10体未満の可能性があります。</string>
+  <string name="muteArenaHelp">レーティング1200〜1700のボットが、参加中のプレイヤーを最大10人まで補います。人間の参加人数に上限はなく、進行中の対局は通常どおり終了します。</string>
+  <string name="muteArenaSettings">通常の初期配置で標準チェスを選び、ボットを許可してください。チーム戦と賞品には対応していません。</string>
 </resources>
