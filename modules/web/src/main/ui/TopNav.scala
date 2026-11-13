@@ -17,7 +17,10 @@ final class TopNav(helpers: Helpers):
   ) =
     if compact then
       st.nav(id := "topnav", cls := "hover")(
-        st.section(a(href := "/")(trans.site.play())),
+        st.section(
+          linkTitle("/", trans.site.play()),
+          div(role := "group")(a(href := routes.Tournament.home)(trans.arena.arenaTournaments()))
+        ),
         st.section(
           linkTitle(routes.Puzzle.home.url, trans.site.puzzles()),
           div(role := "group")(
@@ -38,8 +41,7 @@ final class TopNav(helpers: Helpers):
         st.section(
           linkTitle(routes.ForumCateg.index.url, trans.site.community()),
           div(role := "group")(
-            a(href := routes.ForumCateg.index)(trans.site.forum()),
-            a(href := routes.Tournament.home)(trans.arena.arenaTournaments())
+            a(href := routes.ForumCateg.index)(trans.site.forum())
           )
         ),
         toolsMenu(compact)

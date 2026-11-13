@@ -41,7 +41,7 @@ function renderTournament(tour: Tournament, day: Date) {
       attrs: {
         href: '/tournament/' + tour.id,
         style: 'width: ' + width + '%; ' + startDirection() + ': ' + left + '%',
-        title: `${tour.fullName} - ${format(tour.bounds.start, 'EEEE, dd/MM/yyyy HH:mm')}`,
+        title: `${tour.fullName} - ${new Intl.DateTimeFormat(document.documentElement.lang, { dateStyle: 'full', timeStyle: 'short' }).format(tour.bounds.start)}`,
       },
     },
     [h('span.icon', tour.perf ? { attrs: dataIcon(iconOf(tour)) } : {}), h('span.body', [tour.fullName])],
@@ -76,7 +76,7 @@ function renderDay(ctrl: Ctrl) {
     const dayEnd = addDays(day, 1);
     const tours = ctrl.data.tournaments.filter(t => t.bounds.start < dayEnd && t.bounds.end > day);
     return h('day', [
-      h('date', { attrs: { title: format(day, 'EEEE, dd/MM/yyyy') } }, [format(day, 'dd/MM')]),
+      h('date', { attrs: { title: new Intl.DateTimeFormat(document.documentElement.lang, { dateStyle: 'full' }).format(day) } }, [format(day, 'dd/MM')]),
       h(
         'lanes',
         makeLanes(tours).map(l => renderLane(l, day)),

@@ -27,13 +27,26 @@ final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Mat
 
   private def serveHome(using ctx: Context): Fu[Result] =
     if env.noSweat.enabled then
-      env.tournament.noSweatArena.events.flatMap: events =>
-        Ok.page(
-          views.noSweatArenaHome(
-            events.filter(t => !t.isPrivate || ctx.is(t.createdBy)),
-            ctx.userId.exists(env.tournament.noSweatArena.hostAllowed)
-          )
+      for
+        visible <- api.fetchVisibleTournaments
+        json <- env.tournament.apiJsonView(visible)
+        response <- negotiate(
+          html = for
+            _ <- env.user.lightUserApi.preloadMany(visible.finished.flatMap(_.winnerId))
+            page <- renderPage(
+              views.tournament.list.home(
+                Nil,
+                visible.finished,
+                None,
+                json,
+                focused = true,
+                canCreate = ctx.userId.exists(env.tournament.noSweatArena.hostAllowed)
+              )
+            )
+          yield Ok(page).noCache,
+          json = Ok(json)
         )
+      yield response
     else serveNativeHome
 
   private def serveNativeHome(using ctx: Context) = NoBot:
@@ -45,7 +58,7 @@ final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Mat
         html = for
           finished <- api.notableFinished
           winners <- env.tournament.winners.all
-          page <- renderPage(views.tournament.list.home(scheduled, finished, winners, scheduleJson))
+          page <- renderPage(views.tournament.list.home(scheduled, finished, Some(winners), scheduleJson))
         yield Ok(page).noCache,
         json = Ok(scheduleJson)
       )
@@ -418,17 +431,28 @@ final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Mat
         .inject(views.tournament.list.shields.byCateg(categ, awards))
 
   def calendar = Open:
-    api.calendar.json.flatMap: json =>
-      negotiate(Ok.page(views.tournament.list.calendar(json)), Ok(json))
+    (if env.noSweat.enabled then env.tournament.noSweatDiscovery.calendarJson else api.calendar.json).flatMap:
+      json => negotiate(Ok.page(views.tournament.list.calendar(json)), Ok(json))
 
   def history(freq: String, page: Int) = Open:
-    lila.tournament.Schedule.Freq.byName.get(freq).so { fr =>
-      api.history(fr, page).flatMap { pager =>
-        val userIds = pager.currentPageResults.flatMap(_.winnerId)
-        env.user.lightUserApi.preloadMany(userIds) >>
-          Ok.page(views.tournament.list.history(fr, pager))
+    if env.noSweat.enabled then
+      if freq != "unique" then notFound
+      else
+        env.tournament.noSweatDiscovery
+          .history(page)
+          .flatMap: pager =>
+            env.user.lightUserApi.preloadMany(pager.currentPageResults.flatMap(_.winnerId)) >>
+              Ok.page(
+                views.tournament.list.history(lila.tournament.Schedule.Freq.Unique, pager, focused = true)
+              )
+    else
+      lila.tournament.Schedule.Freq.byName.get(freq).so { fr =>
+        api.history(fr, page).flatMap { pager =>
+          val userIds = pager.currentPageResults.flatMap(_.winnerId)
+          env.user.lightUserApi.preloadMany(userIds) >>
+            Ok.page(views.tournament.list.history(fr, pager))
+        }
       }
-    }
 
   private def editArenaForm(teams: List[lila.core.team.LightTeam], tour: Tour)(using Me) =
     env.tournament.noSweatArena.scope(tour).map(s => forms.edit(teams, tour, arenaPrepared = s.isDefined))

@@ -80,3 +80,56 @@ class NoSweatArenaTest extends munit.FunSuite:
     assertEquals(restored.arenaSettings, tour.arenaSettings)
     assert(!restored.conditions.allowsBots)
     assertEquals(handler.readDocument(doc -- "noSweatArena").get.arenaSettings, NoSweatArenaSettings.default)
+
+  test("public discovery never includes private, variant, position or team-battle tournaments"):
+    import lila.db.dsl.{ *, given }
+    val selector = NoSweatArenaDiscovery.publicEvents(List(UserId("host")))
+    assertEquals(
+      selector.getAsOpt[Bdoc]("createdBy").flatMap(_.getAsOpt[List[UserId]]("$in")),
+      Some(List(UserId("host")))
+    )
+    for key <- List("password", "variant", "fen", "teamBattle") do
+      assertEquals(selector.getAsOpt[Bdoc](key).flatMap(_.getAsOpt[Boolean]("$exists")), Some(false))
+    assertEquals(
+      NoSweatArenaDiscovery
+        .publicEvents(Nil)
+        .getAsOpt[Bdoc]("createdBy")
+        .flatMap(_.getAsOpt[List[UserId]]("$in")),
+      Some(Nil)
+    )
+
+  test("homepage spotlight respects the native 24-hour horizon, finish state and late-entry cutoff"):
+    val now = nowInstant
+    val tour = Tournament(
+      id = TourId("spottest"),
+      name = "Weekly",
+      status = lila.core.tournament.Status.created,
+      clock = chess.Clock.Config(chess.Clock.LimitSeconds(900), chess.Clock.IncrementSeconds(10)),
+      minutes = 120,
+      variant = chess.variant.Standard,
+      position = None,
+      rated = chess.Rated.Yes,
+      conditions = TournamentCondition.All.empty,
+      schedule = None,
+      nbPlayers = 0,
+      createdAt = now,
+      createdBy = UserId("host"),
+      startsAt = now.plusHours(23)
+    )
+    assert(NoSweatArenaDiscovery.spotlight(tour, now))
+    assert(!NoSweatArenaDiscovery.spotlight(tour.copy(startsAt = now.plusHours(24)), now))
+    assert(!NoSweatArenaDiscovery.spotlight(tour.copy(startsAt = now.plusDays(7)), now))
+    assert(!NoSweatArenaDiscovery.spotlight(tour.copy(password = Some("secret")), now))
+    assert(!NoSweatArenaDiscovery.spotlight(tour.copy(status = lila.core.tournament.Status.finished), now))
+    assert(
+      NoSweatArenaDiscovery.spotlight(
+        tour.copy(status = lila.core.tournament.Status.started, startsAt = now.minusMinutes(60)),
+        now
+      )
+    )
+    assert(
+      !NoSweatArenaDiscovery.spotlight(
+        tour.copy(status = lila.core.tournament.Status.started, startsAt = now.minusMinutes(119)),
+        now
+      )
+    )

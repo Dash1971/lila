@@ -27,7 +27,17 @@ class NoSweatArenaLocaleTest extends munit.FunSuite:
       "BotNoticeTitle",
       "BotNoticeIntro",
       "BotNoticeFill"
-    ).map("muteArena" + _) :+ "arena:allowBotAccounts"
+    ).map("muteArena" + _) ++ List(
+      "arena:allowBotAccounts",
+      "arena:history",
+      "arena:arenaTournaments",
+      "tournaments",
+      "finished",
+      "tournamentCalendar",
+      "tournamentFAQ",
+      "createANewTournament",
+      "eventInProgress"
+    )
     for code <- List("en-GB", "de-DE", "es-ES", "fr-FR", "hi-IN", "ja-JP", "ko-KR", "pt-BR", "ru-RU", "zh-CN")
     do
       val lang = Lang.get(code).get

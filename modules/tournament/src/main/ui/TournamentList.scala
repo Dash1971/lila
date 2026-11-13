@@ -18,67 +18,82 @@ final class TournamentList(helpers: Helpers, ui: TournamentUi)(
   def home(
       scheduled: List[Tournament],
       finished: List[Tournament],
-      winners: AllWinners,
-      json: JsObject
+      winners: Option[AllWinners],
+      json: JsObject,
+      focused: Boolean = false,
+      canCreate: Boolean = true
   )(using ctx: Context) =
-    Page(trans.site.tournaments.txt())
+    Page(if focused then trans.arena.arenaTournaments.txt() else trans.site.tournaments.txt())
       .css("tournament.home")
       .js(infiniteScrollEsmInit)
-      .js(PageModule("tournament.schedule", Json.obj("data" -> json)))
+      .js(PageModule("tournament.schedule", Json.obj("data" -> json, "noSweat" -> focused)))
       .hrefLangs(LangPath(routes.Tournament.home))
       .flag(_.fullScreen)
       .graph(
         url = routeUrl(routes.Tournament.home),
-        title = trans.site.tournamentHomeTitle.txt(),
-        description = trans.site.tournamentHomeDescription.txt()
+        title = if focused then trans.arena.arenaTournaments.txt() else trans.site.tournamentHomeTitle.txt(),
+        description = if focused then lila.core.i18n.I18nKey("muteSiteDescription").txt()
+        else trans.site.tournamentHomeDescription.txt()
       ):
-        main(cls := "tour-home")(
+        main(cls := (if focused then "tour-home nosweat-arena-home" else "tour-home"))(
           st.aside(cls := "tour-home__side")(
             p(cls := "tour__links")(
-              ctx.me.map: me =>
-                frag(
-                  a(href := routes.UserTournament.path(me.username, "created"))(trans.arena.myTournaments()),
-                  br
-                ),
+              ctx.me
+                .filter(_ => !focused)
+                .map: me =>
+                  frag(
+                    a(href := routes.UserTournament.path(me.username, "created"))(
+                      trans.arena.myTournaments()
+                    ),
+                    br
+                  ),
               a(href := routes.Tournament.calendar)(trans.site.tournamentCalendar()),
               br,
               a(href := routes.Tournament.history(Freq.Unique.name))(trans.arena.history()),
               br,
               a(href := routes.Tournament.help)(trans.site.tournamentFAQ()),
               br,
-              a(href := routes.Cms.lonePage(lila.core.id.CmsPageKey("leagues-and-battles")))(
-                trans.arena.leaguesAndStreamerBattles()
+              (!focused).option(
+                a(href := routes.Cms.lonePage(lila.core.id.CmsPageKey("leagues-and-battles")))(
+                  trans.arena.leaguesAndStreamerBattles()
+                )
               )
             ),
-            h2(
-              a(href := routes.Tournament.leaderboard)(trans.site.leaderboard())
-            ),
-            ul(cls := "leaderboard")(
-              winners.top.map: w =>
-                li(
-                  userIdLink(w.userId.some),
-                  a(title := w.tourName, href := routes.Tournament.show(w.tourId))(
-                    ui.scheduledTournamentNameShortHtml(w.tourName)
-                  )
-                )
-            ),
-            h2(trans.site.lichessTournaments()),
-            div(cls := "scheduled")(
-              scheduled.map: tour =>
-                tour.schedule
-                  .exists(_.freq != Freq.Hourly)
-                  .option:
-                    a(href := routes.Tournament.show(tour.id), dataIcon := ui.tournamentIcon(tour))(
-                      strong(tour.name(full = false)),
-                      momentFromNow(tour.startsAt)
-                    )
-            ),
-            a(cls := "button button-empty", href := routes.Tournament.calendar)(trans.site.more(), " »")
+            (!focused).option(
+              frag(
+                h2(
+                  a(href := routes.Tournament.leaderboard)(trans.site.leaderboard())
+                ),
+                ul(cls := "leaderboard")(
+                  winners.toList
+                    .flatMap(_.top)
+                    .map: w =>
+                      li(
+                        userIdLink(w.userId.some),
+                        a(title := w.tourName, href := routes.Tournament.show(w.tourId))(
+                          ui.scheduledTournamentNameShortHtml(w.tourName)
+                        )
+                      )
+                ),
+                h2(trans.site.lichessTournaments()),
+                div(cls := "scheduled")(
+                  scheduled.map: tour =>
+                    tour.schedule
+                      .exists(_.freq != Freq.Hourly)
+                      .option:
+                        a(href := routes.Tournament.show(tour.id), dataIcon := ui.tournamentIcon(tour))(
+                          strong(tour.name(full = false)),
+                          momentFromNow(tour.startsAt)
+                        )
+                ),
+                a(cls := "button button-empty", href := routes.Tournament.calendar)(trans.site.more(), " »")
+              )
+            )
           ),
           st.section(cls := "tour-home__schedule box")(
             boxTop(
-              h1(trans.site.tournaments()),
-              ctx.isAuth.option(
+              h1(if focused then trans.arena.arenaTournaments() else trans.site.tournaments()),
+              (ctx.isAuth && canCreate).option(
                 div(cls := "box__top__actions")(
                   a(
                     href := routes.Tournament.form,
@@ -90,7 +105,7 @@ final class TournamentList(helpers: Helpers, ui: TournamentUi)(
             ),
             div(cls := "tour-chart")
           ),
-          div(cls := "arena-list box")(
+          div(cls := (if focused then "arena-list tour-home__list box" else "arena-list box"))(
             table(cls := "slist slist-pad")(
               thead(
                 tr(
@@ -104,19 +119,21 @@ final class TournamentList(helpers: Helpers, ui: TournamentUi)(
           )
         )
 
-  def history(freq: Freq, pager: Paginator[Tournament])(using Context) =
-    Page("Tournament history")
+  def history(freq: Freq, pager: Paginator[Tournament], focused: Boolean = false)(using Context) =
+    Page(if focused then trans.arena.history.txt() else "Tournament history")
       .js(infiniteScrollEsmInit)
       .css("tournament.history"):
-        main(cls := "page-menu arena-history")(
-          lila.ui.bits.pageMenuSubnav(
-            allFreqs.map: f =>
-              a(cls := freq.name.active(f.name), href := routes.Tournament.history(f.name))(
-                nameOf(f)
-              )
+        main(cls := (if focused then "arena-history" else "page-menu arena-history"))(
+          (!focused).option(
+            lila.ui.bits.pageMenuSubnav(
+              allFreqs.map: f =>
+                a(cls := freq.name.active(f.name), href := routes.Tournament.history(f.name))(
+                  nameOf(f)
+                )
+            )
           ),
-          div(cls := "page-menu__content box")(
-            boxTop(h1(nameOf(freq), " tournaments")),
+          div(cls := (if focused then "box" else "page-menu__content box"))(
+            boxTop(h1(if focused then trans.arena.history() else frag(nameOf(freq), " tournaments"))),
             div(cls := "arena-list")(
               table(cls := "slist slist-pad")(
                 tbody(cls := "infinite-scroll")(
@@ -129,7 +146,7 @@ final class TournamentList(helpers: Helpers, ui: TournamentUi)(
         )
 
   def calendar(json: play.api.libs.json.JsObject)(using Context) =
-    Page("Tournament calendar")
+    Page(trans.site.tournamentCalendar.txt())
       .js(PageModule("tournament.calendar", Json.obj("data" -> json)))
       .css("tournament.calendar"):
         main(cls := "box")(

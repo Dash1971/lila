@@ -19,7 +19,7 @@ export interface Ctrl {
   data(): Data;
 }
 
-export function initModule(opts: { data: Data }) {
+export function initModule(opts: { data: Data; noSweat?: boolean }) {
   wsConnect('/socket/v5', false, { params: { flag: 'tournament' } });
 
   const element = document.querySelector('.tour-chart') as HTMLElement;
@@ -38,7 +38,7 @@ export function initModule(opts: { data: Data }) {
   setInterval(redraw, 3700);
 
   pubsub.on('socket.in.reload', d => {
-    opts.data = {
+    opts.data = opts.noSweat ? d : {
       created: update(opts.data.created, d.created),
       started: update(opts.data.started, d.started),
       finished: update(opts.data.finished, d.finished),

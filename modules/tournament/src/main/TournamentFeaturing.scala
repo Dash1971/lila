@@ -10,13 +10,16 @@ import lila.mon.extensions.*
 final class TournamentFeaturing(
     api: TournamentApi,
     repo: TournamentRepo,
-    cacheApi: lila.memo.CacheApi
+    cacheApi: lila.memo.CacheApi,
+    noSweatDiscovery: NoSweatArenaDiscovery
 )(using Executor, Scheduler):
 
   object tourIndex:
     def get(teamIds: List[TeamId]): Fu[(List[Tournament], VisibleTournaments)] = for
       (base, scheduled) <- sameForEveryone.get(())
-      teamTours <- visibleForTeams(teamIds, Minutes(5 * 60), "index", Max(30))
+      teamTours <-
+        if noSweatDiscovery.enabled then fuccess(Nil)
+        else visibleForTeams(teamIds, Minutes(5 * 60), "index", Max(30))
       forMe = base.add(teamTours)
     yield (scheduled, forMe)
 
@@ -25,29 +28,33 @@ final class TournamentFeaturing(
         _.refreshAfterWrite(3.seconds).buildAsyncTimeout(): _ =>
           for
             visible <- api.fetchVisibleTournaments
-            scheduled <- repo.allScheduledDedup
+            scheduled <- if noSweatDiscovery.enabled then fuccess(Nil) else repo.allScheduledDedup
           yield (visible, scheduled)
 
   object homepage:
 
     def get(teamIds: List[TeamId]): Fu[List[Tournament]] = for
       base <- sameForEveryone.get(())
-      teamTours <- visibleForTeams(teamIds, Minutes(3 * 60), "homepage", Max(3))
+      teamTours <-
+        if noSweatDiscovery.enabled then fuccess(Nil)
+        else visibleForTeams(teamIds, Minutes(3 * 60), "homepage", Max(3))
     yield teamTours ::: base
 
     private val sameForEveryone: AsyncLoadingCache[Unit, List[Tournament]] =
       cacheApi.unit[List[Tournament]]("tournamentFeaturing.homepage.sameForEveryone"):
         _.refreshAfterWrite(2.seconds).buildAsyncTimeout(): _ =>
-          for
-            started <- repo.scheduledNotHourlyStillWorthEntering
-            created <- repo.scheduledNotHourlyCreated(Minutes(crud.CrudForm.maxHomepageHours * 60))
-          yield (started ::: created)
-            .sortBy(_.startsAt.toSeconds)
-            .foldLeft(List.empty[Tournament]): (acc, tour) =>
-              if !tour.homepageSince.exists(_.isBefore(nowInstant)) then acc
-              else if acc.exists(_.similarSchedule(tour)) then acc
-              else tour :: acc
-            .reverse
+          if noSweatDiscovery.enabled then noSweatDiscovery.homepage
+          else
+            for
+              started <- repo.scheduledNotHourlyStillWorthEntering
+              created <- repo.scheduledNotHourlyCreated(Minutes(crud.CrudForm.maxHomepageHours * 60))
+            yield (started ::: created)
+              .sortBy(_.startsAt.toSeconds)
+              .foldLeft(List.empty[Tournament]): (acc, tour) =>
+                if !tour.homepageSince.exists(_.isBefore(nowInstant)) then acc
+                else if acc.exists(_.similarSchedule(tour)) then acc
+                else tour :: acc
+              .reverse
 
   private def visibleForTeams(
       teamIds: List[TeamId],

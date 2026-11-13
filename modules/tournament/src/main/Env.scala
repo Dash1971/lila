@@ -85,6 +85,7 @@ final class Env(
   private lazy val colorHistoryApi = wire[ColorHistoryApi]
 
   lazy val noSweatArena = wire[NoSweatArena]
+  lazy val noSweatDiscovery = wire[NoSweatArenaDiscovery]
 
   lazy val api: TournamentApi = wire[TournamentApi]
 

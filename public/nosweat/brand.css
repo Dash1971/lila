@@ -160,3 +160,15 @@ cg-board square.nosweat-premove-dest { background:rgb(20 30 85 / .28); }
 
 
 .analyse .game__meta__players .player { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+/* Native Arena discovery: keep the compact quick-pair grid and add only its spotlight. */
+.nosweat-arena-home { grid-template-areas:'schedule' 'list' 'side'; }
+.nosweat-arena-home .tour-home__list { display:block; }
+.lobby.mutechess-play.mutechess-play--arena { grid-template-areas:'side' 'app' 'table' 'about'; }
+.mutechess-play .nosweat-arena-spotlight { margin:0; min-width:0; align-self:start; }
+@media(min-width:1100px) {
+  .lobby.mutechess-play.mutechess-play--arena { max-width:88em; grid-template-columns:minmax(15em,22em) minmax(0,64em); grid-template-areas:'side app' '. table' '. about'; }
+}
+@media(min-width:800px) {
+  .nosweat-arena-home { grid-template-areas:'side schedule' 'side list'; }
+}

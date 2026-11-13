@@ -47,9 +47,15 @@ object home:
           cls := List(
             "lobby" -> true,
             "mutechess-play" -> env.noSweat.enabled,
+            "mutechess-play--arena" -> (env.noSweat.enabled && tours.nonEmpty),
             "lobby-nope" -> (playban.isDefined || currentGame.isDefined || homepage.hasUnreadLichessMessage)
           )
         )(
+          (env.noSweat.enabled && tours.nonEmpty).option(
+            div(cls := "lobby__side nosweat-arena-spotlight")(
+              div(cls := "lobby__spotlights")(tours.take(1).map(views.tournament.list.homepageSpotlight))
+            )
+          ),
           Option.unless(env.noSweat.enabled)(
             div(cls := "lobby__side")(
               ctx.blind.option(h2(trans.nvui.featuredEvents())),

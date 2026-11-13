@@ -49,7 +49,8 @@ final class TournamentApi(
     lightUserApi: lila.core.user.LightUserApi,
     ircApi: lila.core.irc.IrcApi,
     teamApi: lila.core.team.TeamApi,
-    noSweatArena: NoSweatArena
+    noSweatArena: NoSweatArena,
+    noSweatDiscovery: NoSweatArenaDiscovery
 )(using scheduler: Scheduler)(using
     Executor,
     org.apache.pekko.actor.ActorSystem,
@@ -678,14 +679,18 @@ final class TournamentApi(
 
   // when loading /tournament
   def fetchVisibleTournaments: Fu[VisibleTournaments] =
-    scheduledCreatedAndStarted.zip(notableFinished).map { case ((created, started), finished) =>
-      VisibleTournaments(created, started, finished)
-    }
+    if noSweatDiscovery.enabled then noSweatDiscovery.visible
+    else
+      scheduledCreatedAndStarted.zip(notableFinished).map { case ((created, started), finished) =>
+        VisibleTournaments(created, started, finished)
+      }
 
   // when updating /tournament
   def fetchUpdateTournaments: Fu[VisibleTournaments] =
-    scheduledCreatedAndStarted.dmap: (created, started) =>
-      VisibleTournaments(created, started, Nil)
+    if noSweatDiscovery.enabled then noSweatDiscovery.visible
+    else
+      scheduledCreatedAndStarted.dmap: (created, started) =>
+        VisibleTournaments(created, started, Nil)
 
   def fetchModable: Fu[List[lila.core.tournament.Tournament]] =
     fetchVisibleTournaments.map(_.all)
@@ -810,6 +815,7 @@ final class TournamentApi(
         _.flatMap { LightPov(_, userId) }
 
   private def notifyBBB(next: Tournament, prev: Option[Tournament])(using me: MyId) =
+    if noSweatDiscovery.enabled then publish()
     if next.isScheduled then
       scalalib
         .ProductDiff(
