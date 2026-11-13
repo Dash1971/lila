@@ -165,12 +165,17 @@ private[app] object NoSweatBotCatalog:
     !assigned(bot) || !existing || registeredIdentity.contains((bot \ "id").as[String])
 
   def aliases(input: Map[String, String], roster: List[JsObject]): Map[String, String] =
-    val names = roster.map(bot => (bot \ "username").as[String].toLowerCase).toSet
+    val names = roster
+      .filter(bot =>
+        assigned(bot) || (bot \ "username").as[String].toLowerCase.matches("signal(train|test)[0-9]+")
+      )
+      .map(bot => (bot \ "username").as[String].toLowerCase)
+      .toSet
     val aliases = input.map((username, value) => username.toLowerCase -> value)
     require(aliases.size == input.size, "Duplicate case-insensitive bot aliases")
     require(aliases.values.map(_.toLowerCase).toSet.size == aliases.size, "Duplicate public bot aliases")
     aliases.foreach: (username, value) =>
-      require(names(username) && username.matches("signal(train|test)[0-9]+"), "Unapproved bot alias target")
+      require(names(username), "Unapproved bot alias target")
       require(validDisplayName(value), "Invalid public bot alias")
     aliases
 
@@ -179,8 +184,16 @@ private[app] object NoSweatBotCatalog:
       value.forall(c => c.isLetterOrDigit || " ._-'".contains(c))
 
   def publicName(bot: JsObject, aliases: Map[String, String]): Option[String] =
-    if assigned(bot) then (bot \ "name").asOpt[String]
-    else aliases.get((bot \ "username").as[String].toLowerCase)
+    aliases
+      .get((bot \ "username").as[String].toLowerCase)
+      .orElse(Option.when(assigned(bot))((bot \ "name").as[String]))
 
-  def aliasEligible(current: Option[String], username: String, alias: String): Boolean =
-    current.isEmpty || current.contains(username) || current.contains(alias)
+  def aliasEligible(
+      current: Option[String],
+      username: String,
+      alias: String,
+      originalDisplayName: Option[String] = None
+  ): Boolean =
+    current.isEmpty || current.contains(username) || current.contains(alias) || current.exists(
+      originalDisplayName.contains
+    )

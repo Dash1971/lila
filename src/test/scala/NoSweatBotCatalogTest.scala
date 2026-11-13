@@ -80,13 +80,19 @@ class NoSweatBotCatalogTest extends munit.FunSuite:
     )
     intercept[IllegalArgumentException](NoSweatBotCatalog.validate(List(wrong)))
 
-  test("public aliases are restricted to managed placeholder names and cannot overwrite a chosen name"):
+  test("public aliases are restricted to managed placeholders/catalog identities and preserve chosen names"):
     assertEquals(
       NoSweatBotCatalog.aliases(Map("SignalTrain001" -> "Roy Batty"), List(legacy)),
       Map("signaltrain001" -> "Roy Batty")
     )
+    val assignedAliases = NoSweatBotCatalog.aliases(Map("CatalogOne" -> "FEISAR"), List(catalog))
+    assertEquals(NoSweatBotCatalog.publicName(catalog, assignedAliases), Some("FEISAR"))
+    assert(NoSweatBotCatalog.aliasEligible(Some("Catalog One"), "CatalogOne", "FEISAR", Some("Catalog One")))
+    assert(!NoSweatBotCatalog.aliasEligible(Some("Custom Name"), "CatalogOne", "FEISAR", Some("Catalog One")))
     intercept[IllegalArgumentException]:
-      NoSweatBotCatalog.aliases(Map("CatalogOne" -> "Roy Batty"), List(catalog))
+      NoSweatBotCatalog.aliases(Map("UnknownAccount" -> "FEISAR"), List(catalog))
+    intercept[IllegalArgumentException]:
+      NoSweatBotCatalog.aliases(Map("Wintermute" -> "FEISAR"), List(Json.obj("username" -> "Wintermute")))
     intercept[IllegalArgumentException]:
       NoSweatBotCatalog.aliases(Map("SignalTrain001" -> "x" * 21), List(legacy))
     assert(NoSweatBotCatalog.aliasEligible(None, "SignalTrain001", "Roy Batty"))

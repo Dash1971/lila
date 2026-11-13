@@ -303,14 +303,24 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
       _ <- NoSweatBotCatalog
         .publicName(bot, botAliases)
         .fold(funit): alias =>
-          if NoSweatBotCatalog.aliasEligible(user.profile.flatMap(_.displayName), name.value, alias) then
+          val originalDisplayName = Option.when(NoSweatBotCatalog.assigned(bot))((bot \ "name").as[String])
+          if NoSweatBotCatalog.aliasEligible(
+              user.profile.flatMap(_.displayName),
+              name.value,
+              alias,
+              originalDisplayName
+            )
+          then
             env.user.repo.withColl:
               _.update
                 .one(
                   bid(name.id) ++ bdoc("noSweatBot" -> true) ++ or(
                     bdoc(s"${UserFields.profile}.displayName".exists(false)),
-                    bdoc(s"${UserFields.profile}.displayName" -> name.value),
-                    bdoc(s"${UserFields.profile}.displayName" -> alias)
+                    bdoc(
+                      s"${UserFields.profile}.displayName" -> bdoc(
+                        "$in" -> (List(name.value, alias) ++ originalDisplayName.toList)
+                      )
+                    )
                   ),
                   set(
                     s"${UserFields.profile}.displayName" -> alias,
