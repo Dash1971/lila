@@ -59,8 +59,11 @@ function renderDuel(ctrl: TournamentController) {
             return teamId && teamName(battle, teamId);
           }),
         ),
-      hl('line.a', [hl('strong', d.p[0].n), hl('span', duelPlayerMeta(d.p[1], ctrl).reverse())]),
-      hl('line.b', [hl('span', duelPlayerMeta(d.p[0], ctrl)), hl('strong', d.p[1].n)]),
+      hl('line.a', [
+        hl('strong', d.p[0].displayName || d.p[0].n),
+        hl('span', duelPlayerMeta(d.p[1], ctrl).reverse()),
+      ]),
+      hl('line.b', [hl('span', duelPlayerMeta(d.p[0], ctrl)), hl('strong', d.p[1].displayName || d.p[1].n)]),
     ]);
 }
 

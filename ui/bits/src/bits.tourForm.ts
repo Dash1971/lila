@@ -10,6 +10,20 @@ site.load.then(() => {
   $variant.on('change', showPosition);
   showPosition();
 
+  $('[data-maia-arena-settings]').each(function () {
+    const $settings = $(this);
+    const $bots = $settings.find('input[type="checkbox"]');
+    const updateBots = () => {
+      const enabled = $bots.prop('checked');
+      $settings.find('.maia-arena-fields, .maia-arena-enabled').toggleClass('none', !enabled);
+      $settings.find('.maia-arena-human-only').toggleClass('none', enabled);
+      // Retain values when toggling, but omit hidden bot-only settings for human-only events.
+      $settings.find('.maia-arena-fields input').prop('required', enabled).prop('disabled', !enabled);
+    };
+    $bots.on('change', updateBots);
+    updateBots();
+  });
+
   $('.flatpickr').each(function (this: HTMLInputElement) {
     flatpickr(this, {
       minDate: 'today',

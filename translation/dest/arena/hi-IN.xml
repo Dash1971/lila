@@ -78,4 +78,5 @@
   <string name="tournamentShields">टूर्नामेंट शील्ड्स</string>
   <string name="onlyTitled">केवल शीर्षक वाले खिलाड़ी</string>
   <string name="onlyTitledHelp">टूर्नामेंट में शामिल होने के लिए एक आधिकारिक शीर्षक की आवश्यकता है</string>
+  <string name="allowBotAccounts">बॉट खातों को अनुमति दें</string>
 </resources>

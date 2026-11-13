@@ -87,4 +87,5 @@
   <string name="tournamentPairingsAreNowClosed">토너먼트 매칭이 이제 종료되었습니다.</string>
   <string name="berserkRate">버서크 비율</string>
   <string name="leaguesAndStreamerBattles">리그 &amp; 스트리머 배틀</string>
+  <string name="allowBotAccounts">봇 계정 참가 허용</string>
 </resources>

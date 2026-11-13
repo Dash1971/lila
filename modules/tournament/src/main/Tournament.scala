@@ -36,8 +36,11 @@ case class Tournament(
     spotlight: Option[Spotlight] = None,
     description: Option[String] = None,
     payouts: Option[Payouts] = None,
-    hasChat: Boolean = true
+    hasChat: Boolean = true,
+    noSweatArena: Option[NoSweatArenaSettings] = None
 ) extends lila.core.tournament.Tournament:
+
+  def arenaSettings = noSweatArena.getOrElse(NoSweatArenaSettings.default)
 
   def isCreated = status == Status.created
   def isStarted = status == Status.started
@@ -206,7 +209,8 @@ object Tournament:
         setup.startDate | nowInstant.plusMinutes(setup.waitMinutes | TournamentForm.waitMinuteDefault),
       description = setup.description,
       payouts = setup.payouts,
-      hasChat = setup.hasChat | true
+      hasChat = setup.hasChat | true,
+      noSweatArena = setup.noSweatArena
     )
 
   def scheduleAs(sched: Schedule, startsAt: Instant, minutes: Int)(using Translate) =

@@ -1220,9 +1220,23 @@ Leave empty to start games from the normal initial position.</string>
   <string name="muteInsightOpeningHelp">The opening variation played in the game.</string>
   <string name="muteInsightLastDay">Last 24 hours</string>
   <string name="muteArenaPrepare">Prepare Arena bots</string>
-  <string name="muteArenaReady">Arena bots are ready.</string>
+  <string name="muteArenaReady">The Arena is prepared. Play begins at the scheduled start time.</string>
   <string name="muteArenaDraining">Waiting for background bot games to finish. Refresh to check readiness.</string>
-  <string name="muteArenaUnavailable">Arena bots could not be prepared. Another event may be active, or fewer than ten eligible bots are available.</string>
-  <string name="muteArenaHelp">Bots rated 1200–1700 fill up to ten active participants. Humans can join without a participant limit; existing games finish normally.</string>
-  <string name="muteArenaSettings">Use standard chess, the normal starting position and allow bots. Team battles and prizes are unavailable.</string>
+  <string name="muteArenaUnavailable">The Arena could not be prepared. Another event may be active, or too few eligible bots are available.</string>
+  <string name="muteArenaHelp">Bots rated %1$s–%2$s fill places up to %3$s active participants. Humans can join without a participant limit; games already underway finish normally.</string>
+  <string name="muteArenaSettings">Use standard chess and the normal starting position. Team battles and prizes are unavailable.</string>
+  <string name="muteArenaPrepareHuman">Prepare Arena</string>
+  <string name="muteArenaBotsHelp">Maia bots fill empty places as people join and leave.</string>
+  <string name="muteArenaHumanOnly">Only human players can join this Arena.</string>
+  <string name="muteArenaRatingRange">Bot rating range</string>
+  <string name="muteArenaMinimum">Minimum</string>
+  <string name="muteArenaMaximum">Maximum</string>
+  <string name="muteArenaRatingHelp">Uses each bot’s current rating for this Arena’s time control.</string>
+  <string name="muteArenaTarget">Active participant target</string>
+  <string name="muteArenaTargetHelp">Bots fill up to this total (1–20). More humans can always join.</string>
+  <string name="muteArenaRangeInvalid">The minimum bot rating must not exceed the maximum.</string>
+  <string name="muteArenaLocked">Bot settings, time control and rated mode cannot change after the Arena is prepared or started.</string>
+  <string name="muteArenaBotNoticeTitle">Maia bot participants</string>
+  <string name="muteArenaBotNoticeIntro">The organizer allows human-like Maia BOT accounts to fill empty places in this tournament.</string>
+  <string name="muteArenaBotNoticeFill">Maia bots fill places up to %1$s active participants. Once at least %2$s humans remain active, bots receive no new pairings. Games already underway finish normally.</string>
 </resources>

@@ -1217,9 +1217,23 @@ Laissez vide pour commencer les parties à partir de la position initiale normal
   <string name="muteInsightOpeningHelp">La variante d’ouverture jouée dans la partie.</string>
   <string name="muteInsightLastDay">Les dernières 24 heures</string>
   <string name="muteArenaPrepare">Préparer les bots de l’arène</string>
-  <string name="muteArenaReady">Les bots de l’arène sont prêts.</string>
+  <string name="muteArenaReady">L’Arena est prête. Les parties commenceront à l’heure prévue.</string>
   <string name="muteArenaDraining">En attente de la fin des parties de bots en arrière-plan. Actualisez pour vérifier.</string>
-  <string name="muteArenaUnavailable">Impossible de préparer les bots. Un autre événement est peut-être actif ou moins de dix bots admissibles sont disponibles.</string>
-  <string name="muteArenaHelp">Des bots classés de 1200 à 1700 complètent le groupe jusqu’à dix participants actifs. Le nombre de participants humains est illimité ; les parties en cours se terminent normalement.</string>
-  <string name="muteArenaSettings">Utilisez les échecs standards, la position initiale normale et autorisez les bots. Les batailles par équipes et les prix ne sont pas disponibles.</string>
+  <string name="muteArenaUnavailable">Impossible de préparer l’Arena. Un autre tournoi est peut-être actif ou trop peu de bots admissibles sont disponibles.</string>
+  <string name="muteArenaHelp">Les bots classés entre %1$s et %2$s complètent les places jusqu’à %3$s participants actifs. Le nombre de joueurs humains est illimité ; les parties en cours se terminent normalement.</string>
+  <string name="muteArenaSettings">Utilisez les échecs classiques et la position initiale normale. Les batailles par équipes et les prix ne sont pas disponibles.</string>
+  <string name="muteArenaPrepareHuman">Préparer l’Arena</string>
+  <string name="muteArenaBotsHelp">Les bots Maia occupent les places libres lorsque des personnes arrivent ou partent.</string>
+  <string name="muteArenaHumanOnly">Seuls des joueurs humains peuvent rejoindre cette Arena.</string>
+  <string name="muteArenaRatingRange">Plage de classement des bots</string>
+  <string name="muteArenaMinimum">Minimum</string>
+  <string name="muteArenaMaximum">Maximum</string>
+  <string name="muteArenaRatingHelp">Utilise le classement actuel de chaque bot pour la cadence de cette Arena.</string>
+  <string name="muteArenaTarget">Nombre cible de participants actifs</string>
+  <string name="muteArenaTargetHelp">Les bots complètent les places jusqu’à ce total (1–20). Davantage de joueurs humains peuvent toujours participer.</string>
+  <string name="muteArenaRangeInvalid">Le classement minimal des bots ne doit pas dépasser le maximum.</string>
+  <string name="muteArenaLocked">Les réglages des bots, la cadence et le mode classé ne peuvent plus changer une fois l’Arena préparée ou commencée.</string>
+  <string name="muteArenaBotNoticeTitle">Participation des bots Maia</string>
+  <string name="muteArenaBotNoticeIntro">L’organisateur autorise des comptes BOT Maia au jeu humain à occuper les places libres de ce tournoi.</string>
+  <string name="muteArenaBotNoticeFill">Les bots Maia complètent les places jusqu’à %1$s participants actifs. Tant qu’au moins %2$s joueurs humains restent actifs, les bots ne reçoivent aucun nouvel appariement. Les parties en cours se terminent normalement.</string>
 </resources>

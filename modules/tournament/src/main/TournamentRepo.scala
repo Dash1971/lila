@@ -330,7 +330,8 @@ final class TournamentRepo(val coll: Coll, playerCollName: CollName)(using Execu
           tour.conditions.list.isEmpty.option("conditions"),
           tour.position.isEmpty.option("fen"),
           tour.variant.standard.option("variant"),
-          tour.payouts.isEmpty.option("payouts")
+          tour.payouts.isEmpty.option("payouts"),
+          tour.noSweatArena.isEmpty.option("noSweatArena")
         ).flatten
       )
     )

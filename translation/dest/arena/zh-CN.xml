@@ -87,4 +87,5 @@
   <string name="tournamentPairingsAreNowClosed">锦标赛配对现已关闭。</string>
   <string name="berserkRate">狂暴率</string>
   <string name="leaguesAndStreamerBattles">联赛和主播对战</string>
+  <string name="allowBotAccounts">允许机器人账号参赛</string>
 </resources>

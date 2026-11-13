@@ -320,26 +320,27 @@ final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Mat
   def apiUpdate(id: TourId) = ScopedBody(_.Tournament.Write) { ctx ?=> me ?=>
     WithEditableTournament(id): tour =>
       env.team.api.lightsByTourLeader(me).flatMap { teams =>
-        bindForm(forms.edit(teams, tour))(
-          jsonFormError,
-          data =>
-            given GetMyTeamIds = _ => fuccess(teams.map(_.id))
-            for
-              tour <- api.apiUpdate(tour, data)
-              json <- jsonView(
-                tour,
-                none,
-                none,
-                none,
-                partial = false,
-                withScores = true,
-                withAllowList = true,
-                withDescription = true
-              )
-            yield
-              discard { env.report.api.automodComms(data.automodText, routes.Tournament.show(tour.id).url) }
-              Ok(json)
-        )
+        editArenaForm(teams, tour).flatMap: editForm =>
+          bindForm(editForm)(
+            jsonFormError,
+            data =>
+              given GetMyTeamIds = _ => fuccess(teams.map(_.id))
+              for
+                tour <- api.apiUpdate(tour, data)
+                json <- jsonView(
+                  tour,
+                  none,
+                  none,
+                  none,
+                  partial = false,
+                  withScores = true,
+                  withAllowList = true,
+                  withDescription = true
+                )
+              yield
+                discard { env.report.api.automodComms(data.automodText, routes.Tournament.show(tour.id).url) }
+                Ok(json)
+          )
       }
   }
 
@@ -429,21 +430,25 @@ final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Mat
       }
     }
 
+  private def editArenaForm(teams: List[lila.core.team.LightTeam], tour: Tour)(using Me) =
+    env.tournament.noSweatArena.scope(tour).map(s => forms.edit(teams, tour, arenaPrepared = s.isDefined))
+
   def edit(id: TourId) = Auth { ctx ?=> me ?=>
     WithEditableTournament(id): tour =>
       env.team.api.lightsByTourLeader(me).flatMap { teams =>
-        val form = forms.edit(teams, tour)
-        Ok.page(views.tournament.form.edit(tour, form, teams))
+        editArenaForm(teams, tour).flatMap: form =>
+          Ok.page(views.tournament.form.edit(tour, form, teams))
       }
   }
 
   def update(id: TourId) = AuthBody { ctx ?=> me ?=>
     WithEditableTournament(id): tour =>
       env.team.api.lightsByTourLeader(me).flatMap { teams =>
-        bindForm(forms.edit(teams, tour))(
-          err => BadRequest.page(views.tournament.form.edit(tour, err, teams)),
-          data => api.update(tour, data).inject(Redirect(routes.Tournament.show(id)).flashSuccess)
-        )
+        editArenaForm(teams, tour).flatMap: editForm =>
+          bindForm(editForm)(
+            err => BadRequest.page(views.tournament.form.edit(tour, err, teams)),
+            data => api.update(tour, data).inject(Redirect(routes.Tournament.show(id)).flashSuccess)
+          )
       }
   }
 

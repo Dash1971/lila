@@ -1177,9 +1177,23 @@
   <string name="muteInsightOpeningHelp">対局で指されたオープニングの変化。</string>
   <string name="muteInsightLastDay">過去24時間</string>
   <string name="muteArenaPrepare">アリーナのボットを準備</string>
-  <string name="muteArenaReady">アリーナのボットの準備ができました。</string>
+  <string name="muteArenaReady">アリーナの準備ができました。対局は予定の開始時刻に始まります。</string>
   <string name="muteArenaDraining">バックグラウンドのボット対局の終了を待っています。ページを更新して準備状況を確認してください。</string>
-  <string name="muteArenaUnavailable">ボットを準備できませんでした。別のイベントが進行中か、条件に合うボットが10体未満の可能性があります。</string>
-  <string name="muteArenaHelp">レーティング1200〜1700のボットが、参加中のプレイヤーを最大10人まで補います。人間の参加人数に上限はなく、進行中の対局は通常どおり終了します。</string>
-  <string name="muteArenaSettings">通常の初期配置で標準チェスを選び、ボットを許可してください。チーム戦と賞品には対応していません。</string>
+  <string name="muteArenaUnavailable">アリーナを準備できませんでした。別の大会が開催中か、条件を満たすボットが不足している可能性があります。</string>
+  <string name="muteArenaHelp">レーティング%1$s～%2$sのボットが、活動中の参加者数が%3$s人になるまで空きを補います。人間の参加人数に上限はなく、進行中の対局は通常どおり終了まで続きます。</string>
+  <string name="muteArenaSettings">通常のチェスと初期配置を使用してください。チーム戦と賞品には対応していません。</string>
+  <string name="muteArenaPrepareHuman">アリーナを準備</string>
+  <string name="muteArenaBotsHelp">人間の参加や退出に合わせて、Maiaボットが空きを補います。</string>
+  <string name="muteArenaHumanOnly">このアリーナには人間のプレイヤーだけが参加できます。</string>
+  <string name="muteArenaRatingRange">ボットのレーティング範囲</string>
+  <string name="muteArenaMinimum">最低</string>
+  <string name="muteArenaMaximum">最高</string>
+  <string name="muteArenaRatingHelp">このアリーナの持ち時間区分における各ボットの現在のレーティングを使用します。</string>
+  <string name="muteArenaTarget">活動中の参加者数の目標</string>
+  <string name="muteArenaTargetHelp">この合計人数（1～20人）までボットが補います。人間はそれを超えても参加できます。</string>
+  <string name="muteArenaRangeInvalid">ボットの最低レーティングは最高レーティング以下にしてください。</string>
+  <string name="muteArenaLocked">アリーナの準備後または開始後は、ボット設定、持ち時間、レート戦の設定を変更できません。</string>
+  <string name="muteArenaBotNoticeTitle">Maiaボットの参加</string>
+  <string name="muteArenaBotNoticeIntro">主催者は、この大会の空きを補うために、人間らしく指すMaiaのBOTアカウントの参加を許可しています。</string>
+  <string name="muteArenaBotNoticeFill">Maiaボットは活動中の参加者が%1$s人になるまで空きを補います。人間の参加者が%2$s人以上である間は、ボットに新しい対局は割り当てられません。進行中の対局は通常どおり終了まで続きます。</string>
 </resources>

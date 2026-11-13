@@ -1,6 +1,7 @@
 import { get, set } from '@/data';
 import { licon } from '@/licon';
 import { pubsub } from '@/pubsub';
+import { json, url } from '@/xhr';
 
 import { profileUrl } from './userLink';
 
@@ -13,6 +14,16 @@ export interface Data {
 let watchersData: Data | undefined;
 
 const name = (u: string) => (u.includes(' ') ? u.split(' ')[1] : u);
+
+export function watcherLink(user: string, displayName?: string): HTMLAnchorElement {
+  const canonical = name(user);
+  const link = document.createElement('a');
+  link.className = 'user-link ulpt';
+  link.href = profileUrl(canonical);
+  const title = user.includes(' ') ? user.slice(0, user.indexOf(' ') + 1) : '';
+  link.textContent = title + (displayName || canonical);
+  return link;
+}
 
 export function watchers(element: HTMLElement, withUserList = true): void {
   if (element.dataset.watched) return;
@@ -42,10 +53,29 @@ export function watchers(element: HTMLElement, withUserList = true): void {
       const currUsers = data.users.map(u => u || '').join(';');
       if (get(listEl, 'prevUsers') !== currUsers) {
         set(listEl, 'prevUsers', currUsers);
-        const tags = data.users.map(u =>
-          u ? `<a class="user-link ulpt" href="${profileUrl(name(u))}">${u}</a>` : i18n.site.anonymous,
-        );
-        $listEl.html(tags.join(', '));
+        const render = (displayNames: Map<string, string> = new Map()) => {
+          // A lookup for an older crowd must not overwrite the current spectator list.
+          if (get(listEl, 'prevUsers') !== currUsers) return;
+          listEl.replaceChildren();
+          data.users!.forEach((user, index) => {
+            if (index) listEl.append(', ');
+            if (!user) listEl.append(i18n.site.anonymous);
+            else {
+              listEl.append(watcherLink(user, displayNames.get(name(user).toLowerCase())));
+            }
+          });
+        };
+        render();
+        if (document.documentElement.dataset.brand === 'mutechess') {
+          const ids = [...new Set(data.users.filter(Boolean).map(user => name(user).toLowerCase()))].slice(
+            0,
+            100,
+          );
+          if (ids.length)
+            json<LightUser[]>(url('/api/users/status', { ids: ids.join(',') }))
+              .then(users => render(new Map(users.map(user => [user.id, user.displayName || user.name]))))
+              .catch(() => {}); // Keep canonical labels when the optional name lookup is unavailable.
+        }
       }
     } else $listEl.html('');
 

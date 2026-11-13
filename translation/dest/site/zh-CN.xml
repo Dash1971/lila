@@ -1176,9 +1176,23 @@
   <string name="muteInsightOpeningHelp">对局中采用的开局变例。</string>
   <string name="muteInsightLastDay">最近24小时</string>
   <string name="muteArenaPrepare">准备竞技场机器人</string>
-  <string name="muteArenaReady">竞技场机器人已就绪。</string>
+  <string name="muteArenaReady">竞技场已准备就绪。对局将在预定时间开始。</string>
   <string name="muteArenaDraining">正在等待后台机器人对局结束。请刷新页面查看准备状态。</string>
-  <string name="muteArenaUnavailable">无法准备竞技场机器人。可能有其他赛事正在进行，或符合条件的机器人不足十个。</string>
-  <string name="muteArenaHelp">评分为1200–1700的机器人将活跃参赛人数补足至十人。人类参赛人数不设上限；正在进行的对局会正常结束。</string>
-  <string name="muteArenaSettings">请使用标准国际象棋和正常初始局面，并允许机器人参加。暂不支持团队赛和奖品。</string>
+  <string name="muteArenaUnavailable">无法准备竞技场。可能有其他赛事正在进行，或符合条件的机器人数量不足。</string>
+  <string name="muteArenaHelp">等级分为%1$s–%2$s的机器人会补足空位，直到活跃参赛者达到%3$s人。真人参赛人数不限；已经开始的对局将正常结束。</string>
+  <string name="muteArenaSettings">请使用标准国际象棋和正常初始局面。不支持团体对抗赛和奖金。</string>
+  <string name="muteArenaPrepareHuman">准备竞技场</string>
+  <string name="muteArenaBotsHelp">随着真人加入或离开，Maia机器人会补足空位。</string>
+  <string name="muteArenaHumanOnly">此竞技场仅限真人玩家参加。</string>
+  <string name="muteArenaRatingRange">机器人等级分范围</string>
+  <string name="muteArenaMinimum">最低</string>
+  <string name="muteArenaMaximum">最高</string>
+  <string name="muteArenaRatingHelp">使用各机器人在此竞技场用时类别下的当前等级分。</string>
+  <string name="muteArenaTarget">活跃参赛者目标人数</string>
+  <string name="muteArenaTargetHelp">机器人补足至此总人数（1–20人）。真人始终可以超出此人数加入。</string>
+  <string name="muteArenaRangeInvalid">机器人最低等级分不能高于最高等级分。</string>
+  <string name="muteArenaLocked">竞技场准备就绪或开始后，无法更改机器人设置、用时规则和是否计分。</string>
+  <string name="muteArenaBotNoticeTitle">Maia机器人参赛</string>
+  <string name="muteArenaBotNoticeIntro">主办方允许模仿人类棋风的Maia BOT账号补足本赛事的空位。</string>
+  <string name="muteArenaBotNoticeFill">Maia机器人会补足空位，直到活跃参赛者达到%1$s人。当至少有%2$s名真人持续活跃时，机器人将不再获得新的配对。已经开始的对局将正常结束。</string>
 </resources>

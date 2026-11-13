@@ -84,4 +84,5 @@
   <string name="tournamentPairingsAreNowClosed">Жеребьёвка турнира закончена</string>
   <string name="berserkRate">Берсерк</string>
   <string name="leaguesAndStreamerBattles">Лиги &amp; Битвы стримеров</string>
+  <string name="allowBotAccounts">Разрешить аккаунты ботов</string>
 </resources>

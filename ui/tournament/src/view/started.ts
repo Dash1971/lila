@@ -20,7 +20,7 @@ function joinTheGame(gameId: string) {
 
 function notice(ctrl: TournamentController): VNode {
   return ctrl.willBePaired()
-    ? h('div.tour__notice.bar-glider', i18n.site.standByX(ctrl.data.myUsername!))
+    ? h('div.tour__notice.bar-glider', i18n.site.standByX(ctrl.data.myDisplayName || ctrl.data.myUsername!))
     : h('div.tour__notice.closed', i18n.arena.tournamentPairingsAreNowClosed);
 }
 

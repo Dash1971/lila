@@ -36,6 +36,8 @@ object BSONHandlers:
     r => (r.value * 100_000).toInt
   )
 
+  private given BSONDocumentHandler[NoSweatArenaSettings] = Macros.handler
+
   import TournamentCondition.bsonHandler
 
   given tourHandler: BSON[Tournament] with
@@ -77,7 +79,8 @@ object BSONHandlers:
         spotlight = r.getO[Spotlight]("spotlight"),
         description = r.strO("description"),
         payouts = r.getO[Payouts]("payouts"),
-        hasChat = r.boolO("chat").getOrElse(true)
+        hasChat = r.boolO("chat").getOrElse(true),
+        noSweatArena = r.getO[NoSweatArenaSettings]("noSweatArena")
       )
       if false && tour.realNames then tour.copy(conditions = conditions.withPublicTitle) else tour
 
@@ -106,7 +109,8 @@ object BSONHandlers:
         "spotlight" -> o.spotlight,
         "description" -> o.description,
         "payouts" -> o.payouts,
-        "chat" -> (!o.hasChat).option(false)
+        "chat" -> (!o.hasChat).option(false),
+        "noSweatArena" -> o.noSweatArena
       )
 
   given BSON[Player] with

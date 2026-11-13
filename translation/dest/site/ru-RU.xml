@@ -1300,9 +1300,23 @@
   <string name="muteInsightOpeningHelp">Вариант дебюта, разыгранный в партии.</string>
   <string name="muteInsightLastDay">Последние 24 часа</string>
   <string name="muteArenaPrepare">Подготовить ботов арены</string>
-  <string name="muteArenaReady">Боты арены готовы.</string>
+  <string name="muteArenaReady">Арена подготовлена. Партии начнутся в назначенное время.</string>
   <string name="muteArenaDraining">Ожидание завершения фоновых партий ботов. Обновите страницу для проверки готовности.</string>
-  <string name="muteArenaUnavailable">Не удалось подготовить ботов. Возможно, уже идёт другое событие или доступно менее десяти подходящих ботов.</string>
-  <string name="muteArenaHelp">Боты с рейтингом 1200–1700 дополняют состав до десяти активных участников. Число участников-людей не ограничено; текущие партии завершаются обычным образом.</string>
-  <string name="muteArenaSettings">Используйте стандартные шахматы, обычную начальную позицию и разрешите ботов. Командные битвы и призы недоступны.</string>
+  <string name="muteArenaUnavailable">Не удалось подготовить Арену. Возможно, уже активен другой турнир или доступно недостаточно подходящих ботов.</string>
+  <string name="muteArenaHelp">Боты с рейтингом %1$s–%2$s заполняют места до %3$s активных участников. Число участников-людей не ограничено; начатые партии завершаются в обычном порядке.</string>
+  <string name="muteArenaSettings">Используйте обычные шахматы и начальную позицию. Командные битвы и призы недоступны.</string>
+  <string name="muteArenaPrepareHuman">Подготовить Арену</string>
+  <string name="muteArenaBotsHelp">Боты Maia заполняют свободные места, когда люди приходят и уходят.</string>
+  <string name="muteArenaHumanOnly">В этой Арене могут участвовать только люди.</string>
+  <string name="muteArenaRatingRange">Диапазон рейтинга ботов</string>
+  <string name="muteArenaMinimum">Минимум</string>
+  <string name="muteArenaMaximum">Максимум</string>
+  <string name="muteArenaRatingHelp">Используется текущий рейтинг каждого бота для контроля времени этой Арены.</string>
+  <string name="muteArenaTarget">Целевое число активных участников</string>
+  <string name="muteArenaTargetHelp">Боты заполняют места до этого общего числа (1–20). Люди могут присоединяться и сверх него.</string>
+  <string name="muteArenaRangeInvalid">Минимальный рейтинг ботов не должен превышать максимальный.</string>
+  <string name="muteArenaLocked">Настройки ботов, контроль времени и рейтинговый режим нельзя менять после подготовки или начала Арены.</string>
+  <string name="muteArenaBotNoticeTitle">Участие ботов Maia</string>
+  <string name="muteArenaBotNoticeIntro">Организатор разрешает BOT-аккаунтам Maia, играющим в человеческом стиле, заполнять свободные места в этом турнире.</string>
+  <string name="muteArenaBotNoticeFill">Боты Maia заполняют места до %1$s активных участников. Пока активны не менее %2$s людей, боты не получают новых пар. Начатые партии завершаются в обычном порядке.</string>
 </resources>

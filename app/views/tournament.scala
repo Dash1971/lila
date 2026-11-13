@@ -18,7 +18,8 @@ private lazy val showUi = TournamentShow(helpers, views.gathering)(
   variantTeamLinks = lila.team.Team.variants.view
     .mapValues: team =>
       (team, teamLink(team, true))
-    .toMap
+    .toMap,
+  focused = env.noSweat.enabled
 )
 export showUi.faq.page as faq
 

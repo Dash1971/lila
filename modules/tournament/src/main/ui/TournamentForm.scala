@@ -107,6 +107,7 @@ final class TournamentForm(val helpers: Helpers, showUi: TournamentShow)(
       ),
       fields.waitStart,
       conditionFields(form, fields, teams = leaderTeams, tour = none),
+      focused.option(arenaSettings(form, fields)),
       featuresFields(form, fields),
       fields.isTeamBattle.option(form3.hidden(form.prefix("teamBattleByTeam")))
     )
@@ -127,6 +128,7 @@ final class TournamentForm(val helpers: Helpers, showUi: TournamentShow)(
       ),
       fields.waitStart,
       conditionFields(form, fields, teams = myTeams, tour = tour.some),
+      focused.option(arenaSettings(form, fields)),
       featuresFields(form, fields)
     )
 
@@ -168,7 +170,44 @@ final class TournamentForm(val helpers: Helpers, showUi: TournamentShow)(
         (ctx.me.exists(_.hasTitle) || Granter.opt(_.ManageTournament)).option:
           titled(form.prefix("conditions.titled"))
         ,
-        bots(form.prefix("conditions.bots"), fields.disabledAfterStart)
+        (!focused).option(bots(form.prefix("conditions.bots"), fields.disabledAfterStart))
+      )
+    )
+
+  private def arenaSettings(form: Form[?], fields: TourFields)(using Context, FormPrefix) =
+    import lila.core.i18n.I18nKey
+    val enabled = form3.isChecked(form.prefix("conditions.bots"))
+    form3.fieldset(trans.arena.allowBotAccounts(), toggle = true.some, disabled = fields.frozen)(
+      div(data("maia-arena-settings") := true)(
+        form3.checkboxGroup(
+          form.prefix("conditions.bots"),
+          trans.arena.allowBotAccounts(),
+          disabled = fields.disabledAfterStart
+        ),
+        p(cls := (if enabled then "maia-arena-enabled" else "maia-arena-enabled none"))(
+          I18nKey("muteArenaBotsHelp")()
+        ),
+        p(cls := (if enabled then "maia-arena-human-only none" else "maia-arena-human-only"))(
+          I18nKey("muteArenaHumanOnly")()
+        ),
+        div(cls := (if enabled then "maia-arena-fields" else "maia-arena-fields none"))(
+          errMsg(form.prefix("noSweatArena")),
+          h3(I18nKey("muteArenaRatingRange")()),
+          form3.split(
+            form3.group(form.prefix("noSweatArena.minRating"), I18nKey("muteArenaMinimum")(), half = true)(
+              form3.input(_, typ = "number")(required := true)
+            ),
+            form3.group(form.prefix("noSweatArena.maxRating"), I18nKey("muteArenaMaximum")(), half = true)(
+              form3.input(_, typ = "number")(required := true)
+            )
+          ),
+          p(cls := "form-help")(I18nKey("muteArenaRatingHelp")()),
+          form3.group(
+            form.prefix("noSweatArena.target"),
+            I18nKey("muteArenaTarget")(),
+            help = I18nKey("muteArenaTargetHelp")().some
+          )(form3.input(_, typ = "number")(required := true))
+        )
       )
     )
 

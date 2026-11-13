@@ -1013,20 +1013,23 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
         else
           for
             games <- current()
+            settings = tour.arenaSettings
+            count = if tour.conditions.allowsBots then settings.target else 0
+            _ = requireThat(settings.valid, 400, "Invalid Arena settings")
             perfs <- env.user.perfsRepo.idsMap(botIds.toList, _.pri)
             busy = games.flatMap(g => occupied(g._1)).toSet
-            candidates = perfs.toList.filter((id, ps) =>
-              !busy(id) && ps(tour.perfType.key).intRating.value >= 1200 && ps(
-                tour.perfType.key
-              ).intRating.value <= 1700
-            )
+            candidates = perfs.toList
+              .filter((id, ps) => !busy(id) && settings.accepts(ps(tour.perfType.key).intRating.value))
             chosen = lila.app.NoSweatArenaRoster.select(
-              candidates.map((id, ps) => id -> ps(tour.perfType.key).intRating.value)
+              candidates.map((id, ps) => id -> ps(tour.perfType.key).intRating.value),
+              settings.minRating,
+              settings.maxRating,
+              count
             )
-            _ = requireThat(chosen.size == 10, 409, "Not enough Arena bots")
+            _ = requireThat(chosen.size == count, 409, "Not enough Arena bots")
             bots <- chosen.traverse(id => env.user.api.byIdWithPerf(id, tour.perfType.key))
             _ = requireThat(
-              bots.flatten.size == 10 && bots.flatten.forall(b => b.user.isBot && b.user.enabled.yes),
+              bots.flatten.size == count && bots.flatten.forall(b => b.user.isBot && b.user.enabled.yes),
               409,
               "Arena roster unavailable"
             )
@@ -1057,7 +1060,7 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
       withBots = pairs.filter(p => p.users.exists(botIds))
       backgroundDraining = games.exists(g => automatic(g._1) && g._1.getAsOpt[TourId]("arena").isEmpty)
       eligible = withBots
-        .filter(_ => !backgroundDraining)
+        .filter(_ => tour.conditions.allowsBots && !backgroundDraining)
         .filter(p => p.users.filter(botIds).forall(id => roster(id) && !occupiedBots(id)))
         .take(free)
       // Keep native human/human pairings even when managed inference slots are full.

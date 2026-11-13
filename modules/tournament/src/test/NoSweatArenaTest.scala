@@ -35,3 +35,48 @@ class NoSweatArenaTest extends munit.FunSuite:
     assertEquals(NoSweatArena.recentHumans(Set(human), Set.empty, seen, now + 61000), Map.empty[UserId, Long])
     assertEquals(NoSweatArena.recentHumans(Set.empty, Set.empty, seen, now + 1000), Map.empty[UserId, Long])
     assertEquals(NoSweatArena.recentHumans(Set(human), Set(human), seen, now + 61000)(human), now + 61000)
+
+  test("custom targets determine filler seats without limiting human participation"):
+    for target <- List(1, 4, 12, 20); humans <- List(0, 1, 3, 10, 25) do
+      assertEquals(
+        NoSweatArena.selectBots(ranked, humans, Set.empty, target),
+        ranked.take((target - humans).max(0)).toSet
+      )
+    assertEquals(NoSweatArena.selectBots(ranked, 0, Set.empty, 0), Set.empty[UserId])
+
+  test("bot form validates range order, participant limits and rating bounds"):
+    val form = play.api.data.Form(NoSweatArenaSettings.formMapping)
+    def bind(min: Int, max: Int, target: Int) =
+      form.bind(Map("minRating" -> min.toString, "maxRating" -> max.toString, "target" -> target.toString))
+    assertEquals(bind(1400, 1700, 10).get, NoSweatArenaSettings.default)
+    assertEquals(bind(1600, 1600, 4).get, NoSweatArenaSettings(1600, 1600, 4))
+    assert(bind(1700, 1400, 10).errors.exists(_.message == "muteArenaRangeInvalid"))
+    for (min, max, target) <- List((399, 1700, 10), (1400, 3201, 10), (1400, 1700, 0), (1400, 1700, 21)) do
+      assert(bind(min, max, target).hasErrors)
+
+  test("per-event settings survive native BSON round trips; old events receive the defaults"):
+    import BSONHandlers.given
+    import lila.db.dsl.{ *, given }
+    val tour = Tournament(
+      id = TourId("settings"),
+      name = "Settings",
+      status = lila.core.tournament.Status.created,
+      clock = chess.Clock.Config(chess.Clock.LimitSeconds(900), chess.Clock.IncrementSeconds(10)),
+      minutes = 120,
+      variant = chess.variant.Standard,
+      position = None,
+      rated = chess.Rated.Yes,
+      conditions = TournamentCondition.All.empty,
+      schedule = None,
+      nbPlayers = 0,
+      createdAt = nowInstant,
+      createdBy = UserId("owner"),
+      startsAt = nowInstant,
+      noSweatArena = Some(NoSweatArenaSettings(1300, 1800, 6))
+    )
+    val handler = summon[reactivemongo.api.bson.BSONDocumentHandler[Tournament]]
+    val doc = handler.writeTry(tour).get
+    val restored = handler.readDocument(doc).get
+    assertEquals(restored.arenaSettings, tour.arenaSettings)
+    assert(!restored.conditions.allowsBots)
+    assertEquals(handler.readDocument(doc -- "noSweatArena").get.arenaSettings, NoSweatArenaSettings.default)

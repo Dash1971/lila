@@ -52,11 +52,16 @@ final class NoSweatArena(
       )
 
   def register(t: Tournament, bots: List[lila.core.user.WithPerf]): Funit =
-    require(ownerEvent(t) && t.isCreated && bots.size == 10 && bots.map(_.id).distinct.size == 10)
+    val settings = t.arenaSettings
+    val count = if t.conditions.allowsBots then settings.target else 0
     require(
-      bots.forall(b =>
-        b.user.isBot && b.user.enabled.yes && b.perf.intRating.value >= 1200 && b.perf.intRating.value <= 1700
-      )
+      ownerEvent(t) && t.isCreated && settings.valid && bots.size == count && bots
+        .map(_.id)
+        .distinct
+        .size == count
+    )
+    require(
+      bots.forall(b => b.user.isBot && b.user.enabled.yes && settings.accepts(b.perf.intRating.value))
     )
     for
       _ <- state.update.one(
@@ -105,7 +110,12 @@ final class NoSweatArena(
             ordered = roster
               .filter(availableBots)
               .sortBy(id => (ranking.ranking.get(id).fold(Int.MaxValue)(_.value), roster.indexOf(id)))
-            selected = selectBots(ordered, humans.size, playing.intersect(roster.toSet))
+            selected = selectBots(
+              ordered,
+              humans.size,
+              playing.intersect(roster.toSet),
+              if t.conditions.allowsBots then t.arenaSettings.target else 0
+            )
             _ <- players
               .filter(p => p.bot && p.active && !selected(p.userId))
               .sequentiallyVoid(p => playerRepo.withdraw(t.id, p.userId))
@@ -165,7 +175,12 @@ object NoSweatArena:
       now: Long
   ): Map[UserId, Long] =
     (previous ++ observed.map(_ -> now)).filter((id, at) => active(id) && now - at <= reconnectMillis)
-  def selectBots(ranked: List[UserId], humans: Int, playing: Set[UserId]): Set[UserId] =
-    val target = (10 - humans).max(0)
+  def selectBots(
+      ranked: List[UserId],
+      humans: Int,
+      playing: Set[UserId],
+      participantTarget: Int = 10
+  ): Set[UserId] =
+    val target = (participantTarget - humans).max(0)
     val desired = ranked.take(target)
     desired.filter(playing).toSet ++ desired.filterNot(playing).take((target - playing.size).max(0))

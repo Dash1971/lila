@@ -27,7 +27,7 @@ final class TournamentForm(appConfig: play.api.Configuration):
 
   private[tournament] def empty(teamBattleId: Option[TeamId] = None, forClas: Boolean)(using me: Me) =
     TournamentSetup(
-      name = teamBattleId.isEmpty.option(me.titleUsername),
+      name = teamBattleId.isEmpty.option(if focused then me.publicName else me.titleUsername),
       clockTime = if focused then 15d else if forClas then 5d else timeDefault,
       clockIncrement = if focused then IncrementSeconds(10) else incrementDefault,
       minutes = if focused then 120 else minuteDefault,
@@ -45,11 +45,12 @@ final class TournamentForm(appConfig: play.api.Configuration):
       streakable = forClas.not.some,
       description = none,
       payouts = none,
-      hasChat = forClas.not.some
+      hasChat = forClas.not.some,
+      noSweatArena = focused.option(NoSweatArenaSettings.default)
     )
 
-  def edit(leaderTeams: List[LightTeam], tour: Tournament)(using Me) =
-    form(leaderTeams, tour.some).fill(fillFromTour(tour))
+  def edit(leaderTeams: List[LightTeam], tour: Tournament, arenaPrepared: Boolean = false)(using Me) =
+    form(leaderTeams, tour.some, arenaPrepared).fill(fillFromTour(tour))
 
   private[tournament] def fillFromTour(tour: Tournament) =
     TournamentSetup(
@@ -69,14 +70,26 @@ final class TournamentForm(appConfig: play.api.Configuration):
       streakable = tour.streakable.some,
       description = tour.description,
       payouts = tour.payouts,
-      hasChat = tour.hasChat.some
+      hasChat = tour.hasChat.some,
+      noSweatArena = if focused then Some(tour.arenaSettings) else tour.noSweatArena
     )
 
-  private def form(leaderTeams: List[LightTeam], prev: Option[Tournament])(using Me) =
+  private def form(leaderTeams: List[LightTeam], prev: Option[Tournament], arenaPrepared: Boolean = false)(
+      using Me
+  ) =
     Form:
       val m = makeMapping(leaderTeams, prev)
       prev.fold(m): tour =>
         m
+          .verifying(
+            "muteArenaLocked",
+            d =>
+              !focused || (!(arenaPrepared || !tour.isCreated) || (
+                d.noSweatArena.getOrElse(tour.arenaSettings) == tour.arenaSettings &&
+                  d.conditions.allowsBots == tour.conditions.allowsBots &&
+                  d.clockConfig == tour.clock && d.realRated == tour.rated
+              ))
+          )
           .verifying(
             "Can't change variant after players have joined",
             _.realVariant == tour.variant || tour.nbPlayers == 0
@@ -122,12 +135,14 @@ final class TournamentForm(appConfig: play.api.Configuration):
       "streakable" -> optional(boolean),
       "description" -> optional(cleanNonEmptyText),
       "payouts" -> (if manager then optional(cleanNonEmptyText.into[Payouts]) else ignored(none)),
-      "hasChat" -> optional(boolean)
+      "hasChat" -> optional(boolean),
+      "noSweatArena" -> (if focused then optional(NoSweatArenaSettings.formMapping)
+                         else ignored(none))
     )(TournamentSetup.apply)(unapply)
       .verifying(
         "muteArenaSettings",
         d =>
-          !focused || (d.realVariant.standard && d.position.isEmpty && d.teamBattleByTeam.isEmpty && d.conditions.allowsBots && d.payouts.isEmpty)
+          !focused || (d.realVariant.standard && d.position.isEmpty && d.teamBattleByTeam.isEmpty && d.payouts.isEmpty)
       )
       .verifying("Invalid clock", _.validClock(prev))
       .verifying("Invalid clock for bot games", _.validClockForBots(prev))
@@ -191,7 +206,8 @@ private[tournament] case class TournamentSetup(
     streakable: Option[Boolean],
     description: Option[String],
     payouts: Option[Payouts],
-    hasChat: Option[Boolean]
+    hasChat: Option[Boolean],
+    noSweatArena: Option[NoSweatArenaSettings] = None
 ):
   def validClock(prev: Option[Tournament]) =
     sameClock(prev) ||
@@ -260,7 +276,8 @@ private[tournament] case class TournamentSetup(
         teamBattle = old.teamBattle,
         description = description,
         payouts = payouts,
-        hasChat = hasChat | true
+        hasChat = hasChat | true,
+        noSweatArena = noSweatArena.orElse(old.noSweatArena)
       )
 
   // update only fields that are specified
@@ -285,7 +302,8 @@ private[tournament] case class TournamentSetup(
         teamBattle = old.teamBattle,
         description = description.fold(old.description)(_.nonEmptyOption),
         payouts = payouts.fold(old.payouts)(_.nonEmptyOption),
-        hasChat = hasChat | old.hasChat
+        hasChat = hasChat | old.hasChat,
+        noSweatArena = noSweatArena.orElse(old.noSweatArena)
       )
 
   def automodText = List(name, description).flatten.mkString("\n")

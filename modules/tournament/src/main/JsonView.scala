@@ -128,6 +128,7 @@ final class JsonView(
           .add("description" -> withDescription.so(tour.description))
           .add("payouts" -> tour.payouts)
           .add("myUsername" -> me.map(_.username))
+          .add("myDisplayName" -> me.flatMap(_.publicDisplayName))
           .add[Condition.RatingCondition]("minRating", tour.conditions.minRating)
           .add[Condition.RatingCondition]("maxRating", tour.conditions.maxRating)
           .add("minRatedGames", tour.conditions.nbRatedGame)
@@ -351,6 +352,7 @@ final class JsonView(
             "k" -> p.rank.value
           )
           .add("t" -> u.title)
+          .add("displayName" -> u.displayName)
 
   private def duelJson(d: Duel): Fu[JsObject] = for
     u1 <- duelPlayerJson(d.p1)
@@ -485,6 +487,7 @@ object JsonView:
             "s" -> p.score
           )
           .add("t" -> light.flatMap(_.title))
+          .add("displayName" -> light.flatMap(_.displayName))
           .add("f" -> p.fire)
           .add("w" -> p.withdraw)
 
@@ -498,6 +501,7 @@ object JsonView:
           "username" -> user.name
         )
         .add("title" -> user.title)
+        .add("displayName" -> user.displayName)
         .add("flair" -> user.flair)
         .add("patronColor" -> user.patronAndColor.map(_.color))
         .add("performance" -> player.performance)

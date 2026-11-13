@@ -85,4 +85,5 @@ Por exemplo, uma média de classificação de 3% significa que você normalmente
   <string name="tournamentPairingsAreNowClosed">Os pareamentos do torneio fecharam.</string>
   <string name="berserkRate">Taxa Berserk</string>
   <string name="leaguesAndStreamerBattles">Ligas &amp; Batalhas de Streamers</string>
+  <string name="allowBotAccounts">Permitir contas de bots</string>
 </resources>

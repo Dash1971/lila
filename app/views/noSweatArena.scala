@@ -16,14 +16,14 @@ def noSweatArenaHome(events: List[lila.tournament.Tournament], host: Boolean)(us
 
 def noSweatArenaControls(t: lila.tournament.Tournament, status: JsObject)(using Context): Frag =
   frag(
-    p(I18nKey("muteArenaHelp").apply()),
     if (status \ "prepared").asOpt[Boolean].contains(true) then
       p(I18nKey(if (status \ "ready").asOpt[Boolean].contains(true) then "muteArenaReady"
       else "muteArenaDraining").apply())
     else
       t.isCreated.option(
         postForm(action := routes.Tournament.prepare(t.id))(
-          submitButton(cls := "button")(I18nKey("muteArenaPrepare").apply())
+          submitButton(cls := "button")(I18nKey(if t.conditions.allowsBots then "muteArenaPrepare"
+          else "muteArenaPrepareHuman").apply())
         )
       )
   )

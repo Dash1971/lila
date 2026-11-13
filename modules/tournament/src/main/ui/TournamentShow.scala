@@ -14,7 +14,8 @@ import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
 final class TournamentShow(helpers: Helpers, gathering: GatheringUi)(
-    variantTeamLinks: Map[chess.variant.Variant.LilaKey, (LightTeam, Frag)]
+    variantTeamLinks: Map[chess.variant.Variant.LilaKey, (LightTeam, Frag)],
+    focused: Boolean = false
 )(using NetDomain):
   import helpers.{ *, given }
 
@@ -193,18 +194,30 @@ final class TournamentShow(helpers: Helpers, gathering: GatheringUi)(
         chat
       )
 
-    private def sideBotsWarning(tour: Tournament) =
+    private def sideBotsWarning(tour: Tournament)(using Context) =
       tour.conditions.allowsBots.option:
         div(cls := "tour__bots-warning")(
           img(src := staticAssetPath("images/icons/bot.webp")),
           div(
-            h2("Bot tournament"),
-            p(
-              "The organizer has decided to let ",
-              userTitleTag(chess.PlayerTitle.BOT),
-              " accounts play in this tournament."
-            ),
-            p("You will have to face ", strong("chess engines"), " in some of your games.")
+            if focused then
+              frag(
+                h2(lila.core.i18n.I18nKey("muteArenaBotNoticeTitle")()),
+                p(lila.core.i18n.I18nKey("muteArenaBotNoticeIntro")()),
+                p(
+                  lila.core.i18n
+                    .I18nKey("muteArenaBotNoticeFill")(tour.arenaSettings.target, tour.arenaSettings.target)
+                )
+              )
+            else
+              frag(
+                h2("Bot tournament"),
+                p(
+                  "The organizer has decided to let ",
+                  userTitleTag(chess.PlayerTitle.BOT),
+                  " accounts play in this tournament."
+                ),
+                p("You will have to face ", strong("chess engines"), " in some of your games.")
+              )
           )
         )
 

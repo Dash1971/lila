@@ -96,6 +96,7 @@ export interface TournamentData {
   duels: Duel[];
   duelTeams?: DuelTeams;
   myUsername?: string;
+  myDisplayName?: string;
   reloadDelay?: number;
   reloadEndpoint: string;
 }
@@ -204,7 +205,8 @@ export interface Duel {
 }
 
 export interface DuelPlayer {
-  n: string; // name
+  n: string; // canonical name
+  displayName?: string;
   r: number; // rating
   k: number; // rank
   t?: string; // title
