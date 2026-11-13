@@ -141,46 +141,21 @@ final class Api(env: Env, gameC: => Game) extends LilaController(env):
       .flatMap(env.tournament.apiJsonView.apply)
       .map(ApiResult.Data.apply)
 
-  def tournamentGames(id: TourId) = AnonOrScoped(): ctx ?=>
-    env.tournament.tournamentRepo.byId(id).orNotFound { tour =>
-      val onlyUserId = getUserStr("player").map(_.id)
-      val config = GameApiV2.ByTournamentConfig(
-        tour = tour,
-        format = GameApiV2.Format.byRequest,
-        flags = gameC.requestPgnFlags(extended = false),
-        perSecond = gamesPerSecond(ctx.me)
-      )
-      limit.GlobalConcurrencyLimitPerIP
-        .download(ctx.req.ipAddress)(env.api.gameApiV2.exportByTournament(config, onlyUserId)): source =>
-          Ok.chunked(source)
-            .asAttachmentStream(env.api.gameApiV2.filename(tour, config.format))
-            .as(gameC.gameContentType(config))
-    }
-
-  def tournamentResults(id: TourId) = Anon:
-    val csv = HTTPRequest.acceptsCsv(req) || get("as").has("csv")
-    env.tournament.tournamentRepo.byId(id).orNotFound { tour =>
-      val withSheet = getBool("sheet")
-      val perSecond = MaxPerSecond:
-        if withSheet
-        then (20 - (tour.estimateNumberOfGamesOneCanPlay / 20).toInt).atLeast(10)
-        else 50
-      val source = env.tournament.api
-        .resultStream(
-          tour,
-          perSecond,
-          getInt("nb") | Int.MaxValue,
-          withSheet = withSheet
-        )
-      val result =
-        if csv then csvDownload(lila.tournament.TournamentCsv(source))
-        else jsonDownload(source.map(lila.tournament.JsonView.playerResultWrites.writes))
-      result.asAttachment(env.api.gameApiV2.filename(tour, if csv then "csv" else "ndjson"))
-    }
-
-  def tournamentTeams(id: TourId) = Anon:
-    Found(env.tournament.tournamentRepo.byId(id)): tour =>
-      JsonOk(env.tournament.jsonView.apiTeamStanding(tour))
+  private[controllers] def tournamentGamesOf(tour: lila.tournament.Tournament)(using
+      ctx: Context
+  ): Fu[Result] =
+    val onlyUserId = getUserStr("player").map(_.id)
+    val config = GameApiV2.ByTournamentConfig(
+      tour = tour,
+      format = GameApiV2.Format.byRequest,
+      flags = gameC.requestPgnFlags(extended = false),
+      perSecond = gamesPerSecond(ctx.me)
+    )
+    limit.GlobalConcurrencyLimitPerIP
+      .download(ctx.req.ipAddress)(env.api.gameApiV2.exportByTournament(config, onlyUserId)): source =>
+        Ok.chunked(source)
+          .asAttachmentStream(env.api.gameApiV2.filename(tour, config.format))
+          .as(gameC.gameContentType(config))
 
   def swissGames(id: SwissId) = AnonOrScoped(): ctx ?=>
     Found(env.swiss.cache.swissCache.byId(id)): swiss =>
