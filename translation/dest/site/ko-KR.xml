@@ -1177,7 +1177,7 @@ FEN 포지션을 생성하기 위해 %s를 사용할 수 있습니다.
   <string name="muteInsightLastDay">최근 24시간</string>
   <string name="muteArenaPrepare">아레나 봇 준비</string>
   <string name="muteArenaReady">아레나가 준비되었습니다. 예정된 시작 시각에 대국이 시작됩니다.</string>
-  <string name="muteArenaDraining">백그라운드 봇 대국이 끝나기를 기다리는 중입니다. 새로고침하여 준비 상태를 확인하세요.</string>
+  <string name="muteArenaDraining">백그라운드 대국이 끝나기를 기다리고 있습니다.</string>
   <string name="muteArenaUnavailable">아레나를 준비할 수 없습니다. 다른 대회가 진행 중이거나 조건에 맞는 봇이 부족할 수 있습니다.</string>
   <string name="muteArenaHelp">레이팅 %1$s~%2$s의 봇이 활동 중인 참가자가 %3$s명이 될 때까지 빈자리를 채웁니다. 사람 참가자 수에는 제한이 없으며, 진행 중인 대국은 정상적으로 끝까지 진행됩니다.</string>
   <string name="muteArenaSettings">표준 체스와 기본 시작 배치를 사용하세요. 팀 대항전과 상금은 지원하지 않습니다.</string>
@@ -1192,7 +1192,8 @@ FEN 포지션을 생성하기 위해 %s를 사용할 수 있습니다.
   <string name="muteArenaTargetHelp">봇이 이 총원(1~20명)까지 채웁니다. 사람은 이 수를 넘어서도 참가할 수 있습니다.</string>
   <string name="muteArenaRangeInvalid">봇의 최소 레이팅은 최대 레이팅보다 높을 수 없습니다.</string>
   <string name="muteArenaLocked">아레나가 준비되거나 시작된 후에는 봇 설정, 시간 형식, 레이팅 반영 여부를 변경할 수 없습니다.</string>
-  <string name="muteArenaBotNoticeTitle">Maia 봇 참가</string>
-  <string name="muteArenaBotNoticeIntro">주최자는 이 대회의 빈자리를 채우기 위해 사람처럼 플레이하는 Maia BOT 계정의 참가를 허용했습니다.</string>
-  <string name="muteArenaBotNoticeFill">Maia 봇은 활동 중인 참가자가 %1$s명이 될 때까지 빈자리를 채웁니다. 사람 참가자가 %2$s명 이상으로 유지되면 봇에는 새 대국이 배정되지 않습니다. 진행 중인 대국은 정상적으로 끝까지 진행됩니다.</string>
+  <string name="muteArenaBotNoticeTitle">Maia 봇이 빈자리를 채웁니다</string>
+  <string name="muteArenaBotNoticeIntro">레이팅이 %1$s~%2$s인 봇이 활동 중인 참가자가 %3$s명에 이를 때까지 빈자리를 채웁니다.</string>
+  <string name="muteArenaBotNoticeFill">사람이 참가하면 봇이 자리를 내줍니다. 활동 중인 사람이 %s명에 이르면 봇은 새로운 대국에 배정되지 않습니다. 진행 중인 대국은 정상적으로 끝까지 계속됩니다.</string>
+  <string name="muteArenaRefresh">새로고침</string>
 </resources>

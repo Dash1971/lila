@@ -1219,7 +1219,7 @@ Déjalo vacío para empezar las partidas desde la posición inicial habitual.</s
   <string name="muteInsightLastDay">Últimas 24 horas</string>
   <string name="muteArenaPrepare">Preparar los bots de la arena</string>
   <string name="muteArenaReady">La Arena está preparada. Las partidas comenzarán a la hora programada.</string>
-  <string name="muteArenaDraining">Esperando a que terminen las partidas de bots en segundo plano. Actualiza la página para comprobarlo.</string>
+  <string name="muteArenaDraining">Esperando a que terminen las partidas en segundo plano.</string>
   <string name="muteArenaUnavailable">No se ha podido preparar la Arena. Puede que haya otro torneo activo o que no haya suficientes bots aptos.</string>
   <string name="muteArenaHelp">Los bots con puntuación de %1$s–%2$s completan las plazas hasta llegar a %3$s participantes activos. No hay límite de participantes humanos; las partidas en curso terminan normalmente.</string>
   <string name="muteArenaSettings">Usa ajedrez estándar y la posición inicial normal. Las batallas por equipos y los premios no están disponibles.</string>
@@ -1234,7 +1234,8 @@ Déjalo vacío para empezar las partidas desde la posición inicial habitual.</s
   <string name="muteArenaTargetHelp">Los bots completan las plazas hasta este total (1–20). Siempre pueden unirse más personas.</string>
   <string name="muteArenaRangeInvalid">La puntuación mínima de los bots no puede superar la máxima.</string>
   <string name="muteArenaLocked">Los ajustes de bots, el ritmo de juego y el modo por puntos no pueden cambiar tras preparar o iniciar la Arena.</string>
-  <string name="muteArenaBotNoticeTitle">Participación de bots Maia</string>
-  <string name="muteArenaBotNoticeIntro">El organizador permite que las cuentas BOT de Maia, que juegan como personas, cubran las plazas libres de este torneo.</string>
-  <string name="muteArenaBotNoticeFill">Los bots Maia completan las plazas hasta llegar a %1$s participantes activos. Mientras al menos %2$s personas sigan activas, los bots no recibirán nuevos emparejamientos. Las partidas en curso terminan normalmente.</string>
+  <string name="muteArenaBotNoticeTitle">Los bots Maia cubren las plazas libres</string>
+  <string name="muteArenaBotNoticeIntro">Los bots con una puntuación de %1$s–%2$s cubren plazas libres hasta alcanzar %3$s participantes activos.</string>
+  <string name="muteArenaBotNoticeFill">A medida que se unen personas, los bots dejan su lugar. Cuando hay %s personas activas, los bots dejan de recibir nuevos emparejamientos. Las partidas en curso terminan con normalidad.</string>
+  <string name="muteArenaRefresh">Actualizar</string>
 </resources>

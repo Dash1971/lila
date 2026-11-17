@@ -26,7 +26,10 @@ export default function (ctrl: TournamentController) {
         const side = ctrl.opts.$side;
         $(el).replaceWith(side);
         side
-          .toggleClass('collapsed', ctrl.collapsedDescription())
+          .toggleClass(
+            'collapsed',
+            !ctrl.opts.classes?.includes('nosweat-arena') && ctrl.collapsedDescription(),
+          )
           .find('.disclosure')
           .on('click', () => {
             side.toggleClass('collapsed');

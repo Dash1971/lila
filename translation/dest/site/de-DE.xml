@@ -1219,7 +1219,7 @@ Leer lassen, um Partien von der normalen Ausgangsstellung aus zu starten.</strin
   <string name="muteInsightLastDay">Letzte 24 Stunden</string>
   <string name="muteArenaPrepare">Arena-Bots vorbereiten</string>
   <string name="muteArenaReady">Die Arena ist vorbereitet. Gespielt wird ab der geplanten Startzeit.</string>
-  <string name="muteArenaDraining">Die laufenden Bot-Spiele werden beendet. Aktualisiere die Seite, um die Bereitschaft zu prüfen.</string>
+  <string name="muteArenaDraining">Warte, bis die Hintergrundpartien beendet sind.</string>
   <string name="muteArenaUnavailable">Die Arena konnte nicht vorbereitet werden. Möglicherweise ist ein anderes Turnier aktiv oder es sind zu wenige geeignete Bots verfügbar.</string>
   <string name="muteArenaHelp">Bots mit einer Wertung von %1$s–%2$s ergänzen das Feld auf bis zu %3$s aktive Teilnehmer. Menschen können ohne Teilnehmerlimit beitreten; laufende Partien werden regulär beendet.</string>
   <string name="muteArenaSettings">Verwende Standardschach mit der normalen Ausgangsstellung. Mannschaftskämpfe und Preise sind nicht verfügbar.</string>
@@ -1234,7 +1234,8 @@ Leer lassen, um Partien von der normalen Ausgangsstellung aus zu starten.</strin
   <string name="muteArenaTargetHelp">Bots ergänzen das Feld bis zu dieser Zahl (1–20). Weitere Menschen können jederzeit beitreten.</string>
   <string name="muteArenaRangeInvalid">Die Mindestwertung der Bots darf die Höchstwertung nicht überschreiten.</string>
   <string name="muteArenaLocked">Bot-Einstellungen, Bedenkzeit und Wertungsmodus können nach der Vorbereitung oder dem Start der Arena nicht geändert werden.</string>
-  <string name="muteArenaBotNoticeTitle">Maia-Bots als Teilnehmer</string>
-  <string name="muteArenaBotNoticeIntro">Der Veranstalter erlaubt menschenähnlich spielenden Maia-BOT-Konten, freie Plätze in diesem Turnier zu füllen.</string>
-  <string name="muteArenaBotNoticeFill">Maia-Bots ergänzen das Feld auf bis zu %1$s aktive Teilnehmer. Solange mindestens %2$s Menschen aktiv bleiben, erhalten Bots keine neuen Paarungen. Laufende Partien werden regulär beendet.</string>
+  <string name="muteArenaBotNoticeTitle">Maia-Bots füllen freie Plätze</string>
+  <string name="muteArenaBotNoticeIntro">Bots mit einer Wertung von %1$s–%2$s füllen freie Plätze, bis die Zahl der aktiven Teilnehmer %3$s erreicht.</string>
+  <string name="muteArenaBotNoticeFill">Wenn Menschen beitreten, treten Bots zurück. Sobald die Zahl der aktiven Menschen %s erreicht, erhalten Bots keine neuen Paarungen. Laufende Partien werden regulär beendet.</string>
+  <string name="muteArenaRefresh">Aktualisieren</string>
 </resources>

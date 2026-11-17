@@ -1301,7 +1301,7 @@
   <string name="muteInsightLastDay">Последние 24 часа</string>
   <string name="muteArenaPrepare">Подготовить ботов арены</string>
   <string name="muteArenaReady">Арена подготовлена. Партии начнутся в назначенное время.</string>
-  <string name="muteArenaDraining">Ожидание завершения фоновых партий ботов. Обновите страницу для проверки готовности.</string>
+  <string name="muteArenaDraining">Ожидание завершения фоновых партий.</string>
   <string name="muteArenaUnavailable">Не удалось подготовить Арену. Возможно, уже активен другой турнир или доступно недостаточно подходящих ботов.</string>
   <string name="muteArenaHelp">Боты с рейтингом %1$s–%2$s заполняют места до %3$s активных участников. Число участников-людей не ограничено; начатые партии завершаются в обычном порядке.</string>
   <string name="muteArenaSettings">Используйте обычные шахматы и начальную позицию. Командные битвы и призы недоступны.</string>
@@ -1316,7 +1316,8 @@
   <string name="muteArenaTargetHelp">Боты заполняют места до этого общего числа (1–20). Люди могут присоединяться и сверх него.</string>
   <string name="muteArenaRangeInvalid">Минимальный рейтинг ботов не должен превышать максимальный.</string>
   <string name="muteArenaLocked">Настройки ботов, контроль времени и рейтинговый режим нельзя менять после подготовки или начала Арены.</string>
-  <string name="muteArenaBotNoticeTitle">Участие ботов Maia</string>
-  <string name="muteArenaBotNoticeIntro">Организатор разрешает BOT-аккаунтам Maia, играющим в человеческом стиле, заполнять свободные места в этом турнире.</string>
-  <string name="muteArenaBotNoticeFill">Боты Maia заполняют места до %1$s активных участников. Пока активны не менее %2$s людей, боты не получают новых пар. Начатые партии завершаются в обычном порядке.</string>
+  <string name="muteArenaBotNoticeTitle">Боты Maia занимают свободные места</string>
+  <string name="muteArenaBotNoticeIntro">Боты с рейтингом %1$s–%2$s занимают свободные места, пока число активных участников не достигнет %3$s.</string>
+  <string name="muteArenaBotNoticeFill">По мере присоединения людей боты уступают им места. Когда число активных людей достигает %s, боты больше не получают новых соперников. Уже начатые партии завершаются в обычном порядке.</string>
+  <string name="muteArenaRefresh">Обновить</string>
 </resources>

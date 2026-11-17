@@ -1048,7 +1048,7 @@
   <string name="muteInsightLastDay">पिछले 24 घंटे</string>
   <string name="muteArenaPrepare">एरीना बॉट तैयार करें</string>
   <string name="muteArenaReady">अरीना तैयार है। खेल निर्धारित समय पर शुरू होगा।</string>
-  <string name="muteArenaDraining">पृष्ठभूमि में चल रही बॉट बाज़ियों के समाप्त होने की प्रतीक्षा है। तैयारी जाँचने के लिए पेज ताज़ा करें।</string>
+  <string name="muteArenaDraining">पृष्ठभूमि की बाज़ियाँ समाप्त होने की प्रतीक्षा है।</string>
   <string name="muteArenaUnavailable">अरीना तैयार नहीं हो सका। कोई दूसरा टूर्नामेंट सक्रिय हो सकता है या पर्याप्त योग्य बॉट उपलब्ध नहीं हैं।</string>
   <string name="muteArenaHelp">%1$s–%2$s रेटिंग वाले बॉट कुल %3$s सक्रिय प्रतिभागियों तक खाली स्थान भरते हैं। मानव खिलाड़ियों की संख्या पर कोई सीमा नहीं है; चल रही बाज़ियाँ सामान्य रूप से पूरी होंगी।</string>
   <string name="muteArenaSettings">मानक शतरंज और सामान्य प्रारंभिक स्थिति का उपयोग करें। टीम मुकाबले और पुरस्कार उपलब्ध नहीं हैं।</string>
@@ -1063,7 +1063,8 @@
   <string name="muteArenaTargetHelp">बॉट इस कुल संख्या (1–20) तक स्थान भरते हैं। अधिक मानव खिलाड़ी हमेशा शामिल हो सकते हैं।</string>
   <string name="muteArenaRangeInvalid">बॉट की न्यूनतम रेटिंग अधिकतम रेटिंग से अधिक नहीं हो सकती।</string>
   <string name="muteArenaLocked">अरीना तैयार होने या शुरू होने के बाद बॉट सेटिंग, समय नियंत्रण और रेटिंग मोड नहीं बदल सकते।</string>
-  <string name="muteArenaBotNoticeTitle">Maia बॉट प्रतिभागी</string>
-  <string name="muteArenaBotNoticeIntro">आयोजक इस टूर्नामेंट में खाली स्थान भरने के लिए इंसानों की तरह खेलने वाले Maia BOT खातों को अनुमति देता है।</string>
-  <string name="muteArenaBotNoticeFill">Maia बॉट कुल %1$s सक्रिय प्रतिभागियों तक खाली स्थान भरते हैं। जब तक कम से कम %2$s मानव खिलाड़ी सक्रिय रहते हैं, बॉट को नई जोड़ियाँ नहीं मिलतीं। चल रही बाज़ियाँ सामान्य रूप से पूरी होंगी।</string>
+  <string name="muteArenaBotNoticeTitle">Maia बॉट खाली स्थान भरते हैं</string>
+  <string name="muteArenaBotNoticeIntro">%1$s–%2$s रेटिंग वाले बॉट तब तक खाली स्थान भरते हैं जब तक सक्रिय प्रतिभागियों की संख्या %3$s नहीं हो जाती।</string>
+  <string name="muteArenaBotNoticeFill">जैसे-जैसे मानव खिलाड़ी जुड़ते हैं, बॉट उनके लिए जगह छोड़ते हैं। सक्रिय मानव खिलाड़ियों की संख्या %s होने पर बॉट को नए मुकाबले नहीं दिए जाते। चल रही बाज़ियाँ सामान्य रूप से पूरी होती हैं।</string>
+  <string name="muteArenaRefresh">रीफ़्रेश करें</string>
 </resources>

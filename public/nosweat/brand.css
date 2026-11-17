@@ -172,3 +172,29 @@ cg-board square.nosweat-premove-dest { background:rgb(20 30 85 / .28); }
 @media(min-width:800px) {
   .nosweat-arena-home { grid-template-areas:'side schedule' 'side list'; }
 }
+
+/* Focused Arena sidebar: disclosure replaces the duplicate warning, leaving room for native chat. */
+@media(min-width:800px) {
+  .tour.nosweat-arena { grid-template-rows:minmax(min-content,calc(100vh - var(---site-header-height) - var(---site-header-margin) - var(---sticky-gap) - var(---block-gap) - 3rem)) auto; }
+}
+.nosweat-arena .tour__side { min-width:0; }
+.nosweat-arena .tour__meta { flex:0 0 auto; gap:.8rem; padding:1rem 0; }
+.nosweat-arena .tour__meta section { padding-inline:1rem; }
+.nosweat-arena .tour__meta__head::before { font-size:2.2rem; }
+.nosweat-arena .tour__meta .scrollable-content { overflow:visible; flex:none; gap:.7rem; }
+.nosweat-arena .tour__meta .description { overflow-wrap:anywhere; }
+.nosweat-arena-bots { border-top:1px solid var(--c-border); padding-top:.2rem; }
+.nosweat-arena-bots summary { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.7rem 1rem .2rem; list-style:none; color:var(--c-primary); cursor:pointer; font-size:.9em; }
+.nosweat-arena-bots summary::-webkit-details-marker { display:none; }
+.nosweat-arena-bots summary [data-icon] { flex:none; color:var(--c-font-dim); }
+.nosweat-arena-bots__body { padding:.7rem 1rem 0; color:var(--c-font-dim); font-size:.85em; overflow-wrap:anywhere; }
+.nosweat-arena-bots__body p { margin:0; }
+.nosweat-arena-bots__body p + p { margin-top:.7rem; }
+.nosweat-arena-controls { flex:none; margin:.7rem 0 0; color:var(--c-font-dim); font-size:.85em; }
+.nosweat-arena-controls p { display:flex; flex-wrap:wrap; gap:.25em .7em; margin:0; }
+.nosweat-arena-controls .button { white-space:normal; }
+.nosweat-arena .tour__side .mchat { min-height:15rem; flex:1 0 15rem; margin-top:.8rem; }
+@media(pointer:coarse) {
+  .nosweat-arena-bots summary { min-height:44px; }
+  .nosweat-arena-controls a { min-height:44px; display:inline-flex; align-items:center; }
+}

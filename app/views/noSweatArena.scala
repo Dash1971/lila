@@ -5,10 +5,15 @@ import lila.app.UiEnv.{ *, given }
 import lila.core.i18n.I18nKey
 
 def noSweatArenaControls(t: lila.tournament.Tournament, status: JsObject)(using Context): Frag =
-  frag(
+  div(cls := "nosweat-arena-controls")(
     if (status \ "prepared").asOpt[Boolean].contains(true) then
-      p(I18nKey(if (status \ "ready").asOpt[Boolean].contains(true) then "muteArenaReady"
-      else "muteArenaDraining").apply())
+      p(
+        I18nKey(if (status \ "ready").asOpt[Boolean].contains(true) then "muteArenaReady"
+        else "muteArenaDraining").apply(),
+        (!(status \ "ready").asOpt[Boolean].contains(true)).option(
+          a(href := routes.Tournament.show(t.id))(I18nKey("muteArenaRefresh")())
+        )
+      )
     else
       t.isCreated.option(
         postForm(action := routes.Tournament.prepare(t.id))(

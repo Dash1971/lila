@@ -8,7 +8,7 @@ import lila.common.Json.given
 import lila.common.String.html.markdownLinksOrRichText
 import lila.core.config.NetDomain
 import lila.core.team.LightTeam
-import lila.gathering.Condition.WithVerdicts
+import lila.gathering.Condition.{ Bots, WithVerdict, WithVerdicts }
 import lila.gathering.ui.GatheringUi
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
@@ -18,6 +18,8 @@ final class TournamentShow(helpers: Helpers, gathering: GatheringUi)(
     focused: Boolean = false
 )(using NetDomain):
   import helpers.{ *, given }
+
+  private val focusedClass = if focused then " nosweat-arena" else ""
 
   def apply(
       tour: Tournament,
@@ -44,9 +46,9 @@ final class TournamentShow(helpers: Helpers, gathering: GatheringUi)(
           )
         )
       .csp(_.withLilaHttp):
-        main(cls := s"tour variant-${tour.variant.key}$extraCls")(
+        main(cls := s"tour variant-${tour.variant.key}$extraCls$focusedClass")(
           st.aside(cls := "tour__side"):
-            frag(side(tour, verdicts, shieldOwner, chat._1F, streamers), arenaControls)
+            side(tour, verdicts, shieldOwner, chat._1F, streamers, arenaControls)
           ,
           div(cls := "tour__main")(div(cls := "box")),
           tour.isCreated.option(div(cls := "tour__faq"):
@@ -55,7 +57,7 @@ final class TournamentShow(helpers: Helpers, gathering: GatheringUi)(
 
   def restricted(tour: Tournament)(using ctx: Context) =
     basePage(tour):
-      main(cls := s"tour variant-${tour.variant.key}")(
+      main(cls := s"tour variant-${tour.variant.key}$focusedClass")(
         st.aside(cls := "tour__side"):
           side(tour, WithVerdicts(Nil), none, none, emptyFrag)
         ,
@@ -101,8 +103,16 @@ final class TournamentShow(helpers: Helpers, gathering: GatheringUi)(
         verdicts: lila.gathering.Condition.WithVerdicts,
         shieldOwner: Option[UserId],
         chat: Option[Frag],
-        streamers: Frag
+        streamers: Frag,
+        arenaControls: Option[Frag] = None
     )(using ctx: Context) =
+      val entryVerdicts =
+        if focused then
+          WithVerdicts(verdicts.list.filterNot {
+            case WithVerdict(Bots(true), verdict) => verdict.accepted
+            case _ => false
+          })
+        else verdicts
       frag(
         div(cls := "tour__meta")(
           st.section(cls := "tour__meta__head", dataIcon := tour.perfType.icon.toString)(
@@ -183,41 +193,49 @@ final class TournamentShow(helpers: Helpers, gathering: GatheringUi)(
                 )
               })
           ),
-          gathering.verdicts(verdicts, tour.perfType, tour.isEnterable),
+          focused.option(sideBotsExplanation(tour)),
+          gathering.verdicts(entryVerdicts, tour.perfType, tour.isEnterable),
           tour.looksLikePrize.option(gathering.userPrizeDisclaimer(tour.createdBy)),
-          List(shieldOwner, tour.description, tour.payouts)
-            .exists(_.isDefined)
+          (!focused && List(shieldOwner, tour.description, tour.payouts).exists(_.isDefined))
             .option(button(cls := "disclosure"))
         ),
         streamers,
         sideBotsWarning(tour),
+        arenaControls,
         chat
       )
 
-    private def sideBotsWarning(tour: Tournament)(using Context) =
+    private def sideBotsExplanation(tour: Tournament)(using Context) =
       tour.conditions.allowsBots.option:
+        details(cls := "nosweat-arena-bots")(
+          summary(
+            span(lila.core.i18n.I18nKey("muteArenaBotNoticeTitle")()),
+            span(dataIcon := Icon.InfoCircle, attr("aria-hidden") := "true")
+          ),
+          div(cls := "nosweat-arena-bots__body")(
+            p(
+              lila.core.i18n.I18nKey("muteArenaBotNoticeIntro")(
+                tour.arenaSettings.minRating,
+                tour.arenaSettings.maxRating,
+                tour.arenaSettings.target
+              )
+            ),
+            p(lila.core.i18n.I18nKey("muteArenaBotNoticeFill")(tour.arenaSettings.target))
+          )
+        )
+
+    private def sideBotsWarning(tour: Tournament)(using Context) =
+      (!focused && tour.conditions.allowsBots).option:
         div(cls := "tour__bots-warning")(
           img(src := staticAssetPath("images/icons/bot.webp")),
           div(
-            if focused then
-              frag(
-                h2(lila.core.i18n.I18nKey("muteArenaBotNoticeTitle")()),
-                p(lila.core.i18n.I18nKey("muteArenaBotNoticeIntro")()),
-                p(
-                  lila.core.i18n
-                    .I18nKey("muteArenaBotNoticeFill")(tour.arenaSettings.target, tour.arenaSettings.target)
-                )
-              )
-            else
-              frag(
-                h2("Bot tournament"),
-                p(
-                  "The organizer has decided to let ",
-                  userTitleTag(chess.PlayerTitle.BOT),
-                  " accounts play in this tournament."
-                ),
-                p("You will have to face ", strong("chess engines"), " in some of your games.")
-              )
+            h2("Bot tournament"),
+            p(
+              "The organizer has decided to let ",
+              userTitleTag(chess.PlayerTitle.BOT),
+              " accounts play in this tournament."
+            ),
+            p("You will have to face ", strong("chess engines"), " in some of your games.")
           )
         )
 

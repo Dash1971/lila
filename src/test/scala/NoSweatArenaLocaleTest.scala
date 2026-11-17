@@ -10,6 +10,7 @@ class NoSweatArenaLocaleTest extends munit.FunSuite:
       "Prepare",
       "Ready",
       "Draining",
+      "Refresh",
       "Unavailable",
       "Help",
       "Settings",
@@ -47,7 +48,8 @@ class NoSweatArenaLocaleTest extends munit.FunSuite:
         assert(catalog.containsKey(key), s"$code/$key")
         val rendered = (key match
           case "muteArenaHelp" => I18nKey(key)(1400, 1700, 10)
-          case "muteArenaBotNoticeFill" => I18nKey(key)(10, 10)
+          case "muteArenaBotNoticeIntro" => I18nKey(key)(1200, 1700, 10)
+          case "muteArenaBotNoticeFill" => I18nKey(key)(10)
           case _ => I18nKey(key)()
         ).render
         assert(rendered.nonEmpty && !rendered.contains(key), s"$code/$key")
