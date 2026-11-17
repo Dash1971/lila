@@ -1196,4 +1196,6 @@
   <string name="muteArenaBotNoticeIntro">评分为%1$s至%2$s的机器人会补充空位，直到活跃参赛人数达到%3$s。</string>
   <string name="muteArenaBotNoticeFill">随着人类棋手加入，机器人会让出位置。当活跃的人类棋手人数达到%s时，机器人将不再获得新的对局配对。已经开始的对局会正常进行至结束。</string>
   <string name="muteArenaRefresh">刷新</string>
+  <string name="mutePageNotFound">找不到页面</string>
+  <string name="muteReturnToHomepage">返回首页</string>
 </resources>

@@ -1320,4 +1320,6 @@
   <string name="muteArenaBotNoticeIntro">Боты с рейтингом %1$s–%2$s занимают свободные места, пока число активных участников не достигнет %3$s.</string>
   <string name="muteArenaBotNoticeFill">По мере присоединения людей боты уступают им места. Когда число активных людей достигает %s, боты больше не получают новых соперников. Уже начатые партии завершаются в обычном порядке.</string>
   <string name="muteArenaRefresh">Обновить</string>
+  <string name="mutePageNotFound">Страница не найдена</string>
+  <string name="muteReturnToHomepage">Вернуться на главную страницу</string>
 </resources>

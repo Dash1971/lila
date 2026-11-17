@@ -1237,4 +1237,6 @@ Laissez vide pour commencer les parties à partir de la position initiale normal
   <string name="muteArenaBotNoticeIntro">Les bots classés entre %1$s et %2$s occupent les places libres jusqu’à atteindre %3$s participants actifs.</string>
   <string name="muteArenaBotNoticeFill">À mesure que des humains rejoignent le tournoi, les bots leur cèdent la place. Lorsque le nombre d’humains actifs atteint %s, les bots ne reçoivent plus de nouveaux appariements. Les parties en cours se terminent normalement.</string>
   <string name="muteArenaRefresh">Actualiser</string>
+  <string name="mutePageNotFound">Page introuvable</string>
+  <string name="muteReturnToHomepage">Retour à la page d’accueil</string>
 </resources>

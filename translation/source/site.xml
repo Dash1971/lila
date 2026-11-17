@@ -1240,4 +1240,6 @@ Leave empty to start games from the normal initial position.</string>
   <string name="muteArenaBotNoticeIntro">Bots rated %1$s–%2$s fill empty seats until the active participant count reaches %3$s.</string>
   <string name="muteArenaBotNoticeFill">As humans join, bots step aside. Once the number of active humans reaches %s, bots receive no new pairings. Games already underway finish normally.</string>
   <string name="muteArenaRefresh">Refresh</string>
+  <string name="mutePageNotFound">Page not found</string>
+  <string name="muteReturnToHomepage">Return to the homepage</string>
 </resources>

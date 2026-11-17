@@ -1237,4 +1237,6 @@ Deixe em branco para começar as partidas na posição inicial padrão.</string>
   <string name="muteArenaBotNoticeIntro">Bots com rating de %1$s–%2$s preenchem as vagas até que o número de participantes ativos chegue a %3$s.</string>
   <string name="muteArenaBotNoticeFill">Conforme humanos entram, os bots cedem lugar. Quando o número de humanos ativos chega a %s, os bots deixam de receber novos emparceiramentos. As partidas em andamento terminam normalmente.</string>
   <string name="muteArenaRefresh">Atualizar</string>
+  <string name="mutePageNotFound">Página não encontrada</string>
+  <string name="muteReturnToHomepage">Voltar à página inicial</string>
 </resources>

@@ -1,8 +1,25 @@
 package views.base
 
 import lila.app.UiEnv.{ *, given }
+import lila.core.i18n.I18nKey
 
-def notFound(msg: Option[String]) =
+def notFound(msg: Option[String])(using Context) =
+  if env.noSweat.enabled then
+    val title = I18nKey("mutePageNotFound").txt()
+    Page(msg | title).css("bits.not-found"):
+      main(cls := "not-found page-small box box-pad")(
+        header(
+          h1("404"),
+          div(
+            strong(title),
+            msg.map(em(_)),
+            p(a(href := routes.Lobby.home)(I18nKey("muteReturnToHomepage")()))
+          )
+        )
+      )
+  else upstreamNotFound(msg)
+
+private def upstreamNotFound(msg: Option[String]) =
   Page(msg | "Page not found").css("bits.not-found"):
     main(cls := "not-found page-small box box-pad")(
       header(

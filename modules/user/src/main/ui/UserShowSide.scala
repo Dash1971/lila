@@ -74,7 +74,7 @@ final class UserShowSide(helpers: Helpers, focused: Boolean = false):
     div(cls := "side sub-ratings")(
       (!u.lame || ctx.is(u) || Granter.opt(_.AccountInfo)).option(
         frag(
-          showNonEmptyPerf(u.perfs.ultraBullet, PerfKey.ultraBullet),
+          (!focused || u.noBot).option(showNonEmptyPerf(u.perfs.ultraBullet, PerfKey.ultraBullet)),
           showPerf(u.perfs.bullet, PerfKey.bullet),
           showPerf(u.perfs.blitz, PerfKey.blitz),
           showPerf(u.perfs.rapid, PerfKey.rapid),

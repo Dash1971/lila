@@ -1238,4 +1238,6 @@ Déjalo vacío para empezar las partidas desde la posición inicial habitual.</s
   <string name="muteArenaBotNoticeIntro">Los bots con una puntuación de %1$s–%2$s cubren plazas libres hasta alcanzar %3$s participantes activos.</string>
   <string name="muteArenaBotNoticeFill">A medida que se unen personas, los bots dejan su lugar. Cuando hay %s personas activas, los bots dejan de recibir nuevos emparejamientos. Las partidas en curso terminan con normalidad.</string>
   <string name="muteArenaRefresh">Actualizar</string>
+  <string name="mutePageNotFound">Página no encontrada</string>
+  <string name="muteReturnToHomepage">Volver a la página de inicio</string>
 </resources>

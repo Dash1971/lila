@@ -1197,4 +1197,6 @@
   <string name="muteArenaBotNoticeIntro">レーティング%1$s～%2$sのボットが、活動中の参加者数が%3$s人になるまで空きを補います。</string>
   <string name="muteArenaBotNoticeFill">人間が参加すると、ボットは枠を譲ります。活動中の人間が%s人に達すると、ボットに新しい対局は割り当てられません。進行中の対局は通常どおり終了まで続きます。</string>
   <string name="muteArenaRefresh">更新</string>
+  <string name="mutePageNotFound">ページが見つかりません</string>
+  <string name="muteReturnToHomepage">ホームページに戻る</string>
 </resources>

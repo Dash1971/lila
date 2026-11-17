@@ -1238,4 +1238,6 @@ Leer lassen, um Partien von der normalen Ausgangsstellung aus zu starten.</strin
   <string name="muteArenaBotNoticeIntro">Bots mit einer Wertung von %1$s–%2$s füllen freie Plätze, bis die Zahl der aktiven Teilnehmer %3$s erreicht.</string>
   <string name="muteArenaBotNoticeFill">Wenn Menschen beitreten, treten Bots zurück. Sobald die Zahl der aktiven Menschen %s erreicht, erhalten Bots keine neuen Paarungen. Laufende Partien werden regulär beendet.</string>
   <string name="muteArenaRefresh">Aktualisieren</string>
+  <string name="mutePageNotFound">Seite nicht gefunden</string>
+  <string name="muteReturnToHomepage">Zurück zur Startseite</string>
 </resources>

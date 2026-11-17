@@ -1067,4 +1067,6 @@
   <string name="muteArenaBotNoticeIntro">%1$s–%2$s रेटिंग वाले बॉट तब तक खाली स्थान भरते हैं जब तक सक्रिय प्रतिभागियों की संख्या %3$s नहीं हो जाती।</string>
   <string name="muteArenaBotNoticeFill">जैसे-जैसे मानव खिलाड़ी जुड़ते हैं, बॉट उनके लिए जगह छोड़ते हैं। सक्रिय मानव खिलाड़ियों की संख्या %s होने पर बॉट को नए मुकाबले नहीं दिए जाते। चल रही बाज़ियाँ सामान्य रूप से पूरी होती हैं।</string>
   <string name="muteArenaRefresh">रीफ़्रेश करें</string>
+  <string name="mutePageNotFound">पृष्ठ नहीं मिला</string>
+  <string name="muteReturnToHomepage">मुखपृष्ठ पर लौटें</string>
 </resources>
