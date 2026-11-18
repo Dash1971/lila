@@ -85,6 +85,11 @@ test('shared dialog updates live data, selected rating/move, map, mini-board and
   await lab.open();
   assert.equal(started, 1);
   assert.equal(boardConfig.orientation, 'black');
+  assert.equal(document.body.classList.contains('is2d'), false);
+  assert.ok(
+    document.querySelector('[data-lab-board]')!.classList.contains('is2d'),
+    'the body-mounted dialog supplies its own native board and piece theme scope',
+  );
   assert.ok(
     !document.querySelector('[data-lab-details]')!.textContent!.includes('Evaluation loss'),
     'forced mates do not invent pawn losses',
