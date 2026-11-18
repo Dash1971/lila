@@ -1241,7 +1241,7 @@ Leer lassen, um Partien von der normalen Ausgangsstellung aus zu starten.</strin
   <string name="mutePageNotFound">Seite nicht gefunden</string>
   <string name="muteReturnToHomepage">Zurück zur Startseite</string>
     <string name="muteLabTitle">Maia-Labor</string>
-    <string name="muteLabOpen">Züge nach Wertung · Maia-Labor öffnen</string>
+    <string name="muteLabOpen">Maia-Labor</string>
     <string name="muteLabClose">Maia-Labor schließen</string>
     <string name="muteLabRating">Maia-Wertung</string>
     <string name="muteLabRatingChart">Züge nach Wertung</string>

@@ -1199,7 +1199,7 @@ FEN 포지션을 생성하기 위해 %s를 사용할 수 있습니다.
   <string name="mutePageNotFound">페이지를 찾을 수 없습니다</string>
   <string name="muteReturnToHomepage">홈페이지로 돌아가기</string>
     <string name="muteLabTitle">Maia 연구실</string>
-    <string name="muteLabOpen">레이팅별 수 · Maia 연구실 열기</string>
+    <string name="muteLabOpen">Maia 연구실</string>
     <string name="muteLabClose">Maia 연구실 닫기</string>
     <string name="muteLabRating">Maia 레이팅</string>
     <string name="muteLabRatingChart">레이팅별 수</string>

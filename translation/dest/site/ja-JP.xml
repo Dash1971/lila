@@ -1200,7 +1200,7 @@
   <string name="mutePageNotFound">ページが見つかりません</string>
   <string name="muteReturnToHomepage">ホームページに戻る</string>
     <string name="muteLabTitle">Maiaラボ</string>
-    <string name="muteLabOpen">レーティング別の指し手 · Maiaラボを開く</string>
+    <string name="muteLabOpen">Maiaラボ</string>
     <string name="muteLabClose">Maiaラボを閉じる</string>
     <string name="muteLabRating">Maiaレーティング</string>
     <string name="muteLabRatingChart">レーティング別の指し手</string>

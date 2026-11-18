@@ -95,6 +95,12 @@ test('shared dialog updates live data, selected rating/move, map, mini-board and
     'forced mates do not invent pawn losses',
   );
   const view = document.body;
+  const plot = view.querySelector('.maia-lab-chart')!;
+  const range = view.querySelector<HTMLInputElement>('[data-lab-rating]')!;
+  assert.ok(plot.compareDocumentPosition(range) & window.Node.DOCUMENT_POSITION_FOLLOWING);
+  assert.equal(range.min, '600');
+  assert.equal(range.max, '2600');
+  assert.equal(range.labels?.[0].textContent, 'Maia rating');
   assert.ok(view.textContent?.includes('54.4%'));
   assert.ok(view.textContent?.includes('full rating sweep'));
   const move = view.querySelector<HTMLButtonElement>('tbody [data-lab-move="c4e2"]')!;

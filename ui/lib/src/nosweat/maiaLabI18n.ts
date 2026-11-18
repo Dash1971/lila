@@ -2,7 +2,7 @@
 // are for embedded/test views; every key ships in all ten supported locales.
 export const labEnglish = {
   LabTitle: 'Maia Lab',
-  LabOpen: 'Moves by rating · Open Maia Lab',
+  LabOpen: 'Maia Lab',
   LabClose: 'Close Maia Lab',
   LabRating: 'Maia rating',
   LabRatingChart: 'Moves by rating',

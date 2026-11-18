@@ -1070,7 +1070,7 @@
   <string name="mutePageNotFound">पृष्ठ नहीं मिला</string>
   <string name="muteReturnToHomepage">मुखपृष्ठ पर लौटें</string>
     <string name="muteLabTitle">Maia प्रयोगशाला</string>
-    <string name="muteLabOpen">रेटिंग के अनुसार चालें · Maia प्रयोगशाला खोलें</string>
+    <string name="muteLabOpen">Maia प्रयोगशाला</string>
     <string name="muteLabClose">Maia प्रयोगशाला बंद करें</string>
     <string name="muteLabRating">Maia रेटिंग</string>
     <string name="muteLabRatingChart">रेटिंग के अनुसार चालें</string>

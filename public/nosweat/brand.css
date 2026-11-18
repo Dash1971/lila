@@ -91,8 +91,8 @@ cg-board square.nosweat-premove-dest { background:rgb(20 30 85 / .28); }
 .nosweat-others { display:flex; align-items:center; justify-content:space-between; gap:3px; padding:0 9px; font-size:11px; width:100%; border-top:1px solid var(--c-border); color:var(--c-font-dim); }
 .nosweat-others:hover:not(:disabled) { background:var(--c-bg-low); }
 .nosweat-others:disabled { opacity:1; cursor:default; }
-.nosweat-rating-explorer { background:var(--c-bg-box); padding:8px 10px; border-radius:5px; margin-top:8px; height:190px; display:grid; grid-template-rows:25px minmax(0,1fr); }
-.nosweat-rating-heading { display:flex; align-items:baseline; gap:10px; min-width:0; }
+.nosweat-rating-explorer { background:var(--c-bg-box); padding:8px 10px; border-radius:5px; margin-top:8px; height:190px; display:grid; grid-template-rows:auto minmax(0,1fr); }
+.nosweat-rating-heading { display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px; min-width:0; }
 .nosweat-rating-heading h3 { margin:0; font-size:13px; white-space:nowrap; }
 .nosweat-chart-legend { display:flex; align-items:center; justify-content:start; gap:7px; min-width:0; flex:1; overflow-x:auto; overflow-y:hidden; padding:2px; scrollbar-width:thin; }
 .nosweat-chart-legend .fbt { flex:0 0 auto; padding:0; font-size:12px; text-transform:none; }

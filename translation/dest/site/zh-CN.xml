@@ -1199,7 +1199,7 @@
   <string name="mutePageNotFound">找不到页面</string>
   <string name="muteReturnToHomepage">返回首页</string>
     <string name="muteLabTitle">Maia 实验室</string>
-    <string name="muteLabOpen">各等级分着法 · 打开 Maia 实验室</string>
+    <string name="muteLabOpen">Maia 实验室</string>
     <string name="muteLabClose">关闭 Maia 实验室</string>
     <string name="muteLabRating">Maia 等级分</string>
     <string name="muteLabRatingChart">各等级分着法</string>

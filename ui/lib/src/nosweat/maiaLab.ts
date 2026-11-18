@@ -52,9 +52,8 @@ export class MaiaLab {
         attrs: { dialog: { 'aria-label': labText('LabTitle') } },
         htmlText: `<header class="maia-lab-heading"><div><h2>${t('LabTitle')}</h2><span data-lab-context></span></div><button type="button" class="fbt" data-lab-close aria-label="${t('LabClose')}">×</button></header>
           <p class="maia-lab-description" data-lab-description aria-live="polite"></p>
-          <div class="maia-lab-layout"><div class="maia-lab-main"><nav class="maia-lab-tabs" aria-label="${t('LabTitle')}"><button type="button" class="fbt" data-lab-tab="rating">${t('LabRatingChart')}</button><button type="button" class="fbt" data-lab-tab="map">${t('LabMoveMap')}</button></nav>
-          <div class="maia-lab-controls"><label>${t('LabRating')} <output data-lab-rating-value></output><input type="range" min="600" max="2600" step="100" data-lab-rating></label><label>${t('LabShow')}<select data-lab-count><option value="6">${escapeHtml(labText('LabMoveCount', 6))}</option><option value="8">${escapeHtml(labText('LabMoveCount', 8))}</option></select></label></div>
-          <div class="maia-lab-chart"><div data-lab-plot><div></div></div><div data-lab-map hidden></div></div><p data-lab-map-help class="maia-lab-help" hidden>${t('LabMapHelp')}</p><p data-lab-progress role="status"></p><h3>${t('LabCandidates')}</h3><div class="maia-lab-table"><table><thead><tr><th>${t('LabMove')}</th><th>${t('LabProbability')}</th><th>${t('LabEvaluation')}</th></tr></thead><tbody></tbody></table></div></div>
+          <div class="maia-lab-layout"><div class="maia-lab-main"><div class="maia-lab-toolbar"><nav class="maia-lab-tabs" aria-label="${t('LabTitle')}"><button type="button" class="fbt" data-lab-tab="rating">${t('LabRatingChart')}</button><button type="button" class="fbt" data-lab-tab="map">${t('LabMoveMap')}</button></nav><label class="maia-lab-count">${t('LabShow')}<select data-lab-count><option value="6">${escapeHtml(labText('LabMoveCount', 6))}</option><option value="8">${escapeHtml(labText('LabMoveCount', 8))}</option></select></label></div>
+          <div class="maia-lab-chart"><div data-lab-plot><div></div></div><div data-lab-map hidden></div></div><div class="maia-lab-slider"><label for="maia-lab-rating">${t('LabRating')}</label><output for="maia-lab-rating" data-lab-rating-value></output><input id="maia-lab-rating" type="range" min="600" max="2600" step="100" data-lab-rating></div><p data-lab-map-help class="maia-lab-help" hidden>${t('LabMapHelp')}</p><p data-lab-progress role="status"></p><h3>${t('LabCandidates')}</h3><div class="maia-lab-table"><table><thead><tr><th>${t('LabMove')}</th><th>${t('LabProbability')}</th><th>${t('LabEvaluation')}</th></tr></thead><tbody></tbody></table></div></div>
           <aside><div class="cg-wrap is2d" data-lab-board role="img" aria-label="${t('LabBoard')}"></div><p data-lab-model class="maia-lab-help"></p><section class="maia-lab-detail" aria-live="polite"><h3 data-lab-selected></h3><dl data-lab-details></dl><button type="button" class="button button-empty" data-lab-explore>${t('LabExplore')}</button></section></aside></div><p class="maia-lab-help maia-lab-explanation">${t('LabExplain')}</p>`,
         onClose: () => this.cleanup(),
       });
@@ -212,6 +211,8 @@ export class MaiaLab {
     view
       .querySelectorAll<HTMLButtonElement>('[data-lab-tab]')
       .forEach(button => button.setAttribute('aria-pressed', String(button.dataset.labTab === this.tab)));
+    view.querySelector<HTMLElement>('[data-lab-progress]')!.hidden =
+      !data.failed && data.byRating.size === ratingSamples.length;
     const tbody = view.querySelector('tbody')!;
     tbody.replaceChildren();
     for (const uci of moves) {

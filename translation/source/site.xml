@@ -1243,7 +1243,7 @@ Leave empty to start games from the normal initial position.</string>
   <string name="mutePageNotFound">Page not found</string>
   <string name="muteReturnToHomepage">Return to the homepage</string>
     <string name="muteLabTitle">Maia Lab</string>
-    <string name="muteLabOpen">Moves by rating · Open Maia Lab</string>
+    <string name="muteLabOpen">Maia Lab</string>
     <string name="muteLabClose">Close Maia Lab</string>
     <string name="muteLabRating">Maia rating</string>
     <string name="muteLabRatingChart">Moves by rating</string>
