@@ -213,3 +213,33 @@ test('puzzle review drops only the second row and still withholds all Maia UI wh
   maia.cancel();
   (vnode.elm as HTMLElement).remove();
 });
+
+test('puzzle popup shares native context but cannot expose assistance while solving, hidden or in threat mode', () => {
+  const ctrl = {
+    mode: 'view',
+    cevalEnabled: () => true,
+    threatMode: () => false,
+    node: { fen, outcome: () => undefined },
+    nodeList: [{ fen }],
+    data: { puzzle: { id: 'lab' } },
+    flipped: () => false,
+    pov: 'white',
+    setAutoShapes: () => {},
+    redraw: () => {},
+    ceval: { hovering: () => null },
+  } as unknown as PuzzleCtrl;
+  const model = new PuzzleMaia(ctrl);
+  const source = (model as any).lab.source;
+  assert.equal(source.snapshot().fen, fen);
+  assert.equal(source.snapshot().byRating, (model as any).engine.byRating);
+  ctrl.mode = 'play';
+  assert.equal(source.snapshot(), undefined);
+  assert.equal(model.view(), undefined);
+  ctrl.mode = 'view';
+  ctrl.threatMode = () => true;
+  assert.equal(source.snapshot(), undefined);
+  ctrl.threatMode = () => false;
+  ctrl.cevalEnabled = () => false;
+  assert.equal(source.snapshot(), undefined);
+  model.cancel();
+});

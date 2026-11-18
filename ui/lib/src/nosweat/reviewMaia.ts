@@ -1,5 +1,6 @@
 import { encodeHistory, policy, type Candidate } from './core';
 import type { EnginePreferences } from './preferences';
+import { ratingSamples } from './ratingChart';
 
 export const reviewAllowed = (mode: string, enabled: boolean, hidden: boolean, threat: boolean): boolean =>
   mode === 'view' && enabled && !hidden && !threat;
@@ -21,6 +22,9 @@ export interface ReviewContext {
 // An unavailable context means assistance is prohibited, not merely hidden.
 // All result publication is tied to the complete context and generation.
 export class ReviewMaia {
+  readonly byRating: Map<number, Candidate[]> = new Map<number, Candidate[]>();
+  private context?: ReviewContext;
+  private sampling = 0;
   primary: Candidate[] = [];
   secondary: Candidate[] = [];
   status = '';
@@ -49,6 +53,9 @@ export class ReviewMaia {
     if (key === this.key) return;
     const previousModel = this.key && (JSON.parse(this.key) as ReviewContext).preferences.model;
     this.key = key;
+    this.context = context;
+    this.sampling++;
+    this.byRating.clear();
     const generation = ++this.generation;
     this.primary = [];
     this.secondary = [];
@@ -98,6 +105,42 @@ export class ReviewMaia {
           this.client = undefined;
           this.status = 'Maia unavailable';
           this.changed();
+        }
+      });
+  }
+  stopSampling(): void {
+    this.sampling++;
+  }
+  sampleRatings(): void {
+    const context = this.context;
+    if (!context) return;
+    const generation = this.generation;
+    const sampling = ++this.sampling;
+    const valid = () => generation === this.generation && sampling === this.sampling;
+    this.tail = this.tail
+      .catch(() => {})
+      .then(async () => {
+        if (!valid() || !this.client) return;
+        try {
+          const tokens = encodeHistory(context.fens, context.preferences.history);
+          for (const rating of ratingSamples) {
+            if (!valid()) return;
+            if (this.byRating.has(rating)) continue;
+            const logits = await this.client.predict({
+              tokens,
+              selfElo: rating,
+              opponentElo: rating,
+              includeValue: false,
+            });
+            if (!valid()) return;
+            this.byRating.set(rating, policy(context.fens[context.fens.length - 1], logits));
+            this.changed();
+          }
+        } catch {
+          if (valid()) {
+            this.status = 'Maia unavailable';
+            this.changed();
+          }
         }
       });
   }

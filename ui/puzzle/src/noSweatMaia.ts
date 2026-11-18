@@ -4,7 +4,7 @@ import { winningChances } from 'lib/ceval';
 import { fenColor } from 'lib/game';
 import { licon } from 'lib/licon';
 import { engineArrows, engineShapes } from 'lib/nosweat/arrows';
-import { san, type Candidate } from 'lib/nosweat/core';
+import { san, legalUcis, standardUci, position, type Candidate } from 'lib/nosweat/core';
 import {
   loadEnginePreferences,
   saveEnginePreferences,
@@ -12,6 +12,10 @@ import {
   showEngineSettings,
 } from 'lib/nosweat/engineSettings';
 import { muteText } from 'lib/nosweat/i18n';
+import { MaiaLab } from 'lib/nosweat/maiaLab';
+import { labText } from 'lib/nosweat/maiaLabI18n';
+import type { LabScore } from 'lib/nosweat/maiaLabModel';
+import { ReviewFish } from 'lib/nosweat/reviewFish';
 import { loadBrowserMaia, ReviewMaia, reviewAllowed } from 'lib/nosweat/reviewMaia';
 import { hl, bind } from 'lib/view';
 
@@ -179,6 +183,13 @@ export function puzzleMaiaChannel(channel: PolicyChannel) {
 
 export class PuzzleMaia {
   private readonly engine: ReviewMaia;
+  private readonly lab: MaiaLab;
+  private labFish?: ReviewFish;
+  private labAbort = new AbortController();
+  private readonly labScores = new Map<string, LabScore>();
+  private labFailed = false;
+  private labContext = '';
+  private labHover?: { fen: string; uci: Uci };
   private expanded: [boolean, boolean] = [false, false];
   private displayKey = '';
   private readonly preferences = loadEnginePreferences;
@@ -186,14 +197,121 @@ export class PuzzleMaia {
     this.engine = new ReviewMaia(loadBrowserMaia, () => {
       ctrl.setAutoShapes();
       ctrl.redraw();
+      this.lab?.redraw();
+    });
+    this.lab = new MaiaLab({
+      snapshot: () =>
+        this.allowed()
+          ? {
+              key: this.labKey(),
+              fen: ctrl.node.fen,
+              orientation: ctrl.flipped() ? (ctrl.pov === 'white' ? 'black' : 'white') : ctrl.pov,
+              model: 'Maia-3 ' + this.preferences().model.toUpperCase(),
+              history: this.preferences().history,
+              rating: this.preferences().selfElo,
+              byRating: this.engine.byRating,
+              scores: this.labScores,
+              busy: this.engine.byRating.size < 21,
+              failed: this.labFailed || this.engine.status === 'Maia unavailable',
+            }
+          : undefined,
+      start: () => this.startLab(),
+      stop: () => this.stopLab(),
+      hover: uci => this.hoverLab(uci),
+      explore: uci => ctrl.sendMove(parseUci(uci)!),
     });
     window.addEventListener('pagehide', this.cancel);
     document.addEventListener('visibilitychange', this.sync);
   }
-  cancel = (): void => this.engine.cancel();
+  cancel = (): void => {
+    this.lab.close();
+    this.stopLab();
+    this.engine.cancel();
+  };
+  private labKey(): string {
+    const prefs = this.preferences();
+    return JSON.stringify([
+      this.ctrl.data.puzzle.id,
+      this.ctrl.nodeList.map(n => n.fen),
+      prefs.model,
+      prefs.history,
+      prefs.selfElo,
+      prefs.secondMaiaElo,
+      prefs.secondMaiaEnabled,
+    ]);
+  }
+  private hoverLab(uci?: string): void {
+    if (uci && this.allowed()) {
+      this.labHover = { fen: this.ctrl.node.fen, uci };
+      this.ctrl.ceval.hovering(this.labHover);
+      this.ctrl.setAutoShapes();
+    } else if (this.labHover) {
+      if (this.ctrl.ceval.hovering() === this.labHover) {
+        this.ctrl.ceval.hovering(null);
+        this.ctrl.setAutoShapes();
+      }
+      this.labHover = undefined;
+    }
+  }
+  private stopLab(): void {
+    this.labAbort.abort();
+    this.labAbort = new AbortController();
+    this.labFish?.destroy();
+    this.labFish = undefined;
+    this.engine.stopSampling();
+    this.hoverLab();
+  }
+  private startLab(): void {
+    if (!this.allowed()) return;
+    this.engine.sampleRatings();
+    const key = this.labKey();
+    const signal = this.labAbort.signal;
+    const fen = this.ctrl.node.fen;
+    this.labFailed = false;
+    const legal = new Set(legalUcis(fen));
+    if (!legal.size) return;
+    this.labFish ??= new ReviewFish(() => {});
+    const publish = (review: Awaited<ReturnType<ReviewFish['search']>>) => {
+      if (signal.aborted || key !== this.labKey() || !this.allowed() || review.current.depth < 12) return;
+      const lines = review.current.lines.map(line => ({
+        line,
+        uci: standardUci(position(fen), parseUci(line.moves[0])!),
+      }));
+      if (
+        lines.length !== legal.size ||
+        new Set(lines.map(l => l.uci)).size !== legal.size ||
+        lines.some(l => !legal.has(l.uci))
+      )
+        return;
+      this.labScores.clear();
+      lines.forEach(({ uci, line }) => this.labScores.set(uci, { score: line, depth: review.current.depth }));
+      this.lab.redraw();
+    };
+    void this.labFish
+      .search(fen, [], signal, 12, 0, Symbol('puzzle Maia Lab'), legal.size, {
+        allRoots: true,
+        maxMultiPv: 4,
+        onUpdate: publish,
+      })
+      .then(publish)
+      .catch(() => {
+        if (!signal.aborted && key === this.labKey()) {
+          this.labFailed = true;
+          this.lab.redraw();
+        }
+      });
+  }
   private readonly allowed = () =>
     reviewAllowed(this.ctrl.mode, this.ctrl.cevalEnabled(), document.hidden, this.ctrl.threatMode());
   sync = (): void => {
+    const key = this.labKey();
+    if (!this.allowed() || key !== this.labContext) {
+      this.lab.close();
+      this.stopLab();
+      this.labScores.clear();
+      this.labFailed = false;
+      this.labContext = key;
+    }
     const prefs = this.preferences();
     this.engine.set(
       this.allowed() && !this.ctrl.node.outcome()
@@ -267,6 +385,16 @@ export class PuzzleMaia {
     return hl('section.nosweat-engine-lines', { attrs: { 'aria-label': 'Maia analysis channels' } }, [
       hl('header.nosweat-puzzle-maia-heading', [
         hl('span', 'Maia Analysis'),
+        hl(
+          'button.fbt.nosweat-lab-open',
+          {
+            attrs: { type: 'button', 'aria-haspopup': 'dialog' },
+            hook: bind('click', () => {
+              void this.lab.open();
+            }),
+          },
+          labText('LabOpen'),
+        ),
         hl('button.fbt.nosweat-maia-settings', {
           attrs: {
             type: 'button',

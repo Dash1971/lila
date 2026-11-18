@@ -272,6 +272,8 @@ button.nosweat-maia-other {
 
 .nosweat-puzzle-maia-heading {
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
   align-items: center;
   justify-content: space-between;
   color: $c-font-dim;
@@ -294,4 +296,8 @@ button.nosweat-maia-label {
     text-decoration: underline;
     text-underline-offset: 0.2em;
   }
+}
+
+.nosweat-puzzle-maia-heading .nosweat-lab-open {
+  font-size: 0.9em;
 }

@@ -8,6 +8,8 @@ import { licon } from 'lib/licon';
 import { saveEnginePreferences, showMaiaRating, showEngineSettings } from 'lib/nosweat/engineSettings';
 import { maiaExpectedScore } from 'lib/nosweat/expectedScore';
 import { muteText } from 'lib/nosweat/i18n';
+import { MaiaLab } from 'lib/nosweat/maiaLab';
+import { labText } from 'lib/nosweat/maiaLabI18n';
 import { storage } from 'lib/storage';
 import { hl, type VNode } from 'lib/view';
 
@@ -53,6 +55,8 @@ interface Scored {
 }
 export class NoSweatAnalysis {
   readonly boardReview: BoardReview;
+  private readonly lab: MaiaLab;
+  private labActive = false;
   enabled = false;
   model = '5m';
   selfElo = 1500;
@@ -113,6 +117,35 @@ export class NoSweatAnalysis {
 
   constructor(readonly ctrl: AnalyseCtrl) {
     this.boardReview = new BoardReview(ctrl);
+    this.lab = new MaiaLab({
+      snapshot: () =>
+        this.enabled && this.analysisAllowed() && !document.hidden && !this.ctrl.threatMode()
+          ? {
+              key: this.ratingKey(),
+              fen: this.ctrl.node.fen,
+              orientation: this.ctrl.bottomColor(),
+              model: 'Maia-3 ' + this.model.toUpperCase(),
+              history: this.history,
+              rating: this.selfElo,
+              byRating: this.byRating,
+              scores: new Map(
+                [...this.scores].flatMap(([uci, result]) => (result ? [[uci, result] as const] : [])),
+              ),
+              busy: this.compareBusy || this.qualityBusy,
+              failed: !!this.error,
+            }
+          : undefined,
+      start: () => {
+        this.labActive = true;
+        this.sampleRatings();
+        this.colorCandidates();
+      },
+      stop: () => {
+        this.labActive = false;
+      },
+      hover: uci => this.hoverChartMove(uci),
+      explore: uci => this.preview(uci),
+    });
     Object.assign(this, readEnginePreferences(storage.make('nosweat.enginePreferences.v2').get()));
     this.enabled = !!ctrl.cevalEnabled();
     ctrl.ceval.storedPv(2);
@@ -198,6 +231,7 @@ export class NoSweatAnalysis {
       this.history ? fens.slice(-8) : fens.slice(-1),
     ]);
   private cancel(): void {
+    this.lab.close();
     this.hoverChartMove();
     this.generation++;
     this.abort.abort();
@@ -361,6 +395,7 @@ export class NoSweatAnalysis {
   }
   redrawSide(): void {
     this.sideRedraw?.();
+    this.lab.redraw();
     this.opening?.redraw();
   }
   private nativeLines() {
@@ -438,7 +473,9 @@ export class NoSweatAnalysis {
       this.qualityCandidates().filter(
         move => (this.scores.get(move)?.depth ?? 0) < 18 && !this.qualityAttempted.has(`18:${move}`),
       );
+    const labPending = () => this.labActive && !this.qualityAttempted.has('lab:12');
     if (
+      !labPending() &&
       this.qualityAttempted.has('screen') &&
       (!this.qualityScreened || (this.qualityAttempted.has('root:18') && !targets().length))
     )
@@ -464,7 +501,7 @@ export class NoSweatAnalysis {
           if (!moves.length) this.qualityRoot = review;
           for (const line of review.current.lines) {
             const move = this.normalUci(line.moves[0]);
-            if (move && legal.has(move))
+            if (move && legal.has(move) && review.current.depth >= (this.scores.get(move)?.depth ?? 0))
               this.scores.set(move, {
                 score: line,
                 depth: Math.max(this.scores.get(move)?.depth ?? 0, review.current.depth),
@@ -489,6 +526,10 @@ export class NoSweatAnalysis {
         await search([], 10, legal.size, true);
       }
       if (!this.valid(generation) || !this.qualityScreened) return;
+      if (labPending()) {
+        this.qualityAttempted.add('lab:12');
+        await search([], 12, legal.size, true);
+      }
       for (const move of this.qualityCandidates()) {
         if (!this.valid(generation)) return;
         if ((this.scores.get(move)?.depth ?? 0) >= 14 || this.qualityAttempted.has(`14:${move}`)) continue;
@@ -516,7 +557,7 @@ export class NoSweatAnalysis {
           if (this.status === 'Loading Stockfish review…') this.status = '';
           this.ctrl.redraw();
           // Maia can arrive at a phase boundary; its selected candidates still deepen.
-          if (this.qualityScreened && targets().length) this.colorCandidates();
+          if (this.qualityScreened && (targets().length || labPending())) this.colorCandidates();
         }
       });
   }
@@ -638,6 +679,7 @@ export class NoSweatAnalysis {
         const result = await this.predict(fens, rating, generation);
         if (!this.valid(generation)) return;
         this.byRating.set(rating, result.candidates);
+        this.lab.redraw();
         this.colorCandidates();
         this.ctrl.redraw();
       }
@@ -812,6 +854,20 @@ export class NoSweatAnalysis {
       hl('section.nosweat-rating-explorer', [
         hl('header.nosweat-rating-heading', [
           hl('h3', muteText('MovesByRating', 'Moves by Rating')),
+          hl(
+            'button.fbt.nosweat-lab-open',
+            {
+              attrs: {
+                type: 'button',
+                'aria-haspopup': 'dialog',
+                disabled: !this.enabled || !this.analysisAllowed() || this.ctrl.threatMode(),
+              },
+              hook: reviewClick(() => {
+                void this.lab.open();
+              }),
+            },
+            labText('LabOpen'),
+          ),
           hl('button.fbt.nosweat-maia-settings', {
             attrs: {
               type: 'button',

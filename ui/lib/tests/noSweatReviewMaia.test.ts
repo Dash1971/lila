@@ -167,3 +167,41 @@ test('each puzzle Maia conditions both rating inputs at its own selected rating'
   ]);
   engine.cancel();
 });
+
+test('popup sweep conditions both inputs, publishes progressively and cannot publish after stop or navigation', async () => {
+  const inputs: { selfElo: number; opponentElo: number }[] = [];
+  const blocked = deferred<Float32Array>();
+  let pause = false;
+  const engine = new ReviewMaia(
+    async () => ({
+      predict: async input => {
+        inputs.push(input);
+        return pause ? blocked.promise : new Float32Array(4352);
+      },
+      release: () => {},
+    }),
+    () => {},
+  );
+  engine.set({ ...context, preferences: { ...defaultEnginePreferences, secondMaiaEnabled: false } });
+  await tick();
+  engine.sampleRatings();
+  await tick();
+  await tick();
+  assert.equal(engine.byRating.size, 21);
+  assert.ok(inputs.every(input => input.selfElo === input.opponentElo));
+  engine.set({
+    ...context,
+    id: 'next',
+    preferences: { ...defaultEnginePreferences, secondMaiaEnabled: false },
+  });
+  await tick();
+  pause = true;
+  engine.sampleRatings();
+  await tick();
+  engine.stopSampling();
+  blocked.resolve(new Float32Array(4352));
+  await tick();
+  assert.equal(engine.byRating.size, 0);
+  engine.cancel();
+  assert.equal(engine.byRating.size, 0);
+});
