@@ -21,7 +21,7 @@ const showTime = (v: number) => {
   return v.toString();
 };
 
-const blindModeTimePickers = (tc: TimeControl) => {
+const blindModeTimePickers = (tc: TimeControl, minimumSelectableTime = 0) => {
   return [
     renderTimeModePicker(tc),
     tc.mode() === 'realTime' &&
@@ -32,8 +32,10 @@ const blindModeTimePickers = (tc: TimeControl) => {
           {
             on: { change: (e: Event) => tc.timeV(parseFloat((e.target as HTMLSelectElement).value)) },
           },
-          sliderTimes.map((sliderTime, timeV) =>
-            option({ key: timeV.toString(), name: showTime(sliderTime) }, tc.timeV().toString()),
+          sliderTimes.flatMap((sliderTime, timeV) =>
+            sliderTime >= minimumSelectableTime
+              ? [option({ key: timeV.toString(), name: showTime(sliderTime) }, tc.timeV().toString())]
+              : [],
           ),
         ),
       ]),
@@ -109,8 +111,12 @@ const inputRange = (min: number, max: number, prop: Prop<InputValue>, classes?: 
     on: { input: (e: Event) => prop(parseFloat((e.target as HTMLInputElement).value)) },
   });
 
-export const timePickerAndSliders = (tc: TimeControl, minimumTimeRequiredIfReal = 0): VNode => {
-  if (site.blindMode) return hl('div.config-group', blindModeTimePickers(tc));
+export const timePickerAndSliders = (
+  tc: TimeControl,
+  minimumTimeRequiredIfReal = 0,
+  minimumSelectableTime = 0,
+): VNode => {
+  if (site.blindMode) return hl('div.config-group', blindModeTimePickers(tc, minimumSelectableTime));
 
   const activeMode = tc.mode();
   const showTabs = tc.canSelectMode();
@@ -149,7 +155,7 @@ export const timePickerAndSliders = (tc: TimeControl, minimumTimeRequiredIfReal 
       hl('div.sliders-grid', [
         hl('div.slider-container', [
           hl('div.label-row', [hl('label', i18n.site.minutesPerSide), hl('span.val-box', showTime(tcTime))]),
-          inputRange(0, 38, tc.timeV, {
+          inputRange(sliderInitVal(minimumSelectableTime, timeVToTime, 100, 0), 38, tc.timeV, {
             failure: !tc.realTimeValid(minimumTimeRequiredIfReal),
           }),
         ]),
@@ -164,23 +170,25 @@ export const timePickerAndSliders = (tc: TimeControl, minimumTimeRequiredIfReal 
       ]),
       hl(
         'div.presets',
-        tc.presets.map(p =>
-          hl(
-            'button.preset-btn',
-            {
-              class: {
-                active: tcTime === p.lim && tcIncrement === p.inc,
-              },
-              on: {
-                click: () => {
-                  tc.timeV(sliderInitVal(p.lim, timeVToTime, 100, 9));
-                  tc.incrementV(sliderInitVal(p.inc, incrementVToIncrement, 100, 0));
+        tc.presets
+          .filter(p => p.lim >= minimumSelectableTime)
+          .map(p =>
+            hl(
+              'button.preset-btn',
+              {
+                class: {
+                  active: tcTime === p.lim && tcIncrement === p.inc,
+                },
+                on: {
+                  click: () => {
+                    tc.timeV(sliderInitVal(p.lim, timeVToTime, 100, 9));
+                    tc.incrementV(sliderInitVal(p.inc, incrementVToIncrement, 100, 0));
+                  },
                 },
               },
-            },
-            `${showTime(p.lim)}+${p.inc}`,
+              `${showTime(p.lim)}+${p.inc}`,
+            ),
           ),
-        ),
       ),
     ]);
   } else if (activeMode === 'correspondence') {

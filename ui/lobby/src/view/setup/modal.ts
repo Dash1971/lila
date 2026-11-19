@@ -59,7 +59,11 @@ export default function setupModal(ctrl: LobbyController): VNode[] | null {
 const views = {
   hook: (ctrl: LobbyController): LooseVNodes => [
     !ctrl.opts.noSweat && variantPicker(ctrl.setupCtrl),
-    timePickerAndSliders(ctrl.setupCtrl.timeControl, 0),
+    timePickerAndSliders(
+      ctrl.setupCtrl.timeControl,
+      ctrl.setupCtrl.minimumTimeIfReal(),
+      ctrl.opts.noSweat ? 1 : 0,
+    ),
     gameModeButtons(ctrl),
     ratingView(ctrl),
     !ctrl.opts.noSweat && ratingDifferenceSliders(ctrl),
@@ -68,14 +72,22 @@ const views = {
   friend: (ctrl: LobbyController): LooseVNodes => [
     !ctrl.opts.noSweat && variantPicker(ctrl.setupCtrl),
     !ctrl.opts.noSweat && fenInput(ctrl.setupCtrl),
-    timePickerAndSliders(ctrl.setupCtrl.timeControl, 0),
+    timePickerAndSliders(
+      ctrl.setupCtrl.timeControl,
+      ctrl.setupCtrl.minimumTimeIfReal(),
+      ctrl.opts.noSweat ? 1 : 0,
+    ),
     gameModeButtons(ctrl),
     colorButtons(ctrl.setupCtrl),
   ],
   ai: ({ setupCtrl }: LobbyController): LooseVNodes => [
     variantPicker(setupCtrl),
     fenInput(setupCtrl),
-    timePickerAndSliders(setupCtrl.timeControl, setupCtrl.minimumTimeIfReal()),
+    timePickerAndSliders(
+      setupCtrl.timeControl,
+      setupCtrl.minimumTimeIfReal(),
+      setupCtrl.root.opts.noSweat ? 1 : 0,
+    ),
     levelButtons(setupCtrl),
     colorButtons(setupCtrl),
   ],

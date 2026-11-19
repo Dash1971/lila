@@ -80,7 +80,9 @@ export default class SetupController {
         this.onDropdownChange,
       ),
       !this.root.opts.noSweat && canChangeTimeMode ? timeModes : ['realTime'],
-      forceOptions?.time ?? storeProps.time,
+      this.root.opts.noSweat
+        ? Math.max(1, forceOptions?.time ?? storeProps.time)
+        : (forceOptions?.time ?? storeProps.time),
       forceOptions?.increment ?? storeProps.increment,
       forceOptions?.days ?? storeProps.days,
       this.onPropChange,
@@ -186,8 +188,11 @@ export default class SetupController {
     this.lastValidFen = '';
     this.friendUser = friendUser || '';
     this.variantMenuOpen(false);
-    this.forced = forceOptions;
-    this.loadPropsFromStore(forceOptions);
+    this.forced =
+      this.root.opts.noSweat && forceOptions?.time !== undefined && forceOptions.time < 1
+        ? { ...forceOptions, time: 1 }
+        : forceOptions;
+    this.loadPropsFromStore(this.forced);
   };
 
   closeModal?: () => void; // managed by view/setup/modal.ts
@@ -293,7 +298,8 @@ export default class SetupController {
     return true;
   };
 
-  minimumTimeIfReal = () => (this.gameType === 'ai' && this.variant() === 'fromPosition' ? 1 : 0);
+  minimumTimeIfReal = () =>
+    this.root.opts.noSweat || (this.gameType === 'ai' && this.variant() === 'fromPosition') ? 1 : 0;
 
   submit = async () => {
     if (this.root.opts.noSweat && this.gameType !== 'friend') {

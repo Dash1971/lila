@@ -51,6 +51,8 @@ final class Env(
     if !noSweatOnly || !game.playable then funit
     else if game.clock.isEmpty || game.daysPerTurn.isDefined then
       fufail(NoSweatGameAdmission.RealTimeRequired)
+    else if !NoSweatGameAdmission.hasMinimumClock(game.clockConfig) then
+      fufail(NoSweatGameAdmission.MinimumClockRequired)
     else if game.sourceIs(_.Arena) then
       for
         scope <- db(CollName("nosweat_arena")).byId[Bdoc]("current")

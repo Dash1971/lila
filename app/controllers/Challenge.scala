@@ -99,6 +99,8 @@ final class Challenge(env: Env) extends LilaController(env):
       isForMe(c).so:
         if env.noSweat.enabled && (c.unlimited || c.daysPerTurn.isDefined) then
           fuccess(JsonBadRequest(lila.core.i18n.I18nKey("muteRealTimeOnly").txt()))
+        else if env.noSweat.enabled && !lila.game.NoSweatGameAdmission.hasMinimumClock(c.clock.map(_.config))
+        then fuccess(JsonBadRequest(lila.core.i18n.I18nKey("muteMinimumClock").txt()))
         else
           allow:
             api

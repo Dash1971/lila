@@ -206,6 +206,8 @@ final class NoSweat(env: Env) extends LilaController(env):
       setup.flatMap: data =>
         if (data \ "timeMode").asOpt[String].exists(_ != "realTime") then
           fuccess(BadRequest(Json.obj("error" -> lila.core.i18n.I18nKey("muteRealTimeOnly").txt())))
+        else if (data \ "minutes").asOpt[Double].exists(_ < 1d) then
+          fuccess(BadRequest(Json.obj("error" -> lila.core.i18n.I18nKey("muteMinimumClock").txt())))
         else
           env.security.lilaCookie.ensureAndGet: sid =>
             club

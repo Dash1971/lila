@@ -11,6 +11,45 @@ class NoSweatGameAdmissionTest extends munit.FunSuite:
     paused => Future.successful(state.set(paused))
   )
 
+  test("the minimum is initial time, not estimated duration with increment"):
+    def clock(seconds: Int, increment: Int) = Some(
+      chess.Clock.Config(chess.Clock.LimitSeconds(seconds), chess.Clock.IncrementSeconds(increment))
+    )
+    assert(!NoSweatGameAdmission.hasMinimumClock(None))
+    for seconds <- List(0, 15, 30, 45, 59); increment <- List(0, 1, 5, 180) do
+      assert(!NoSweatGameAdmission.hasMinimumClock(clock(seconds, increment)))
+    for seconds <- List(60, 90, 300); increment <- List(0, 1, 5, 180) do
+      assert(NoSweatGameAdmission.hasMinimumClock(clock(seconds, increment)))
+
+  test("Arena berserk retains the original supported clock and Bullet rating category"):
+    import lila.game.GameExt.*
+    val arena = lila.core.game
+      .newGame(
+        chess = chess
+          .Game(chess.variant.Standard)
+          .copy(clock =
+            Some(
+              chess.Clock.Config(chess.Clock.LimitSeconds(60), chess.Clock.IncrementSeconds(0)).toClock
+            )
+          ),
+        players = chess.ByColor(color => lila.game.Player.makeAnon(color)),
+        rated = chess.Rated.No,
+        source = lila.core.game.Source.Arena,
+        pgnImport = None
+      )
+      .withId(GameId("arenamin"))
+      .start
+    val game = arena.copy(metadata = arena.metadata.copy(tournamentId = Some(TourId("arenamin"))))
+    val berserked = game.goBerserk(chess.Color.White).get.game
+    assert(berserked.whitePlayer.berserk)
+    assert(
+      berserked.clock.get.remainingTime(chess.Color.White) < game.clock.get.remainingTime(chess.Color.White)
+    )
+    assertEquals(berserked.clockConfig, game.clockConfig)
+    assert(NoSweatGameAdmission.hasMinimumClock(berserked.clockConfig))
+    assertEquals(berserked.speed, chess.Speed.Bullet)
+    assertEquals(berserked.perfKey, lila.core.perf.PerfKey.bullet)
+
   test("pausing rejects insertion without running its side effects, and reopening restores it"):
     val state = new AtomicBoolean(false)
     val admission = gate(state)

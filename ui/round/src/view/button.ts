@@ -4,6 +4,7 @@ import { finished, aborted, replayable, rematchable, moretimeable, type PlayerUs
 import type { ClockData } from 'lib/game/clock/clockCtrl';
 import { game as gameRoute } from 'lib/game/router';
 import { licon, type LiconValue } from 'lib/licon';
+import { muteText } from 'lib/nosweat/i18n';
 import { pubsub } from 'lib/pubsub';
 import {
   spinnerVdom as spinner,
@@ -66,6 +67,29 @@ function rematchButtons(ctrl: RoundController): LooseVNodes {
   const disabled = !me && !d.opponent.onGame && (!!d.clock || !d.player.user || !d.opponent.user);
   const them = !!d.opponent.offeringRematch && !disabled;
   if (!rematchable(d)) return [];
+  if (
+    !d.game.rematch &&
+    document.documentElement.dataset.brand === 'mutechess' &&
+    d.clock &&
+    d.clock.initial < 60
+  ) {
+    const explanation = muteText('MinimumClock', 'Starting time must be at least 1 minute per side.');
+    return [
+      hl(
+        'button.fbt.rematch.white',
+        {
+          attrs: {
+            type: 'button',
+            disabled: true,
+            title: explanation,
+            'aria-describedby': 'rematch-minimum-clock',
+          },
+        },
+        i18n.site.rematch,
+      ),
+      hl('p#rematch-minimum-clock.weak', explanation),
+    ];
+  }
   return [
     them &&
       hl(

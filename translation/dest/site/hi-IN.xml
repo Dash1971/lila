@@ -1069,6 +1069,7 @@
   <string name="muteArenaRefresh">रीफ़्रेश करें</string>
   <string name="mutePageNotFound">पृष्ठ नहीं मिला</string>
   <string name="muteReturnToHomepage">मुखपृष्ठ पर लौटें</string>
+  <string name="muteMinimumClock">हर खिलाड़ी के लिए शुरुआती समय कम से कम 1 मिनट होना चाहिए।</string>
     <string name="muteLabTitle">Maia प्रयोगशाला</string>
     <string name="muteLabOpen">Maia प्रयोगशाला</string>
     <string name="muteLabClose">Maia प्रयोगशाला बंद करें</string>

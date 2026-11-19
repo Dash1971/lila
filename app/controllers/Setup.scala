@@ -47,6 +47,9 @@ final class Setup(
               result <-
                 if env.noSweat.enabled && config.makeClock.isEmpty then
                   fuccess(JsonBadRequest(lila.core.i18n.I18nKey("muteRealTimeOnly").txt()))
+                else if env.noSweat.enabled && !lila.game.NoSweatGameAdmission
+                    .hasMinimumClock(config.makeClock)
+                then fuccess(JsonBadRequest(lila.core.i18n.I18nKey("muteMinimumClock").txt()))
                 else if env.noSweat.enabled && (
                     origUser.isEmpty || destUser.isEmpty || origUser.exists(_.user.isBot) ||
                       destUser.exists(_.user.isBot) || destUser.exists(u => ctx.is(u.user)) ||

@@ -261,6 +261,8 @@ final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Mat
   def prepare(id: TourId) = Auth { ctx ?=> me ?=>
     WithEditableTournament(id): tour =>
       if !env.noSweat.enabled then fuccess(NotFound)
+      else if tour.clock.limitSeconds.value < 60 then
+        fuccess(BadRequest(lila.core.i18n.I18nKey("muteMinimumClock").txt()))
       else
         env.noSweat
           .prepareArena(tour)

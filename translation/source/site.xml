@@ -1242,6 +1242,7 @@ Leave empty to start games from the normal initial position.</string>
   <string name="muteArenaRefresh">Refresh</string>
   <string name="mutePageNotFound">Page not found</string>
   <string name="muteReturnToHomepage">Return to the homepage</string>
+  <string name="muteMinimumClock">Starting time must be at least 1 minute per side.</string>
     <string name="muteLabTitle">Maia Lab</string>
     <string name="muteLabOpen">Maia Lab</string>
     <string name="muteLabClose">Close Maia Lab</string>

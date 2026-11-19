@@ -1199,6 +1199,7 @@
   <string name="muteArenaRefresh">更新</string>
   <string name="mutePageNotFound">ページが見つかりません</string>
   <string name="muteReturnToHomepage">ホームページに戻る</string>
+  <string name="muteMinimumClock">各プレイヤーの開始時の持ち時間は1分以上にしてください。</string>
     <string name="muteLabTitle">Maiaラボ</string>
     <string name="muteLabOpen">Maiaラボ</string>
     <string name="muteLabClose">Maiaラボを閉じる</string>

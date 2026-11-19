@@ -25,7 +25,7 @@ extension (f: Form[?])
 final class TournamentForm(val helpers: Helpers, showUi: TournamentShow)(
     modMenu: Context ?=> Frag,
     val translatedVariantChoicesWithVariants: Translate ?=> List[(String, String, Option[String])],
-    focused: Boolean = false
+    val focused: Boolean = false
 ):
   import helpers.{ *, given }
 
@@ -435,7 +435,11 @@ final class TourFields(tourForm: TournamentForm)(form: Form[?], tour: Option[Tou
   def clock =
     form3.split(
       form3.group(form.prefix("clockTime"), trans.site.clockInitialTime(), half = true):
-        form3.select(_, GatheringClock.timeChoices, disabled = disabledAfterStart)
+        form3.select(
+          _,
+          GatheringClock.timeChoices.filter((value, _) => !focused || value.toDouble >= 1d),
+          disabled = disabledAfterStart
+        )
       ,
       form3.group(form.prefix("clockIncrement"), trans.site.clockIncrement(), half = true):
         form3.select(_, GatheringClock.incrementChoices, disabled = disabledAfterStart)

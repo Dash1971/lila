@@ -55,7 +55,9 @@ final class NoSweatArena(
     val settings = t.arenaSettings
     val count = if t.conditions.allowsBots then settings.target else 0
     require(
-      ownerEvent(t) && t.isCreated && settings.valid && bots.size == count && bots
+      ownerEvent(
+        t
+      ) && t.isCreated && t.clock.limitSeconds.value >= 60 && settings.valid && bots.size == count && bots
         .map(_.id)
         .distinct
         .size == count

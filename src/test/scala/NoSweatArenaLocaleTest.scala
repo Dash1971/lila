@@ -29,6 +29,7 @@ class NoSweatArenaLocaleTest extends munit.FunSuite:
       "BotNoticeIntro",
       "BotNoticeFill"
     ).map("muteArena" + _) ++ List(
+      "muteMinimumClock",
       "arena:allowBotAccounts",
       "arena:history",
       "arena:arenaTournaments",

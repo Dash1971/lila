@@ -1240,6 +1240,7 @@ Leer lassen, um Partien von der normalen Ausgangsstellung aus zu starten.</strin
   <string name="muteArenaRefresh">Aktualisieren</string>
   <string name="mutePageNotFound">Seite nicht gefunden</string>
   <string name="muteReturnToHomepage">Zurück zur Startseite</string>
+  <string name="muteMinimumClock">Die Anfangsbedenkzeit muss mindestens 1 Minute pro Seite betragen.</string>
     <string name="muteLabTitle">Maia-Labor</string>
     <string name="muteLabOpen">Maia-Labor</string>
     <string name="muteLabClose">Maia-Labor schließen</string>

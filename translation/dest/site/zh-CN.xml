@@ -1198,6 +1198,7 @@
   <string name="muteArenaRefresh">刷新</string>
   <string name="mutePageNotFound">找不到页面</string>
   <string name="muteReturnToHomepage">返回首页</string>
+  <string name="muteMinimumClock">每方的初始时间必须至少为1分钟。</string>
     <string name="muteLabTitle">Maia 实验室</string>
     <string name="muteLabOpen">Maia 实验室</string>
     <string name="muteLabClose">关闭 Maia 实验室</string>

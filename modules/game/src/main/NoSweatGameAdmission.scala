@@ -23,5 +23,9 @@ final class NoSweatGameAdmission(readPaused: () => Fu[Boolean], writePaused: Boo
   def pause(value: Boolean): Funit = serial(writePaused(value))
 
 object NoSweatGameAdmission:
+  def hasMinimumClock(clock: Option[chess.Clock.Config]): Boolean =
+    clock.exists(_.limitSeconds.value >= 60)
+
+  case object MinimumClockRequired extends RuntimeException
   case object RealTimeRequired extends RuntimeException
   case object Paused extends RuntimeException("Server maintenance: new games are temporarily paused")

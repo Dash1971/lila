@@ -117,7 +117,7 @@ final class TournamentForm(appConfig: play.api.Configuration):
     val nameMaxLength = if me.isVerified || manager then 35 else 30
     mapping(
       "name" -> optional(eventName(2, nameMaxLength, manager || me.isVerified)),
-      "clockTime" -> numberInDouble(timeChoices),
+      "clockTime" -> numberInDouble(timeChoices).verifying("muteMinimumClock", t => !focused || t >= 1d),
       "clockIncrement" -> numberIn(incrementChoices).into[IncrementSeconds],
       "minutes" -> {
         if manager then number

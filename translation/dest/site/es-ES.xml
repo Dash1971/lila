@@ -1240,6 +1240,7 @@ Déjalo vacío para empezar las partidas desde la posición inicial habitual.</s
   <string name="muteArenaRefresh">Actualizar</string>
   <string name="mutePageNotFound">Página no encontrada</string>
   <string name="muteReturnToHomepage">Volver a la página de inicio</string>
+  <string name="muteMinimumClock">El tiempo inicial debe ser de al menos 1 minuto por jugador.</string>
     <string name="muteLabTitle">Laboratorio Maia</string>
     <string name="muteLabOpen">Laboratorio Maia</string>
     <string name="muteLabClose">Cerrar laboratorio Maia</string>
