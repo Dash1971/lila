@@ -50,7 +50,7 @@ function renderPgnInput(ctrl: PuzzleCtrl): string {
 }
 
 function studyButton(ctrl: PuzzleCtrl) {
-  if (ctrl.mode === 'play') return undefined;
+  if (ctrl.mode === 'play' || document.documentElement.dataset.brand === 'mutechess') return undefined;
   return h(
     'section.board-menu__study',
     hl('form', { attrs: { action: '/study/as', method: 'post', target: '_blank' } }, [

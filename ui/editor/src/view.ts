@@ -55,7 +55,8 @@ function castleCheckBox(ctrl: EditorCtrl, id: CastlingToggle, inputLabel: string
   return label(reversed ? [inputElement, inputLabel] : [inputLabel, inputElement]);
 }
 
-function studyButton(ctrl: EditorCtrl, state: EditorState): VNode {
+function studyButton(ctrl: EditorCtrl, state: EditorState): MaybeVNode {
+  if (document.documentElement.dataset.brand === 'mutechess') return undefined;
   return form({ method: 'post', action: '/study/as' }, [
     input('hidden')({ name: 'orientation', value: ctrl.bottomColor() }),
     input('hidden')({ name: 'variant', value: lichessRules(ctrl.variant) }),

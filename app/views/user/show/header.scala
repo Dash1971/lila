@@ -178,7 +178,7 @@ object header:
               splitNumber(trans.broadcast.nbBroadcasts.pluralSame(info.nbRelays))
             )
           ),
-          (info.nbStudies > 0).option(
+          (info.nbStudies > 0 && !env.noSweat.enabled).option(
             a(href := routes.Study.byOwnerDefault(u.username), cls := "nm-item")(
               splitNumber(trans.site.`nbStudies`.pluralSame(info.nbStudies))
             )
