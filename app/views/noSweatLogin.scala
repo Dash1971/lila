@@ -9,7 +9,7 @@ object noSweatLogin:
     Page(I18nKey("muteSignIn").txt())
       .css("bits.auth")
       .headAppend(link(rel := "stylesheet", href := s"${assetPath("nosweat/nostr.css")}?v=key-backup2"))
-      .headAppend(script(src := s"${assetPath("nosweat/nostr.js")}?v=key-copy3", defer)):
+      .headAppend(script(src := s"${assetPath("nosweat/nostr.js")}?v=auth-i18n", defer)):
         main(cls := "auth auth-login box box-pad")(
           div(cls := "auth__brand")(
             img(
@@ -43,7 +43,7 @@ object noSweatLogin:
             button(id := "nostr-generate", cls := "button button-green")(I18nKey("muteCreateKey").txt()),
             div(id := "nostr-created", hidden)(
               p(
-                "Save a copy of this key so you can return on another device. A password manager is a good place for it; anyone with the key can use this identity."
+                I18nKey("muteAuthBackupHelp").txt()
               ),
               input(
                 id := "nostr-backup",
@@ -51,7 +51,7 @@ object noSweatLogin:
                 tpe := "password",
                 readonly,
                 autocomplete := "off",
-                aria.label := "Your new Nostr secret key"
+                aria.label := I18nKey("muteAuthNewSecret").txt()
               ),
               div(cls := "nostr-key-actions")(
                 button(
@@ -83,13 +83,13 @@ object noSweatLogin:
               )
             ),
             p(cls := "nostr-help")(
-              "This browser remembers your key between visits, as long as its site data is kept. Keep a separate backup."
+              I18nKey("muteAuthRememberHelp").txt()
             ),
             div(id := "nostr-saved", hidden)(
               button(id := "nostr-use-saved", cls := "button")(I18nKey("muteContinueSaved").txt()),
               details(cls := "nostr-guide")(
-                summary("Back up your saved key"),
-                p("Copy it to your password manager or download a private .txt copy."),
+                summary(I18nKey("muteAuthBackupSaved").txt()),
+                p(I18nKey("muteAuthBackupOptions").txt()),
                 div(cls := "nostr-key-actions")(
                   button(
                     id := "nostr-copy-saved",
@@ -107,18 +107,18 @@ object noSweatLogin:
               ),
               button(id := "nostr-forget", cls := "button button-empty")(I18nKey("muteForgetSaved").txt())
             ),
-            div(cls := "or-separator")(span("Already use Nostr?")),
+            div(cls := "or-separator")(span(I18nKey("muteAuthAlreadyNostr").txt())),
             button(id := "nostr-extension", cls := "button button-metal")(
               I18nKey("muteSigner").txt()
             ),
             p(cls := "nostr-help")(
-              "Already have a signer? Continue directly. Or install ",
-              a(
-                href := "https://chromewebstore.google.com/detail/nos2x/kpgefcfmnafjgpblomihpgmejjdanjjp",
-                targetBlank,
-                rel := "noopener noreferrer"
-              )("nos2x for Chrome / Chromium"),
-              ". Other compatible Nostr signers work too."
+              I18nKey("muteAuthSignerLink")(
+                a(
+                  href := "https://chromewebstore.google.com/detail/nos2x/kpgefcfmnafjgpblomihpgmejjdanjjp",
+                  targetBlank,
+                  rel := "noopener noreferrer"
+                )("nos2x (Chrome / Chromium)")
+              )
             ),
             label(cls := "form-label", `for` := "nostr-nsec")(I18nKey("muteExistingKey").txt()),
             input(
@@ -131,24 +131,26 @@ object noSweatLogin:
             ),
             button(id := "nostr-import", cls := "button button-metal")(I18nKey("muteImportKey").txt()),
             details(cls := "nostr-guide")(
-              summary("Keeping access to your key"),
+              summary(I18nKey("muteAuthKeepAccess").txt()),
               p(
-                "Clearing site data, a new browser or profile, or another device needs your original key or signer. Private browsing may remove the key when you close it. Browser storage is not a backup."
+                I18nKey("muteAuthClearingData").txt()
               ),
               p(
-                "You can ask this browser to keep site data for longer. It decides whether to allow this, and you can still clear it yourself."
+                I18nKey("muteAuthStorageHelp").txt()
               ),
-              button(id := "nostr-persist", cls := "button button-empty")("Ask browser to keep site data"),
+              button(id := "nostr-persist", cls := "button button-empty")(
+                I18nKey("muteAuthRequestStorage").txt()
+              ),
               p(
-                "For a password manager, add an entry for mutechess.org and paste the copied nsec into its password field or secure note. In Apple Passwords, save it as the password; iCloud Keychain can sync the entry when enabled. Copy that same key back here to restore access."
+                I18nKey("muteAuthPasswordManager").txt()
               ),
-              p("The .txt download contains your key as plain text. Keep it somewhere private.")
+              p(I18nKey("muteAuthPlaintext").txt())
             )
           ),
           div(id := "nostr-second-factor", cls := "form3", hidden)(
-            h2("One more step"),
-            p("Two-factor authentication is enabled for this account."),
-            label(cls := "form-label", `for` := "nostr-token")("Authenticator or recovery code"),
+            h2(I18nKey("muteAuthOneMore").txt()),
+            p(I18nKey("tfa:twoFactorEnabled").txt()),
+            label(cls := "form-label", `for` := "nostr-token")(I18nKey("muteAuthFactorToken").txt()),
             input(
               id := "nostr-token",
               cls := "form-control",
@@ -156,11 +158,31 @@ object noSweatLogin:
               maxlength := 64
             ),
             button(id := "nostr-verify", cls := "button button-green")(I18nKey("muteSignIn").txt()),
-            button(id := "nostr-back", cls := "button button-empty")("Use a different key")
+            button(id := "nostr-back", cls := "button button-empty")(I18nKey("muteAuthDifferentKey").txt())
           ),
-          p(id := "nostr-status", role := "status", aria.live := "polite"),
+          p(
+            id := "nostr-status",
+            attr("data-downloaded") := I18nKey("muteAuthDownloaded").txt(),
+            attr("data-no-key") := I18nKey("muteAuthNoKey").txt(),
+            attr("data-need-signer") := I18nKey("muteAuthNeedSigner").txt(),
+            attr("data-create-first") := I18nKey("muteAuthCreateFirst").txt(),
+            attr("data-granted") := I18nKey("muteAuthGranted").txt(),
+            attr("data-denied") := I18nKey("muteAuthDenied").txt(),
+            attr("data-unsupported") := I18nKey("muteAuthUnsupported").txt(),
+            attr("data-bad-key") := I18nKey("muteAuthBadKey").txt(),
+            attr("data-removed") := I18nKey("muteAuthRemoved").txt(),
+            attr("data-enter-code") := I18nKey("muteAuthEnterCode").txt(),
+            attr("data-failure") := I18nKey("muteAuthFailure").txt(),
+            attr("data-invalid-code") := I18nKey("muteAuthInvalidCode").txt(),
+            attr("data-busy") := I18nKey("muteAuthPleaseWait").txt(),
+            attr("data-bad-name") := I18nKey("muteAuthBadName").txt(),
+            attr("data-account-unavailable") := I18nKey("muteAuthAccountUnavailable").txt(),
+            attr("data-name-unavailable") := I18nKey("usernameAlreadyUsed").txt(),
+            role := "status",
+            aria.live := "polite"
+          ),
           p(cls := "nostr-help")(
-            "Your secret key stays in your browser. Signing in does not post anything to Nostr."
+            I18nKey("muteAuthPrivacy").txt()
           ),
           a(href := "/")(I18nKey("mutePlayAnon").txt())
         )

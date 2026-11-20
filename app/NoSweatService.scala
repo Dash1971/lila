@@ -121,8 +121,8 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
               ratingCatalog.update(id, Map.empty)
               pick(excluded + id, retries - 1)
     env.tournament.noSweatArena.reservedBots.flatMap(reserved => pick(busy ++ reserved, 4))
-  private def requireThat(ok: Boolean, status: Int, message: String): Unit =
-    if !ok then throw NoSweatError(status, message)
+  private def requireThat(ok: Boolean, status: Int, message: String, code: Option[String] = None): Unit =
+    if !ok then throw NoSweatError(status, message, code)
 
   def internalAuthorized(header: Option[String]): Boolean = enabled && header.exists: value =>
     java.security.MessageDigest.isEqual(
@@ -412,55 +412,69 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
           .foreach: games =>
             games.foreach((doc, game) => failGame(game.id, "maia_adapter_unavailable"))
 
-  def nostrUser(pubkey: String, requested: Option[String]): Fu[UserModel] = queue:
-    ready.flatMap: _ =>
-      requireThat(pubkey.matches("[0-9a-f]{64}"), 401, "Invalid verified identity")
-      env.user.repo
-        .byNostr(pubkey)
-        .flatMap:
-          case Some(user) =>
-            requireThat(user.enabled.yes && !user.isBot, 403, "Account unavailable")
-            fuccess(user)
-          case None =>
-            val displayName = requested.filter(_.nonEmpty)
-            val name = displayName.getOrElse("n" + pubkey.take(19))
-            requireThat(name.matches("[A-Za-z][A-Za-z0-9_-]{2,19}"), 400, "Use a 3–20 character username")
-            val reserved = Set(
-              "lichess",
-              "ghost",
-              "openingexplorer",
-              "broadcaster",
-              "irwin",
-              "kaladin",
-              "ai",
-              "lichess4545",
-              "challengermode",
-              "watcherbot",
-              "taketaketakeapp",
-              "undefined",
-              "anonymous",
-              "admin",
-              "system",
-              "nosweatchess",
-              "mutechess"
-            )
-            requireThat(!reserved.contains(name.toLowerCase), 409, "That is a reserved system name")
-            requireThat(
-              !roster.exists(botId(_).value == name.toLowerCase),
-              409,
-              "That name belongs to a Maia opponent"
-            )
-            env.user.repo
-              .existsPri(UserName(name).id)
-              .flatMap: occupied =>
-                requireThat(!occupied, 409, "Username already taken")
-                env.user.repo
-                  .createNostr(pubkey, displayName)
-                  .map:
-                    _.getOrElse(throw NoSweatError(503, "Could not create identity"))
-                  .recover(
-                    lila.db.recoverDuplicateKey(_ => throw NoSweatError(409, "Username already taken"))
-                  )
+  def nostrUser(pubkey: String, requested: Option[String])(checkSignup: => Unit)(using
+      lila.core.i18n.Translate
+  ): Fu[UserModel] =
+    queue:
+      ready.flatMap: _ =>
+        requireThat(pubkey.matches("[0-9a-f]{64}"), 401, "Invalid verified identity")
+        env.user.repo
+          .byNostr(pubkey)
+          .flatMap:
+            case Some(user) =>
+              requireThat(
+                user.enabled.yes && !user.isBot,
+                403,
+                "Account unavailable",
+                Some("account_unavailable")
+              )
+              fuccess(user)
+            case None =>
+              val displayName = NoSweatService.signupDisplayName(requested)
+              val name = displayName.getOrElse("n" + pubkey.take(19))
+              requireThat(
+                name.matches("[A-Za-z][A-Za-z0-9_-]{2,19}"),
+                400,
+                "Use a 3–20 character username",
+                Some("invalid_name")
+              )
+              val reserved = Set(
+                "lichess",
+                "ghost",
+                "openingexplorer",
+                "broadcaster",
+                "irwin",
+                "kaladin",
+                "ai",
+                "lichess4545",
+                "challengermode",
+                "watcherbot",
+                "taketaketakeapp",
+                "undefined",
+                "anonymous",
+                "admin",
+                "system",
+                "nosweatchess",
+                "mutechess"
+              )
+              requireThat(!reserved.contains(name.toLowerCase), 409, "That is a reserved system name")
+              requireThat(
+                !roster.exists(botId(_).value == name.toLowerCase),
+                409,
+                "That name belongs to a Maia opponent"
+              )
+              env.user.repo
+                .existsPri(UserName(name).id)
+                .flatMap: occupied =>
+                  requireThat(!occupied, 409, "Username already taken")
+                  checkSignup
+                  env.user.repo
+                    .createNostr(pubkey, displayName)
+                    .map:
+                      _.getOrElse(throw NoSweatError(503, "Could not create identity"))
+                    .recover(
+                      lila.db.recoverDuplicateKey(_ => throw NoSweatError(409, "Username already taken"))
+                    )
 
   def isNostr(user: UserModel): Fu[Boolean] =
     env.user.repo.withColl(_.exists(bdoc("_id" -> user.id, "nostr" -> bdoc("$exists" -> true))))
@@ -531,7 +545,9 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
                 bdoc("$pull" -> bdoc("nosweatRecovery" -> hash))
               )
             case _ => fuccess(false)
-          consumed.map(ok => requireThat(ok, 401, "Invalid or already used authentication code"))
+          consumed.map(ok =>
+            requireThat(ok, 401, "Invalid or already used authentication code", Some("invalid_factor"))
+          )
 
   def enableSecondFactor(user: UserModel, base32: String, token: String): Fu[List[String]] =
     import lila.user.TotpSecret.totp
@@ -541,7 +557,12 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
     factorRateLimit(user).flatMap: _ =>
       val period = System.currentTimeMillis() / 30000
       val step = List(0L, -1L, 1L).map(period + _).find(n => secret.totp(n).value == token)
-      requireThat(step.isDefined && token.matches("[0-9]{6}"), 400, "Enter a valid authenticator code")
+      requireThat(
+        step.isDefined && token.matches("[0-9]{6}"),
+        400,
+        "Enter a valid authenticator code",
+        Some("invalid_factor")
+      )
       val codes = List.fill(8)(
         java.util.HexFormat
           .of()
@@ -1157,3 +1178,16 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
           "failure" -> doc.getAsOpt[String]("failure"),
           "policy" -> publicArenaPolicy(Json.parse(doc.getAsOpt[String]("snapshot").get))
         )
+
+object NoSweatService:
+  private[app] def signupDisplayName(requested: Option[String])(using
+      lila.core.i18n.Translate
+  ): Option[String] =
+    val displayName = requested.filter(_.nonEmpty)
+    if displayName.exists(lila.user.PublicNameKeys.reservedForIdentity) then
+      throw NoSweatError(
+        409,
+        lila.core.i18n.I18nKey("muteChooseDifferentName").txt(),
+        Some("reserved_public_name")
+      )
+    displayName

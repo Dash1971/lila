@@ -7,6 +7,25 @@ import lila.app.{ *, given }
 import lila.security.IsPwned
 
 final class NoSweat(env: Env) extends LilaController(env):
+  private given lila.core.config.RateLimit = env.net.rateLimit
+  private val challengeLimit = lila.memo.RateLimit[String](30, 1.minute, "mute.auth.challenge")
+  private val loginLimit = lila.memo.RateLimit[String](30, 1.minute, "mute.auth.login")
+  // Match the native signup policy for players sharing a school or mobile network.
+  private val signupLimit = lila.memo.RateLimit.composite[String]("mute.auth.signup")(
+    ("fast", 10, 10.minutes),
+    ("slow", 150, 1.day)
+  )
+
+  private def authNetwork(using Context): String = ctx.ip match
+    case ip: lila.core.net.IpV6Address =>
+      ip.inet.fold(ip.value)(addr => java.util.HexFormat.of().formatHex(addr.getAddress.take(8)))
+    case ip => ip.value
+
+  private def checkAuthLimit(limiter: lila.memo.RateLimit.RateLimiter[String])(using Context): Unit =
+    val network = authNetwork
+    if !limiter.synchronized(limiter.hit(network)) then
+      throw NoSweatError(429, lila.core.i18n.I18nKey("muteAuthPleaseWait").txt())
+
   private val club = env.noSweat
   private def handle(f: => Fu[Result]): Fu[Result] =
     def error(e: Throwable): Result = e match
@@ -72,11 +91,13 @@ final class NoSweat(env: Env) extends LilaController(env):
   def challenge = OpenBodyOf(parse.tolerantText(4096)): context ?=>
     handle:
       sameOrigin
+      checkAuthLimit(challengeLimit)
       club.adapter("/challenge", Json.parse(context.body.body)).map(Ok(_))
 
   def login = OpenBodyOf(parse.tolerantText(16384)): context ?=>
     handle:
       sameOrigin
+      checkAuthLimit(loginLimit)
       val raw = context.body.body
       if (Json.parse(raw) \ "action").asOpt[String].exists(_ != "login") then
         throw NoSweatError(401, "Login signature required")
@@ -85,7 +106,10 @@ final class NoSweat(env: Env) extends LilaController(env):
           "/verify",
           Json.obj("authorization" -> context.req.headers.get("Authorization"), "rawBody" -> raw)
         )
-        user <- club.nostrUser((verified \ "pubkey").as[String], (Json.parse(raw) \ "username").asOpt[String])
+        user <- club.nostrUser(
+          (verified \ "pubkey").as[String],
+          (Json.parse(raw) \ "username").asOpt[String]
+        )(checkAuthLimit(signupLimit))
         _ <- club.checkSecondFactor(user, (Json.parse(raw) \ "twoFactorToken").asOpt[String])
         session <- env.security.api.saveAuthentication(user.id, None, IsPwned(false))
       yield Ok(Json.obj("username" -> user.username.value, "url" -> "/"))
@@ -159,7 +183,7 @@ final class NoSweat(env: Env) extends LilaController(env):
           identity <- env.user.repo.byNostr((verified \ "pubkey").as[String])
           user = identity
             .filter(_.id == me.userId)
-            .getOrElse(throw NoSweatError(403, "Sign with this account’s Nostr key"))
+            .getOrElse(throw NoSweatError(403, "Sign with this account’s Nostr key", Some("wrong_signer")))
           codes <-
             if action == "enable-two-factor" then
               club.enableSecondFactor(

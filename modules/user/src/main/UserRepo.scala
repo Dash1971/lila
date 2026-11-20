@@ -148,8 +148,12 @@ final class UserRepo(c: Coll)(using Executor) extends lila.core.user.UserRepo(c)
           else none
 
   def setProfile(id: UserId, profile: Profile): Fu[Boolean] =
+    val selector = profile.displayName
+      .filter(PublicNameKeys.reservedForIdentity)
+      .fold(bid(id)): legacy =>
+        bid(id) ++ bdoc(s"${F.profile}.displayName" -> legacy)
     coll.update
-      .one(bid(id), set(F.profile -> profile, "nameKeys" -> PublicNameKeys(id.value, profile.displayName)))
+      .one(selector, set(F.profile -> profile, "nameKeys" -> PublicNameKeys(id.value, profile.displayName)))
       .map(_.n > 0)
       .recover(lila.db.recoverDuplicateKey(_ => false))
 

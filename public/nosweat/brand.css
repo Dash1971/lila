@@ -198,3 +198,6 @@ cg-board square.nosweat-premove-dest { background:rgb(20 30 85 / .28); }
   .nosweat-arena-bots summary { min-height:44px; }
   .nosweat-arena-controls a { min-height:44px; display:inline-flex; align-items:center; }
 }
+
+/* Two-factor controls follow the current enrollment and saved-key state. */
+#nostr-security [hidden] { display: none !important; }

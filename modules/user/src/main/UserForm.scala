@@ -57,10 +57,15 @@ final class UserForm:
 object UserForm:
 
   private[user] def publicName(existing: Option[String]): Mapping[Option[String]] = optional(
-    cleanFewSymbolsAndNonEmptyText(minLength = 3, maxLength = 30).verifying(
-      "Use at most 20 characters for your public name",
-      name => name.length <= 20 || existing.contains(name)
-    )
+    cleanFewSymbolsAndNonEmptyText(minLength = 3, maxLength = 30)
+      .verifying(
+        "Use at most 20 characters for your public name",
+        name => name.length <= 20 || existing.contains(name)
+      )
+      .verifying(
+        "muteChooseDifferentName",
+        name => existing.contains(name) || !PublicNameKeys.reservedForIdentity(name)
+      )
   )
 
   val note = Form:
