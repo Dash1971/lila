@@ -1428,4 +1428,7 @@
   <string name="muteAuthBadName">Используйте от 3 до 20 символов, начиная с буквы. Допустимы латинские буквы, цифры, подчёркивания и дефисы.</string>
   <string name="muteAuthWrongSigner">Подпишите запрос ключом Nostr этого аккаунта.</string>
   <string name="muteAuthReload">Настройки безопасности изменились. Обновите страницу.</string>
+  <string name="muteAboutMaiaEngineCredit">%s обеспечивает игру наших человекоподобных соперников, вероятности ходов и прогнозы ожидаемого результата.</string>
+  <string name="muteAboutMaiaFrontendCredit">%1$s и его %2$s послужили основой для элементов нашего интерфейса анализа: графика «Ходы по рейтингу», цветов качества ходов, логики описаний позиций и идеи «Карты ходов».</string>
+  <string name="muteAboutMaiaFrontendSource">открытый фронтенд</string>
 </resources>

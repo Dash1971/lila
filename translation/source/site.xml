@@ -1348,4 +1348,7 @@ Leave empty to start games from the normal initial position.</string>
   <string name="muteAuthBadName">Use a name of 3–20 characters starting with a letter. Use letters A–Z, digits, underscores or hyphens.</string>
   <string name="muteAuthWrongSigner">Sign with this account’s Nostr key.</string>
   <string name="muteAuthReload">Security settings changed. Reload this page.</string>
+  <string name="muteAboutMaiaEngineCredit">%s powers our human-like opponents, move probabilities and expected-score predictions.</string>
+  <string name="muteAboutMaiaFrontendCredit">%1$s and its %2$s inform our analysis interface: Moves by Rating, move-quality colors, position-description logic and inspiration for the Move map.</string>
+  <string name="muteAboutMaiaFrontendSource">open-source frontend</string>
 </resources>

@@ -1176,4 +1176,7 @@
   <string name="muteAuthWrongSigner">इस खाते की Nostr कुंजी से हस्ताक्षर करें।</string>
   <string name="muteAuthReload">सुरक्षा सेटिंग बदल गई है। पेज फिर लोड करें।</string>
   <string name="done">हो गया</string>
+  <string name="muteAboutMaiaEngineCredit">%s हमारे इंसानों जैसे खेलने वाले प्रतिद्वंद्वियों, चालों की संभावनाओं और अपेक्षित स्कोर के पूर्वानुमानों को संचालित करता है।</string>
+  <string name="muteAboutMaiaFrontendCredit">%1$s और उसका %2$s हमारे विश्लेषण इंटरफ़ेस के लिए संदर्भ प्रदान करते हैं: रेटिंग के अनुसार चालें, चालों की गुणवत्ता के रंग, स्थिति के विवरण का तर्क और चालों के मानचित्र की प्रेरणा।</string>
+  <string name="muteAboutMaiaFrontendSource">ओपन-सोर्स फ़्रंटएंड</string>
 </resources>

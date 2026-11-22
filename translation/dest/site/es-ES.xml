@@ -1346,4 +1346,7 @@ Déjalo vacío para empezar las partidas desde la posición inicial habitual.</s
   <string name="muteAuthBadName">Usa de 3 a 20 caracteres y empieza con una letra. Se permiten letras de la A a la Z, dígitos, guiones y guiones bajos.</string>
   <string name="muteAuthWrongSigner">Firma con la clave Nostr de esta cuenta.</string>
   <string name="muteAuthReload">La configuración de seguridad ha cambiado. Recarga esta página.</string>
+  <string name="muteAboutMaiaEngineCredit">%s impulsa a nuestros rivales con juego similar al humano, las probabilidades de las jugadas y las predicciones de puntuación esperada.</string>
+  <string name="muteAboutMaiaFrontendCredit">%1$s y su %2$s sirven de referencia para nuestra interfaz de análisis: Jugadas por nivel, colores de calidad de las jugadas, lógica de descripción de posiciones e inspiración para el Mapa de jugadas.</string>
+  <string name="muteAboutMaiaFrontendSource">interfaz web de código abierto</string>
 </resources>

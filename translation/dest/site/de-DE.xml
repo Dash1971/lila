@@ -1346,4 +1346,7 @@ Leer lassen, um Partien von der normalen Ausgangsstellung aus zu starten.</strin
   <string name="muteAuthBadName">Nutze 3–20 Zeichen und beginne mit einem Buchstaben. Erlaubt sind A–Z, Ziffern, Unterstriche und Bindestriche.</string>
   <string name="muteAuthWrongSigner">Signiere mit dem Nostr-Schlüssel dieses Kontos.</string>
   <string name="muteAuthReload">Die Sicherheitseinstellungen wurden geändert. Lade die Seite neu.</string>
+  <string name="muteAboutMaiaEngineCredit">%s ermöglicht unsere menschenähnlich spielenden Gegner sowie Vorhersagen zu Zugwahrscheinlichkeiten und erwarteten Ergebnissen.</string>
+  <string name="muteAboutMaiaFrontendCredit">%1$s und sein %2$s dienen als Vorlagen für unsere Analyseoberfläche: Züge nach Wertung, Zugqualitätsfarben, die Logik der Stellungsbeschreibungen und die Inspiration für die Zugübersicht.</string>
+  <string name="muteAboutMaiaFrontendSource">quelloffenes Frontend</string>
 </resources>

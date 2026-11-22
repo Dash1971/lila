@@ -1345,4 +1345,7 @@ Laissez vide pour commencer les parties à partir de la position initiale normal
   <string name="muteAuthBadName">Utilisez 3 à 20 caractères en commençant par une lettre. Sont admis les lettres de A à Z, les chiffres, les tirets et les tirets bas.</string>
   <string name="muteAuthWrongSigner">Signez avec la clé Nostr de ce compte.</string>
   <string name="muteAuthReload">Les paramètres de sécurité ont changé. Rechargez la page.</string>
+  <string name="muteAboutMaiaEngineCredit">%s fait fonctionner nos adversaires au style humain, les probabilités des coups et les prédictions de score attendu.</string>
+  <string name="muteAboutMaiaFrontendCredit">%1$s et son %2$s servent de références pour notre interface d’analyse : Coups par niveau, couleurs de qualité des coups, logique des descriptions de position et inspiration pour la Carte des coups.</string>
+  <string name="muteAboutMaiaFrontendSource">interface web open source</string>
 </resources>

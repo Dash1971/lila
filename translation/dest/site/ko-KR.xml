@@ -1304,4 +1304,7 @@ FEN 포지션을 생성하기 위해 %s를 사용할 수 있습니다.
   <string name="muteAuthBadName">영문자로 시작하는 3~20자를 사용하세요. 영문자, 숫자, 밑줄, 하이픈을 쓸 수 있습니다.</string>
   <string name="muteAuthWrongSigner">이 계정의 Nostr 키로 서명하세요.</string>
   <string name="muteAuthReload">보안 설정이 변경되었습니다. 페이지를 새로고침하세요.</string>
+  <string name="muteAboutMaiaEngineCredit">%s는 인간처럼 두는 상대, 수의 선택 확률, 기대 점수 예측을 구동합니다.</string>
+  <string name="muteAboutMaiaFrontendCredit">%1$s와 해당 %2$s는 레이팅별 수, 수의 품질 색상, 포지션 설명 로직, 수 지도에 대한 아이디어 등 분석 인터페이스의 참고 자료를 제공합니다.</string>
+  <string name="muteAboutMaiaFrontendSource">오픈 소스 프런트엔드</string>
 </resources>

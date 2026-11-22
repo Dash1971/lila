@@ -1305,4 +1305,7 @@
   <string name="muteAuthBadName">名前は英字で始まる3～20文字にしてください。英字、数字、アンダースコア、ハイフンが使えます。</string>
   <string name="muteAuthWrongSigner">このアカウントのNostr鍵で署名してください。</string>
   <string name="muteAuthReload">セキュリティ設定が変更されました。ページを再読み込みしてください。</string>
+  <string name="muteAboutMaiaEngineCredit">%s は、人間らしい対戦相手、指し手の確率、期待スコアの予測を支えています。</string>
+  <string name="muteAboutMaiaFrontendCredit">%1$s とその%2$sは、レーティング別の指し手、指し手の質を示す色、局面説明のロジック、指し手マップの着想など、分析画面の参考となっています。</string>
+  <string name="muteAboutMaiaFrontendSource">オープンソースのフロントエンド</string>
 </resources>

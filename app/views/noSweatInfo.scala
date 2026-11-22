@@ -48,10 +48,19 @@ object noSweatInfo:
           ),
           li(
             p(
-              strong(a(href := "https://github.com/CSSLab/maia3")("Maia3 by CSSLab")),
-              " powers our human-like opponents, move probabilities and expected-score predictions. The ",
-              a(href := "https://github.com/CSSLab/maia-platform-frontend")("Maia platform"),
-              " also informs our analysis features and move-quality colors."
+              I18nKey("muteAboutMaiaEngineCredit")(
+                strong(a(href := "https://github.com/CSSLab/maia3")("Maia3 by CSSLab"))
+              )
+            )
+          ),
+          li(
+            p(
+              I18nKey("muteAboutMaiaFrontendCredit")(
+                strong(a(href := "https://www.maiachess.com/")("maiachess.com")),
+                a(href := "https://github.com/CSSLab/maia-platform-frontend")(
+                  I18nKey("muteAboutMaiaFrontendSource")()
+                )
+              )
             )
           ),
           li(
