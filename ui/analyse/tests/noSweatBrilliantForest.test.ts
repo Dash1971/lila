@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
-import { classify, muteBrilliantSource, type ClassificationInput } from '../src/noSweatClassify';
+import { classify, selectiveBrilliantSource, type ClassificationInput } from '../src/noSweatClassify';
 
 interface Case {
   key: string;
@@ -32,7 +32,7 @@ test('the fixed model reproduces saved sacrifices, rejections and disclosed disa
     const actual = classify(c.input);
     const ec = classify({ ...c.input, policy: 'en-croissant' });
     assert.equal(actual.symbol === '!!', c.expected_forest, `${c.key} ${c.san}`);
-    assert.equal(actual.version, muteBrilliantSource);
+    assert.equal(actual.version, selectiveBrilliantSource);
     assert.equal(
       actual.accuracy,
       ec.accuracy,

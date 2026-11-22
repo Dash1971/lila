@@ -131,7 +131,7 @@ test('native tree merge preserves imported judgments instead of adding a conflic
   assert.equal(into.glyphs?.[0].id, 2);
   const clean = { ...nodes[1] } as TreeNodeLite;
   mergeReviewData(clean, from);
-  assert.equal(clean.glyphs?.[0].source, 'mute-chess-brilliant-v5');
+  assert.equal(clean.glyphs?.[0].source, 'mute-chess-brilliant-v8');
 });
 
 test('every computed policy generation protects manual and native judgments', () => {
@@ -142,6 +142,7 @@ test('every computed policy generation protects manual and native judgments', ()
     'mute-chess-brilliant-v3',
     'mute-chess-brilliant-v4',
     'mute-chess-brilliant-v5',
+    'mute-chess-brilliant-v8',
   ]) {
     const into = { ...nodes[1], glyphs: [{ id: 2, symbol: '?', name: 'Manual mistake' }] } as TreeNodeLite;
     const from = { ...nodes[1], glyphs: [{ ...brilliantGlyph(), source }] } as TreeNodeLite;

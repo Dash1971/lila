@@ -13,7 +13,7 @@ self.onmessage = (event: MessageEvent<ClassificationInput | { material: [string,
       result:
         'material' in event.data
           ? isMuteSacrifice(...event.data.material)
-          : classify({ ...event.data, policy: 'mute-brilliant-v5' }, evaluate),
+          : classify({ ...event.data, policy: 'mute-brilliant-v8' }, evaluate),
     });
   } catch (error) {
     self.postMessage({ error: String(error) });

@@ -190,14 +190,19 @@ test('the worker applies the full precision policy after its preliminary legal-o
     const forestSamples = JSON.parse(
       readFileSync(new URL('./fixtures/noSweat/brilliant-v5.json', import.meta.url), 'utf8'),
     ).cases;
-    const sample = forestSamples.find((s: any) => s.key === '167741829524:33');
-    worker.onmessage({ data: { ...sample.input, policy: 'en-croissant' } });
+    const exchangeSamples = JSON.parse(
+      readFileSync(new URL('./fixtures/noSweat/brilliant-v8.json', import.meta.url), 'utf8'),
+    ).cases;
+    // The worker fixes the active policy itself; a caller cannot select another.
+    const awarded = exchangeSamples.find((s: any) => s.expected);
+    worker.onmessage({ data: { ...awarded.input, policy: 'en-croissant' } });
     assert.equal(results[0].result.symbol, '!!');
     assert.equal(results[0].result.version, muteBrilliantSource);
+    const sample = forestSamples.find((s: any) => s.key === '167741829524:33');
     worker.onmessage({ data: { material: sample.input.positions.slice(-2) } });
     assert.equal(results[1].result, true);
-    const knight = forestSamples.find((s: any) => s.key === '186311900336:28');
-    worker.onmessage({ data: knight.input });
+    const rejected = exchangeSamples.find((s: any) => !s.expected && s.score < 0.2);
+    worker.onmessage({ data: rejected.input });
     assert.notEqual(results[2].result.symbol, '!!', 'the prefilter cannot bypass the fixed model');
   } finally {
     (globalThis as any).self = original;

@@ -60,7 +60,8 @@ export function mergeReviewData(into: TreeNodeLite, from: TreeNodeLite): void {
         g.source === 'mute-chess-brilliant-v4' ||
         g.source === 'mute-chess-brilliant-v5' ||
         g.source === 'mute-chess-brilliant-v6' ||
-        g.source === 'mute-chess-brilliant-v7') &&
+        g.source === 'mute-chess-brilliant-v7' ||
+        g.source === 'mute-chess-brilliant-v8') &&
       [...glyphs.values(), ...(from.glyphs ?? []).filter(other => other !== g)].some(
         other => other.id >= 1 && other.id <= 6,
       )

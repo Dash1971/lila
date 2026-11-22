@@ -2,6 +2,7 @@
 import type { Chess } from 'chessops/chess';
 import type { NormalMove } from 'chessops/types';
 
+import { evaluateBrilliantExchange } from './noSweatBrilliantExchange';
 import { evaluateBrilliantForest } from './noSweatBrilliantForest';
 import { after as afterMove, legalMoves, position } from './noSweatCore';
 import type { Review } from './noSweatFish';
@@ -99,7 +100,9 @@ export const isSacrifice = (before: string, after: string, evaluateMaterial = na
   !position(after).isEnd() && evaluateMaterial(before) > -evaluateMaterial(after) + 100;
 
 // Mute-only experiment. Keep annotation()/isSacrifice() above as the EC oracle.
-export const muteBrilliantSource = 'mute-chess-brilliant-v5';
+// Active Brilliant classifier: Mute Exchange (docs/brilliant-moves.md).
+export const muteBrilliantSource = 'mute-chess-brilliant-v8';
+export const selectiveBrilliantSource = 'mute-chess-brilliant-v5';
 export const legacyMuteBrilliantSource = 'mute-chess-brilliant-v4';
 export const muteBrilliantRules = {
   maxLoss: 5,
@@ -291,7 +294,7 @@ export interface ClassificationInput {
   reviews: Review[];
   move: string;
   confirmation?: Review[];
-  policy?: 'en-croissant' | 'mute-brilliant-v4' | 'mute-brilliant-v5';
+  policy?: 'en-croissant' | 'mute-brilliant-v4' | 'mute-brilliant-v5' | 'mute-brilliant-v8';
 }
 export interface ClassificationResult {
   symbol: Annotation;
@@ -311,6 +314,22 @@ export function classify(input: ClassificationInput, evaluateMaterial = naiveMat
   const color = position(positions[n - 2]).turn;
   const sacrifice = isSacrifice(positions[n - 2], positions[n - 1], evaluateMaterial);
   const mute = input.policy === 'mute-brilliant-v4';
+  // Mute Exchange: the trained model alone decides Brilliant, from the completed
+  // current window. It may award a move this engine would otherwise mark down,
+  // because Chess.com's engine often prefers a different move from ours.
+  const exchange = input.policy === 'mute-brilliant-v8';
+  let exchangeBrilliant = false;
+  if (exchange)
+    try {
+      exchangeBrilliant = evaluateBrilliantExchange(
+        positions,
+        before.current.lines,
+        after.current.lines,
+        move,
+      ).brilliant;
+    } catch {
+      exchangeBrilliant = false;
+    }
   const forest =
     input.policy === 'mute-brilliant-v5'
       ? evaluateBrilliantForest(input, {
@@ -360,7 +379,13 @@ export function classify(input: ClassificationInput, evaluateMaterial = naiveMat
   ): Annotation => {
     if (mute)
       return muteAnnotation(p?.lines[0], b, a.lines[0], color, move, sacrifice, sacrificeForMove, context);
+    if (exchangeBrilliant) return '!!';
     const original = annotation(p?.lines[0], b, a.lines[0], color, move, sacrifice);
+    if (exchange) {
+      // Every other judgment keeps its En Croissant meaning; only !! changes hands.
+      if ((original === '!!' || original === '!?') && !sacrificeForMove(move)) return '';
+      return original === '!!' ? (sacrifice && normalized(a.lines[0], color) > -200 ? '!?' : '') : original;
+    }
     if (!forest || original === '??' || original === '?' || original === '?!') return original;
     if (forestCandidate && forest.windows[which].eligible && forest.windowScores[which] >= 0.83) return '!!';
     // The model controls only Brilliant eligibility. Preserve the EC meanings of
@@ -371,7 +396,7 @@ export function classify(input: ClassificationInput, evaluateMaterial = naiveMat
   let symbol = predicate(before.current, after.current, previous?.current);
   const provisional = symbol;
   let withheld = false;
-  if (symbol === '!!' || symbol === '!') {
+  if ((symbol === '!!' && !exchangeBrilliant) || symbol === '!') {
     const needsPrevious = symbol === '!' && n > 2;
     const checked = input.confirmation;
     const previousBefore = checked ? checked[checked.length - 2]?.current : before.previous;
@@ -417,6 +442,12 @@ export function classify(input: ClassificationInput, evaluateMaterial = naiveMat
       0,
       normalized(before.current.lines[0], color) - normalized(after.current.lines[0], color),
     ),
-    version: forest ? muteBrilliantSource : mute ? legacyMuteBrilliantSource : 'ec015-mobilemaia-window-v2',
+    version: exchange
+      ? muteBrilliantSource
+      : forest
+        ? selectiveBrilliantSource
+        : mute
+          ? legacyMuteBrilliantSource
+          : 'ec015-mobilemaia-window-v2',
   };
 }
