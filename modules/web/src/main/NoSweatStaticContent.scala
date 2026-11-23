@@ -1,12 +1,12 @@
 package lila.web
 
 import play.api.libs.json.Json
-import scalatags.Text.RawFrag
+import scalatags.Text.Frag
 import lila.common.Json.given
 import lila.core.config.NetConfig
 
 private[web] object NoSweatStaticContent:
-  def organizationScript(net: NetConfig): Option[RawFrag] =
+  def organizationScript(net: NetConfig): Option[Frag] =
     if net.siteName.startsWith("Mute Chess") || net.siteName.startsWith("MuteChess") ||
       net.siteName.startsWith("No Sweat Chess") || net.domain.value == "mutechess.org"
     then
