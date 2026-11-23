@@ -40,6 +40,8 @@
     <item quantity="other">%s チームを表示</item>
   </plurals>
   <string name="newTeamBattle">新しいチームバトル</string>
+  <string name="startDate">開始日</string>
+  <string name="entryConditions">参加条件</string>
   <string name="customStartDate">開始日を指定</string>
   <string name="customStartDateHelp">自分のタイムゾーンでの日時。これは「トーナメント開始時刻」の設定より優先されます。</string>
   <string name="allowBerserk">バーサークあり</string>

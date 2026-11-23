@@ -32,7 +32,7 @@ final class TournamentList(helpers: Helpers, ui: TournamentUi)(
       .graph(
         url = routeUrl(routes.Tournament.home),
         title = if focused then trans.arena.arenaTournaments.txt() else trans.site.tournamentHomeTitle.txt(),
-        description = if focused then lila.core.i18n.I18nKey("muteSiteDescription").txt()
+        description = if focused then lila.core.i18n.I18nKey.unchecked("muteSiteDescription").txt()
         else trans.site.tournamentHomeDescription.txt()
       ):
         main(cls := (if focused then "tour-home nosweat-arena-home" else "tour-home"))(
@@ -317,8 +317,8 @@ final class TournamentList(helpers: Helpers, ui: TournamentUi)(
               div(cls := "tournament-shields")(
                 history.sorted.map { (categ, awards) =>
                   section(
-                    h2(
-                      a(href := routes.Tournament.categShields(categ.key))(
+                    a(href := routes.Tournament.categShields(categ.key))(
+                      h2(
                         span(cls := "shield-trophy")(categ.icon),
                         categ.i18n()
                       )

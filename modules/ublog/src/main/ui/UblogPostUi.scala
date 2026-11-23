@@ -4,7 +4,9 @@ package ui
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
-final class UblogPostUi(helpers: Helpers, ui: UblogUi)(connectLinks: Context ?=> Frag):
+final class UblogPostUi(helpers: Helpers, ui: UblogUi, structured: UblogStructuredData)(
+    connectLinks: Context ?=> Frag
+):
   import helpers.{ *, given }
 
   def page(
@@ -22,15 +24,8 @@ final class UblogPostUi(helpers: Helpers, ui: UblogUi)(connectLinks: Context ?=>
     Page(s"${post.title} • ${trans.ublog.xBlog.txt(user.username)}")
       .css("bits.ublog")
       .js(Esm("bits.expandText") ++ ctx.isAuth.so(Esm("bits.ublog")))
-      .graph:
-        OpenGraph(
-          `type` = "article",
-          image = imageUrl,
-          title = post.title,
-          url = routeUrl(routes.Ublog.post(user.username, post.slug, post.id)),
-          description = post.intro
-        )
-      .headAppend(lila.ui.bits.markdownAlternate(ctx.req.uri))
+      .graph(structured.openGraph(user, post, imageUrl))
+      .headAppend(structured(user, post, imageUrl))
       .preloadImage(imageUrl)(helpers)
       .copy(atomLink = (routes.Ublog.userAtom(user.username), trans.ublog.xBlog.txt(user.username)).some)
       .flag(_.noRobots, !blog.crawlable || !post.crawlable)
@@ -41,7 +36,7 @@ final class UblogPostUi(helpers: Helpers, ui: UblogUi)(connectLinks: Context ?=>
             post.image.map: image =>
               frag(
                 ui.thumbnail(post, _.Size.Large)(cls := "ublog-post__image"),
-                image.credit.map { p(cls := "ublog-post__image-credit")(_) }
+                image.credit.map(p(cls := "ublog-post__image-credit")(_))
               ),
             (ctx.is(user) || Granter.opt(_.ModerateBlog)).option(standardFlash),
             h1(cls := "ublog-post__title")(post.title),
@@ -103,7 +98,7 @@ final class UblogPostUi(helpers: Helpers, ui: UblogUi)(connectLinks: Context ?=>
             ),
             (~post.ads).option(
               div(dataIcon := Icon.InfoCircle, cls := "ublog-post__ads-disclosure text")(
-                "Contains sponsored content, affiliate links or commercial advertisement"
+                trans.ublog.containsSponsoredContent()
               )
             ),
             strong(cls := "ublog-post__intro")(post.intro),

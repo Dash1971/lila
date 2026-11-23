@@ -4,11 +4,7 @@ import lila.app.UiEnv.{ *, given }
 import lila.core.socket.SocketVersion
 import lila.relay.RelayRound.WithTourAndStudy
 
-val ui = lila.relay.ui.RelayUi(helpers)(
-  picfitUrl,
-  views.study.socketUrl,
-  views.analyse.ui.explorerAndCevalConfig
-)
+val ui = lila.relay.ui.RelayUi(helpers)(picfitUrl, views.study.ui.socketUrl, analyseEndpoints)
 private val card = lila.relay.ui.RelayCardUi(helpers, ui)
 val menu = lila.relay.ui.RelayMenuUi(helpers)
 val tour = lila.relay.ui.RelayTourUi(helpers, ui, card, menu)
@@ -19,8 +15,7 @@ def show(
     rt: WithTourAndStudy,
     data: lila.relay.RelayJsonView.JsData,
     chatOption: Option[lila.chat.UserChat.Mine],
-    socketVersion: SocketVersion,
-    crossSiteIsolation: Boolean = true
+    socketVersion: SocketVersion
 )(using ctx: Context) =
   val chat = chatOption.map: c =>
     views.chat
@@ -37,7 +32,7 @@ def show(
         hostIds = rt.study.members.ids.toList
       ) -> views.chat.frag
   ui.show(rt, data, chat, socketVersion)
-    .csp(crossSiteIsolation.so(views.analyse.ui.bits.cspExternalEngine).compose(_.withExternalAnalysisApis))
+    .csp(views.analyse.ui.bits.cspExternalEngine.compose(_.withExternalAnalysisApis))
 
 def embed(
     rt: WithTourAndStudy,

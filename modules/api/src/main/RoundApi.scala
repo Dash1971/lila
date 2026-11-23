@@ -82,7 +82,6 @@ final private[api] class RoundApi(
   )(using ctx: Context): Fu[JsObject] = {
     for
       initialFen <- initialFenO.fold(gameRepo.initialFen(pov.game))(fuccess)
-      given Translate = ctx.translate
       opening = details.so(gameOpening.of(pov.game, full = ctx.isAuth))
       (json, simul, swiss, note, bookmarked) <-
         (
@@ -120,7 +119,6 @@ final private[api] class RoundApi(
       tv: Option[lila.round.OnTv] = None,
       owner: Boolean = false
   )(using ctx: Context): Fu[JsObject] =
-    given Translate = ctx.translate
     (
       jsonView.watcherJson(
         pov,
@@ -248,7 +246,7 @@ final private[api] class RoundApi(
   private def withAnalysis(g: Game, o: Option[Analysis], initialFen: Option[Fen.Full])(json: JsObject) =
     json.add(
       "analysis",
-      o.map { analysisJson.bothPlayers(g.startedAtPly, _, division = divider(g, initialFen)) }
+      o.map(analysisJson.bothPlayers(g.startedAtPly, _, division = divider(g, initialFen)))
     )
 
   def withTournament(pov: Pov, viewO: Option[TourView])(json: JsObject)(using Translate) =

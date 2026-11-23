@@ -16,15 +16,19 @@ final class NoSweat(env: Env) extends LilaController(env):
     ("slow", 150, 1.day)
   )
 
-  private def authNetwork(using Context): String = ctx.ip match
-    case ip: lila.core.net.IpV6Address =>
-      ip.inet.fold(ip.value)(addr => java.util.HexFormat.of().formatHex(addr.getAddress.take(8)))
-    case ip => ip.value
+  private def authNetwork(using Context): String =
+    val ip = ctx.ip.value
+    if ip.contains(":") then
+      scala.util
+        .Try(io.mola.galimatias.IPv6Address.parseIPv6Address(ip).toInetAddress)
+        .toOption
+        .fold(ip)(addr => java.util.HexFormat.of().formatHex(addr.getAddress.take(8)))
+    else ip
 
   private def checkAuthLimit(limiter: lila.memo.RateLimit.RateLimiter[String])(using Context): Unit =
     val network = authNetwork
     if !limiter.synchronized(limiter.hit(network)) then
-      throw NoSweatError(429, lila.core.i18n.I18nKey("muteAuthPleaseWait").txt())
+      throw NoSweatError(429, lila.core.i18n.I18nKey.unchecked("muteAuthPleaseWait").txt())
 
   private val club = env.noSweat
   private def handle(f: => Fu[Result]): Fu[Result] =
@@ -229,9 +233,9 @@ final class NoSweat(env: Env) extends LilaController(env):
               )
       setup.flatMap: data =>
         if (data \ "timeMode").asOpt[String].exists(_ != "realTime") then
-          fuccess(BadRequest(Json.obj("error" -> lila.core.i18n.I18nKey("muteRealTimeOnly").txt())))
+          fuccess(BadRequest(Json.obj("error" -> lila.core.i18n.I18nKey.unchecked("muteRealTimeOnly").txt())))
         else if (data \ "minutes").asOpt[Double].exists(_ < 1d) then
-          fuccess(BadRequest(Json.obj("error" -> lila.core.i18n.I18nKey("muteMinimumClock").txt())))
+          fuccess(BadRequest(Json.obj("error" -> lila.core.i18n.I18nKey.unchecked("muteMinimumClock").txt())))
         else
           env.security.lilaCookie.ensureAndGet: sid =>
             club

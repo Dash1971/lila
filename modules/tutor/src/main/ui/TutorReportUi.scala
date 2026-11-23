@@ -27,7 +27,7 @@ final class TutorReportUi(helpers: Helpers, bits: TutorBits, perfUi: TutorPerfUi
                 cls := "tutor__report__delete",
                 action := routes.Tutor.delete(full.user.id, full.config.rangeStr)
               ):
-                button(tpe := "submit")(trans.site.delete)
+                button(tpe := "submit")(trans.site.delete())
             ),
             if full.perfs.isEmpty then p("Not enough rated games to examine!")
             else
@@ -40,7 +40,7 @@ final class TutorReportUi(helpers: Helpers, bits: TutorBits, perfUi: TutorPerfUi
         ),
         full.perfs.nonEmpty.option(tutorConcepts),
         div(cls := "tutor__perfs tutor-cards")(
-          full.perfs.toList.map { perfReportCard(full, _) }
+          full.perfs.toList.map(perfReportCard(full, _))
         )
       )
 

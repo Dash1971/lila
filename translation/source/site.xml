@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="gameSetup">Game setup</string>
   <string name="challengeAFriend" comment="be mindful how 'friend' translates in gendered languages. look for a more neutral term if there's an issue, or base your translation on a different phrase like 'invite to a game'. keep it short and convey the button's meaning without offense.">Challenge a friend</string>
   <string name="playAgainstComputer">Play against computer</string>
   <string name="gameMode">Game mode</string>
@@ -439,6 +438,7 @@ Playing rated games will increase stability.</string>
   <string name="pasteTheFenStringHere">Paste the FEN text here</string>
   <string name="pasteThePgnStringHere">Paste the PGN text here</string>
   <string name="orUploadPgnFile">Or upload a PGN file</string>
+  <string name="selectImage">Select image</string>
   <string name="continueFromHere">Continue from here</string>
   <string name="toStudy">Study</string>
   <string name="importGame">Import game</string>
@@ -510,6 +510,7 @@ Friends playing: %2$s</string>
   <string name="standByX">Stand by %s, pairing players, get ready!</string>
   <string name="pause">Pause</string>
   <string name="resume">Resume</string>
+  <string name="stop">Stop</string>
   <string name="youArePlaying">You are playing!</string>
   <string name="winRate">Win rate</string>
   <string name="performance">Performance</string>
@@ -702,7 +703,8 @@ Friends playing: %2$s</string>
   <string name="aboutX">About %s</string>
   <string name="xIsAFreeYLibreOpenSourceChessServer">%1$s is a free (%2$s), libre, no-ads, open source chess server.</string>
   <string name="really">really</string>
-   <string name="lichessUpdates">Lichess updates</string>
+   <string name="lichessUpdates">Lichess feed</string>
+  <string name="allUpdates">All updates</string>
   <string name="contribute">Contribute</string>
   <string name="changelog">Changelog</string>
   <string name="termsOfService">Terms of Service</string>

@@ -49,12 +49,12 @@ trait ResponseBuilder(using Executor)
   def action[A](parser: BodyParser[A])(handler: Request[A] ?=> Fu[Result]): EssentialAction = new:
     import play.api.libs.streams.Accumulator
     import org.apache.pekko.util.ByteString
-    def apply(rh: RequestHeader): Accumulator[ByteString, Result] =
+    def apply(rh: Req): Accumulator[ByteString, Result] =
       parser(rh).mapFuture:
         case Left(r) => fuccess(r)
         case Right(a) => handler(using Request(rh, a))
 
-  def redirectWithQueryString(path: String)(using req: RequestHeader) =
+  def redirectWithQueryString(path: String)(using req: Req) =
     Redirect:
       path + req.rawQueryString.nonEmptyOption.so("?" + _)
 
@@ -68,6 +68,6 @@ trait ResponseBuilder(using Executor)
     "donate" -> "/patron",
     "how-to-cheat" -> "/page/how-to-cheat"
   )
-  def staticRedirect(key: String): Option[Fu[Result]] = movedMap.get(key).map { MovedPermanently(_) }
+  def staticRedirect(key: String): Option[Fu[Result]] = movedMap.get(key).map(MovedPermanently(_))
 
   def MovedPermanently(call: Call): Result = MovedPermanently(call.url)

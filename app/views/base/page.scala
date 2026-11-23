@@ -59,8 +59,6 @@ object page:
       else graph
     val zenable = p.flags(PageFlags.zen)
     val playing = p.flags(PageFlags.playing)
-    val preventIndexing =
-      p.flags(PageFlags.noRobots) || !netConfig.crawlable || lila.i18n.LangPicker.pageOverride.check(ctx.req)
     val pageFrag = frag(
       doctype,
       htmlTag(
@@ -86,16 +84,16 @@ object page:
           p.cssKeys.map(cssTag),
           meta(
             content := graph.fold(
-              if env.noSweat.enabled then I18nKey("muteSiteDescription").txt()
+              if env.noSweat.enabled then I18nKey.unchecked("muteSiteDescription").txt()
               else trans.site.siteDescription.txt()
             )(o => o.description),
             name := "description"
           ),
           maskIcon,
           favicons,
-          preventIndexing.option(noRobots),
+          (p.flags(PageFlags.noRobots) || !netConfig.crawlable).option(noRobots),
           noTranslate,
-          graph.map(lila.web.ui.openGraph),
+          graph.map(lila.web.ui.OpenGraph.render),
           atomLinkTag.tupled(p.atomLink | dailyNewsAtom),
           pref.isTransparentBg
             .option(pref.bgImgUrl)
@@ -117,7 +115,7 @@ object page:
             .so(systemThemeScript(ctx.nonce, ctx.pref.isTransparentBg))
         ).pipe(p.transformHead),
         st.body(
-          cls := {
+          cls :=
             List(
               s"coords-${pref.coordsClass}" -> true,
               "simple-board" -> pref.simpleBoard,
@@ -131,15 +129,16 @@ object page:
               "zen" -> (zenable && (pref.isZen || (playing && pref.isZenAuto))),
               "zenable" -> zenable,
               "zen-auto" -> (zenable && pref.isZenAuto)
-            )
-          },
+            ),
           dataVapid := (ctx.isAuth && env.security.lilaCookie.isRememberMe(ctx.req))
             .option(env.push.vapidPublicKey),
           dataUser := ctx.userId,
           dataUsername := ctx.username,
           dataSoundSet := pref.currentSoundSet.toString,
-          attr("data-socket-domains") := (if ~pref.usingAltSocket then netConfig.socketAlts
-                                          else netConfig.socketDomains).mkString(","),
+          attr("data-socket-domains") := {
+            if ~pref.usingAltSocket then webSocketConfig.altDomains.get()
+            else webSocketConfig.mainDomains.get()
+          }.value.mkString(","),
           dataAssetUrl,
           dataAssetVersion := assetVersion,
           dataNonce := ctx.nonce,
@@ -156,7 +155,7 @@ object page:
         )(
           blindModeForm,
           for in <- ctx.data.inquiry; me <- ctx.me yield views.mod.inquiryUi(in)(using ctx, me),
-          ctx.me.ifTrue(ctx.impersonatedBy.isDefined).map { views.mod.ui.impersonate(_) },
+          ctx.me.ifTrue(ctx.impersonatedBy.isDefined).map(views.mod.ui.impersonate(_)),
           netConfig.stageBanner.option(views.bits.stage),
           anonOnboarding.map: u =>
             frag(cssTag("bits.email-confirm"), views.auth.checkYourEmailBanner(u.username, u.email)),
@@ -186,7 +185,7 @@ object page:
           bottomHtml,
           ctx.nonce.map(inlineJs(_, allModules)),
           modulesInit(allModules, ctx.nonce),
-          p.pageModule.map { mod => frag(jsonScript(mod.data)) }
+          p.pageModule.map(mod => frag(jsonScript(mod.data)))
         )
       )
     )

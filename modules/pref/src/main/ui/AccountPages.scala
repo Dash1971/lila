@@ -141,7 +141,7 @@ final class AccountPages(helpers: Helpers, ui: AccountUi, flagApi: lila.core.use
           div(cls := "form-group")(trans.site.allInformationIsPublicAndOptional()),
           form3.group(
             form("displayName"),
-            I18nKey("mutePublicName").txt(),
+            I18nKey.unchecked("mutePublicName").txt(),
             help = Some(
               "Up to 20 characters. Names are unique without regard to capitalization and can be changed. Leave empty to use your username or a shortened npub. Your identity and game history stay the same."
             )

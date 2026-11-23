@@ -48,7 +48,7 @@ export class MaiaLab {
         class: 'nosweat-maia-lab',
         modal: true,
         easyClose: 'clickOutside',
-        noCloseButton: true,
+        closeButton: false,
         attrs: { dialog: { 'aria-label': labText('LabTitle') } },
         htmlText: `<header class="maia-lab-heading"><div><h2>${t('LabTitle')}</h2><span data-lab-context></span></div><button type="button" class="fbt" data-lab-close aria-label="${t('LabClose')}">×</button></header>
           <p class="maia-lab-description" data-lab-description aria-live="polite"></p>

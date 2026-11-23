@@ -1,7 +1,7 @@
 package controllers
 
 import play.api.libs.json.Json
-import play.api.mvc.{ RequestHeader, Result }
+import play.api.mvc.Result
 import scalalib.net.Bearer
 
 import lila.app.{ *, given }
@@ -98,9 +98,9 @@ final class Challenge(env: Env) extends LilaController(env):
     Found(api.byId(id)): c =>
       isForMe(c).so:
         if env.noSweat.enabled && (c.unlimited || c.daysPerTurn.isDefined) then
-          fuccess(JsonBadRequest(lila.core.i18n.I18nKey("muteRealTimeOnly").txt()))
+          fuccess(JsonBadRequest(lila.core.i18n.I18nKey.unchecked("muteRealTimeOnly").txt()))
         else if env.noSweat.enabled && !lila.game.NoSweatGameAdmission.hasMinimumClock(c.clock.map(_.config))
-        then fuccess(JsonBadRequest(lila.core.i18n.I18nKey("muteMinimumClock").txt()))
+        then fuccess(JsonBadRequest(lila.core.i18n.I18nKey.unchecked("muteMinimumClock").txt()))
         else
           allow:
             api
@@ -109,7 +109,7 @@ final class Challenge(env: Env) extends LilaController(env):
                 _.fold("The Challenge has already been accepted".raise): pov =>
                   negotiateApi(
                     html = Redirect(routes.Round.watcher(pov.gameId, color | Color.white)),
-                    api = _ => env.api.roundApi.player(pov, scalalib.data.Preload.none, none).map { Ok(_) }
+                    api = _ => env.api.roundApi.player(pov, scalalib.data.Preload.none, none).map(Ok(_))
                   )
               .flatMap(withChallengeAnonCookie(ctx.isAnon, c, owner = false))
           .rescue: err =>
@@ -219,7 +219,7 @@ final class Challenge(env: Env) extends LilaController(env):
                     env.game.gameRepo
                       .game(id.into(GameId))
                       .dmap:
-                        _.flatMap { Pov(_, me) }
+                        _.flatMap(Pov(_, me))
                       .flatMapz: p =>
                         env.round.proxyRepo.upgradeIfPresent(p).dmap(some)
                       .flatMap:
@@ -279,7 +279,7 @@ final class Challenge(env: Env) extends LilaController(env):
         bindForm(env.setup.forms.toFriend)(
           _ => NoContent,
           username =>
-            limit.challenge(ctx.ip, rateLimited):
+            limit.challenge.use(rateLimited):
               def redir = Redirect(routes.Challenge.show(c.id))
               env.user.repo.byId(username).flatMap {
                 case None => redir
@@ -300,7 +300,7 @@ final class Challenge(env: Env) extends LilaController(env):
       bindForm(env.setup.forms.api.user)(
         doubleJsonFormError,
         config =>
-          limit.challenge(req.ipAddress, rateLimited, cost = if me.isApiHog then 0 else 1):
+          limit.challenge.use(rateLimited, cost = if me.isApiHog then 0 else 1):
             allow:
               for
                 destUser <- env.user.repo.enabledById(username)
@@ -364,17 +364,16 @@ final class Challenge(env: Env) extends LilaController(env):
     )(
       jsonFormError,
       config =>
-        limit
-          .challenge(req.ipAddress, rateLimited):
-            env.challenge.api
-              .createOpen(config)
-              .map: challenge =>
-                Ok:
-                  val url = s"${env.net.baseUrl}/game/${challenge.id}"
-                  env.challenge.jsonView.apiAndMobile(challenge, none, none) ++ Json.obj(
-                    "urlWhite" -> s"$url?color=white",
-                    "urlBlack" -> s"$url?color=black"
-                  )
+        limit.challenge.use(rateLimited):
+          env.challenge.api
+            .createOpen(config)
+            .map: challenge =>
+              Ok:
+                val url = s"${env.net.baseUrl}/game/${challenge.id}"
+                env.challenge.jsonView.apiAndMobile(challenge, none, none) ++ Json.obj(
+                  "urlWhite" -> s"$url?color=white",
+                  "urlBlack" -> s"$url?color=black"
+                )
     )
 
   def offerRematchForGame(gameId: GameId) = AuthOrScoped(_.Web.Mobile) { _ ?=> me ?=>
@@ -394,5 +393,5 @@ final class Challenge(env: Env) extends LilaController(env):
         }
   }
 
-  private def anonSecretFromCookieOrMobileSri(using RequestHeader) =
+  private def anonSecretFromCookieOrMobileSri(using Req) =
     req.sid.map(_.value) orElse lila.security.Mobile.LichessMobileUa.sriFromUA.map(_.value)

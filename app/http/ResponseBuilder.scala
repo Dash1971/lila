@@ -46,10 +46,10 @@ trait ResponseBuilder(using Executor)
 
   extension [A](fua: Fu[Option[A]])
     def orNotFound(f: A => Fu[Result])(using Context): Fu[Result] =
-      fua.flatMap { _.fold(notFound)(f) }
+      fua.flatMap(_.fold(notFound)(f))
   extension [A](fua: Fu[Boolean])
     def elseNotFound(f: => Fu[Result])(using Context): Fu[Result] =
-      fua.flatMap { if _ then f else notFound }
+      fua.flatMap(if _ then f else notFound)
 
   def WithEnabledUserId(name: UserStr)(op: UserId => Fu[Result])(using Context) =
     name.validateId
@@ -75,9 +75,9 @@ trait ResponseBuilder(using Executor)
   def negotiate(html: => Fu[Result], json: => Fu[Result])(using ctx: Context): Fu[Result] = {
     if HTTPRequest.acceptsJson(ctx.req) then json
     else if ctx.isOAuth then
-      if HTTPRequest.accepts(ctx.req).isEmpty then json
+      if HTTPRequest.accepts(ctx.req).forall(_ == "*/*") then json
       else
-        lila.log.system.info(s"${HTTPRequest.print(ctx.req)} ${ctx.userId} ${HTTPRequest.accepts(ctx.req)}")
+        lila.log.system.info(s"${HTTPRequest.print} ${ctx.userId} ${HTTPRequest.accepts(ctx.req)}")
         NotAcceptable(jsonError(onlyReturnsJson)).toFuccess
     else html
   }.map(_.varyAccept)
@@ -103,14 +103,7 @@ trait ResponseBuilder(using Executor)
 
   def authenticationFailed(using ctx: Context): Fu[Result] =
     negotiate(
-      html = Redirect(
-        if lila.web.ClosedLogin.acceptsPath(ctx.req)
-        then routes.Auth.login.url
-        else
-          HTTPRequest.queryStringGet("login") match
-            case Some(login) => s"${routes.Auth.login.url}?as=$login"
-            case _ => routes.Auth.signup.url
-      ),
+      html = Redirect(lila.web.CtrlUtils.authenticationUrl),
       json = env.security.lilaCookie.ensure:
         Unauthorized(jsonError("Login required"))
     )

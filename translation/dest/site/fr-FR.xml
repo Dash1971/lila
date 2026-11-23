@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="gameSetup">Paramètres de la partie</string>
   <string name="challengeAFriend" comment="be mindful how 'friend' translates in gendered languages. look for a more neutral term if there's an issue, or base your translation on a different phrase like 'invite to a game'. keep it short and convey the button's meaning without offense.">Défier un ami</string>
   <string name="playAgainstComputer">Jouer contre l\'ordinateur</string>
   <string name="gameMode">Mode de jeu</string>
@@ -438,6 +437,7 @@
   <string name="pasteTheFenStringHere">Coller le FEN ici</string>
   <string name="pasteThePgnStringHere">Coller le PGN ici</string>
   <string name="orUploadPgnFile">Ou téléverser un fichier PGN</string>
+  <string name="selectImage">Sélectionner une image</string>
   <string name="continueFromHere">Continuer depuis cette position</string>
   <string name="toStudy">Étude</string>
   <string name="importGame">Importer une partie</string>
@@ -509,6 +509,7 @@ Amis jouant : %2$s</string>
   <string name="standByX">Appariements des joueurs, tenez-vous prêt %s !</string>
   <string name="pause">Pause</string>
   <string name="resume">Reprendre</string>
+  <string name="stop">Arrêter</string>
   <string name="youArePlaying">Vous êtes en train de jouer !</string>
   <string name="winRate">Taux de victoires</string>
   <string name="performance">Performance</string>
@@ -701,7 +702,8 @@ Amis jouant : %2$s</string>
   <string name="aboutX">À propos de %s</string>
   <string name="xIsAFreeYLibreOpenSourceChessServer">%1$s est un serveur d\'échecs gratuit (%2$s), libre, sans pubs et open source.</string>
   <string name="really">pour de vrai</string>
-  <string name="lichessUpdates">Mises à jour de Lichess</string>
+  <string name="lichessUpdates">Nouvelles Lichess</string>
+  <string name="allUpdates">Toutes les nouvelles</string>
   <string name="contribute">Contribuer</string>
   <string name="changelog">Changements</string>
   <string name="termsOfService">Conditions d\'utilisation</string>
@@ -996,6 +998,8 @@ et ont un impact sur le classement des joueurs</string>
   <string name="onlyMembersOfTeam">Seulement les membres de l\'équipe</string>
   <string name="noRestriction">Sans restriction</string>
   <string name="minimumRatedGames">Nombre minimum de parties classées</string>
+  <string name="minimumAccountAge">Âge minimum pour le compte</string>
+  <string name="titledPlayersBypassRestriction">Les joueurs titrés ne sont pas soumis à cette restriction.</string>
   <string name="minimumRating">Classement minimal</string>
   <string name="maximumWeeklyRating">Classement hebdomadaire maximal</string>
   <string name="positionInputHelp">Collez un FEN valide pour commencer chaque partie à partir d\'une position donnée.
@@ -1053,6 +1057,7 @@ Laissez vide pour commencer les parties à partir de la position initiale normal
   <string name="offline" comment="status of a user">hors ligne</string>
   <string name="search">Rechercher</string>
   <string name="clearSearch">Réinitialiser la recherche</string>
+  <string name="searchInX">Rechercher dans \"%s\"</string>
   <string name="thereAreNoResultsForX">Aucun résultat pour \"%s\"</string>
   <string name="tags">Étiquettes</string>
   <string name="enPassant">Prise en passant ?</string>

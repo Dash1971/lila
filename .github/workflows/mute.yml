@@ -1,4 +1,4 @@
-# Mute application files are unchanged; this is the sole #363 metadata exception.
+# Fork-specific CI is the sole #363 metadata exception.
 # The companion snapshot supplies the adapter roster and puzzle validator only.
 name: Mute native checks
 on:
@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: Dash1971/mute-chess
-          ref: 910c329fc79286162797e5908a57b2b3b3e97984
+          ref: 69839d81e228f9de96a64fc8646ca1e3901d3f81
           path: mute-chess
       - name: Check the unchanged WebSocket patch
         run: |
@@ -66,5 +66,3 @@ jobs:
       - name: Check native Scala formatting, GIF parsing, study plan, forum permissions and user search
         working-directory: lila
         run: sbt -J-Xms128m -J-Xmx3g -J-Xss2m -J-XX:ActiveProcessorCount=2 -Dsbt.task.cpus=2 -Dsbt.supershell=false 'scalafmtCheckAll;security/testOnly lila.security.ModeratorOAuthTest lila.security.PermissionTest;core/testOnly lila.core.NostrNameTest;game/testOnly lila.game.NoSweatAnalysisGifTest;game/testOnly lila.game.NoSweatGameAdmissionTest;game/testOnly lila.game.NoSweatArenaAdmissionTest;chat/testOnly lila.chat.ChatPublicNameTest;round/testOnly lila.round.NoSweatPresetChatTest;round/testOnly lila.round.NoSweatAbandonTest;i18n/testOnly lila.i18n.NoSweatLanguagesTest;web/testOnly lila.web.NoSweatBrandingTest;web/testOnly lila.markdown.MarkdownTest;relay/testOnly lila.relay.RelaySourceAddressTest lila.relay.RelayFetchTest;bot/testOnly lila.bot.PublicBotActivityTest;tournament/testOnly lila.tournament.NoSweatArenaTest;compile;testOnly lila.app.NoSweatArenaRosterTest lila.app.NoSweatSignupNameTest;testOnly lila.i18n.NoSweatArenaLocaleTest;forum/testOnly lila.forum.ForumAccessTest;user/testOnly lila.user.NoSweatUserSearchTest;user/testOnly lila.user.NoSweatPlayerRatingsTest;testOnly lila.app.NoSweatInsightsTest;testOnly lila.i18n.NoSweatInsightsLocaleTest;testOnly lila.app.NoSweatStudyPlanTest;testOnly lila.app.NoSweatBotCatalogTest;testOnly lila.app.NoSweatDonationTest;user/testOnly lila.user.NoSweatBotIdentityTest;user/testOnly lila.user.NoSweatNostrIdentityTest;user/testOnly lila.user.PublicNameKeysTest;user/testOnly lila.user.PublicNameTest'
-
-

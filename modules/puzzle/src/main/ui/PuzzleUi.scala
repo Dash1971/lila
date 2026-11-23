@@ -52,8 +52,7 @@ final class PuzzleUi(helpers: Helpers, val bits: PuzzleBits)(
       .csp(analyseCsp)
       .graph(
         OpenGraph(
-          image =
-            Url(routes.Export.puzzleThumbnail(puzzle.id, ctx.pref.theme.some, ctx.pref.pieceSet.some)).some,
+          image = routeUrl(routes.Export.puzzleThumbnail(puzzle.id)).some,
           title =
             if isStreak then "Puzzle Streak"
             else s"Chess tactic #${puzzle.id} - ${puzzle.color.name.capitalize} to play",

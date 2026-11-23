@@ -21,9 +21,10 @@ import {
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { h, type VNode } from "snabbdom";
 
-import { currentTheme } from "lib/device";
-import { licon } from "lib/licon";
-import { icon, spinnerHtml } from "lib/view";
+import { currentTheme } from 'lib/device';
+import { displayLocale } from 'lib/i18n';
+import { licon } from 'lib/licon';
+import { icon, spinnerHtml } from 'lib/view';
 
 import type Ctrl from "./ctrl";
 import type { InsightChart, InsightData } from "./interfaces";
@@ -145,8 +146,8 @@ function barBuilder(
 }
 
 function labelBuilder(d: InsightData) {
-  return d.xAxis.categories.map((ts) =>
-    d.xAxis.dataType === "date" ? new Date(ts * 1000).toLocaleDateString() : ts,
+  return d.xAxis.categories.map(ts =>
+    d.xAxis.dataType === 'date' ? new Date(ts * 1000).toLocaleDateString(displayLocale) : ts,
   );
 }
 

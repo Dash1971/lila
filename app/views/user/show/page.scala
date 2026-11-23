@@ -90,7 +90,7 @@ object page:
         h1(cls := "box__top")("No such player"),
         div(
           p(
-            if env.noSweat.enabled then I18nKey("mutePlayerNotFound")()
+            if env.noSweat.enabled then I18nKey.unchecked("mutePlayerNotFound")()
             else "This username doesn't match any Lichess player."
           ),
           canCreate.not.option(p("It cannot be used to create a new account."))
@@ -108,7 +108,7 @@ object page:
     import ui.transLocalize
     filter match
       case GameFilter.all => transLocalize(trans.site.nbGames, u.count.game)
-      case GameFilter.me => nbs.withMe.so { transLocalize(trans.site.nbGamesWithYou, _) }
+      case GameFilter.me => nbs.withMe.so(transLocalize(trans.site.nbGamesWithYou, _))
       case GameFilter.rated => transLocalize(trans.site.nbRated, u.count.rated)
       case GameFilter.win => transLocalize(trans.site.nbWins, u.count.win)
       case GameFilter.loss => transLocalize(trans.site.nbLosses, u.count.loss)

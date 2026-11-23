@@ -1,7 +1,7 @@
 // Security-only alignment of transitive runtime dependencies (#232, #279).
 // Overrides retain the existing dependency graph and native application behavior.
 ThisBuild / dependencyOverrides ++= {
-  val nettyVersion = "4.2.19.Final"
+  val nettyVersion = "4.2.21.Final"
   val jacksonVersion = "2.18.11"
   Seq(
     "netty-buffer",

@@ -11,6 +11,7 @@ const { render } = await import('../src/view/roundTraining');
 test('cached summary keeps its layout class on the actual DOM with long player names', () => {
   const ctrl = {
     noSweat: {},
+    bottomColor: () => 'white',
     mainline: [],
     mainlineAnalysis: { white: { accuracy: 80, acpl: 20 }, black: { accuracy: 70, acpl: 30 } },
     settings: { showMainlineAnalysis: true },
@@ -39,6 +40,7 @@ test('cached summary keeps its layout class on the actual DOM with long player n
 test('short FEN-start reviews show unavailable native metrics without inventing scores', () => {
   const ctrl = {
     noSweat: {},
+    bottomColor: () => 'white',
     mainline: [],
     mainlineAnalysis: { white: {}, black: { acpl: 0 } },
     settings: { showMainlineAnalysis: true },
@@ -61,6 +63,7 @@ test('separate summary glyphs keep category names and native count navigation', 
   const redraw = mock.fn();
   const ctrl = {
     noSweat: {},
+    bottomColor: () => 'white',
     mainline: [
       { ply: 1, uci: 'e2e4', glyphs: [{ id: 3 }] },
       { ply: 2, uci: 'e7e5', glyphs: [{ id: 6 }] },

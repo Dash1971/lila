@@ -16,7 +16,7 @@ final class PlayApi(env: Env) extends LilaController(env):
   }
 
   def botMove(id: GameId, uci: String, offeringDraw: Option[Boolean]) = Scoped(_.Bot.Play) { _ ?=> me ?=>
-    WithPovAsBot(id) { impl.move(_, uci, offeringDraw) }
+    WithPovAsBot(id)(impl.move(_, uci, offeringDraw))
   }
 
   def botCommand(cmd: String) = ScopedBody(_.Bot.Play) { ctx ?=> me ?=>
@@ -123,9 +123,8 @@ final class PlayApi(env: Env) extends LilaController(env):
 
   private def toResult(f: Funit): Fu[Result] = catchClientError(f.inject(jsonOkResult))
   private def catchClientError(f: Fu[Result]): Fu[Result] =
-    f.recover { case e: lila.core.round.BenignError =>
-      BadRequest(jsonError(e.getMessage))
-    }
+    f.recover:
+      case e: lila.core.round.BenignError => BadRequest(jsonError(e.getMessage))
 
   private def WithPovAsBot(id: GameId)(f: Pov => Fu[Result])(using me: Me) =
     WithPov(id): pov =>
@@ -154,8 +153,8 @@ final class PlayApi(env: Env) extends LilaController(env):
     env.round.proxyRepo
       .game(id)
       .flatMap:
-        case None => NotFound(jsonError("No such game"))
-        case Some(game) => Pov(game, me).fold(NotFound(jsonError("Not your game")).toFuccess)(f)
+        case None => notFoundJson("No such game")
+        case Some(game) => Pov(game, me).fold(notFoundJson("Not your game").toFuccess)(f)
 
   def botOnline = Open:
     for

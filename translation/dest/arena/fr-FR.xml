@@ -47,6 +47,8 @@ Jouez vite et retournez à la page d\'accueil du tournoi pour jouer plus de part
     <item quantity="other">Voir toutes les équipes %s</item>
   </plurals>
   <string name="newTeamBattle">Nouveau combat en équipe</string>
+  <string name="startDate">Date de début </string>
+  <string name="entryConditions">Conditions de participation</string>
   <string name="customStartDate">Date de début modifiée</string>
   <string name="customStartDateHelp">Selon votre fuseau horaire. Ce paramètre désactive le paramètre « Temps restant avant le début du tournoi ».</string>
   <string name="allowBerserk">Activer l\'option Berserk</string>

@@ -10,7 +10,7 @@ import { parseSquare, parseUci, makeSquare, makeUci, opposite } from 'chessops/u
 import { ctrl as makeKeyboardMove, type KeyboardMove, type KeyboardMoveRootCtrl } from 'keyboard-move';
 import { makeVoiceMove, type VoiceMove } from 'voice';
 
-import { prop, type Prop, propWithEffect, type Toggle, toggle, requestIdleCallbackSafe, myUserId } from 'lib';
+import { prop, type Prop, type Toggle, toggle, requestIdleCallbackSafe, myUserId } from 'lib';
 import { type Deferred, defer, throttle } from 'lib/async';
 import { CevalCtrl } from 'lib/ceval';
 import type { CevalHandler } from 'lib/ceval/types';
@@ -65,7 +65,6 @@ export default class PuzzleCtrl implements CevalHandler {
   keyboardMove?: KeyboardMove;
   voiceMove?: VoiceMove;
   promotion: PromotionCtrl;
-  keyboardHelp: Prop<boolean>;
   cgConfig?: CgConfig;
   path: TreePath;
   node: TreeNode;
@@ -152,7 +151,6 @@ export default class PuzzleCtrl implements CevalHandler {
       this.ceval.storedPv(2);
       this.maia = new PuzzleMaia(this);
     }
-    this.keyboardHelp = propWithEffect(location.hash === '#keyboard', this.redraw);
     keyboard(this);
     this.report = new Report();
 

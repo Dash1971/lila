@@ -13,7 +13,7 @@ object noSweatBot:
     val history = (personality \ "history").as[Boolean]
     val style = (personality \ "timingStyle").as[String].replace('-', ' ')
     div(cls := "nosweat-bot-policy")(
-      h2(I18nKey("muteBotSettings").txt()),
+      h2(I18nKey.unchecked("muteBotSettings").txt()),
       table(
         tbody(
           tr(th("Model"), td("Maia3 79M")),
@@ -29,14 +29,17 @@ object noSweatBot:
           tr(th("Temperature"), td((bot \ "temperature_after_opening").as[Double].toString)),
           tr(th("Top-p"), td((bot \ "top_p_after_opening").as[Double].toString)),
           tr(
-            th(I18nKey("muteMoveHistory").txt()),
-            td(if history then I18nKey("muteOn").txt() else I18nKey("muteOff").txt())
+            th(I18nKey.unchecked("muteMoveHistory").txt()),
+            td(if history then I18nKey.unchecked("muteOn").txt() else I18nKey.unchecked("muteOff").txt())
           ),
           tr(
-            th(I18nKey("muteHumanTiming").txt()),
-            td(if timing then I18nKey("muteOn").txt() else I18nKey("muteOff").txt())
+            th(I18nKey.unchecked("muteHumanTiming").txt()),
+            td(if timing then I18nKey.unchecked("muteOn").txt() else I18nKey.unchecked("muteOff").txt())
           ),
-          tr(th(I18nKey("muteTimingStyle").txt()), td(style + (if timing then "" else " (inactive)"))),
+          tr(
+            th(I18nKey.unchecked("muteTimingStyle").txt()),
+            td(style + (if timing then "" else " (inactive)"))
+          ),
           (opening > 0).option(tr(th("Opening"), td(s"Full sampling for the first $opening moves")))
         )
       ),

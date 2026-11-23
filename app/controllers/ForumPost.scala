@@ -58,13 +58,13 @@ final class ForumPost(env: Env) extends LilaController(env) with ForumController
                     ,
                     data =>
                       CategGrantWrite(categId, tryingToPostAsMod = ~data.modIcon):
-                        limit.forumPost(ctx.ip, rateLimited):
+                        limit.forumPost.use(rateLimited):
                           for
                             post <- postApi.makePost(categ, topic, data)
                             url = routes.ForumPost.redirect(post.id).url
                             _ <- env.memo.picfitApi
                               .addRef(Markdown(post.text), lila.forum.picRef(post.id), url.some)
-                            _ = discard { maybeAutomod(post) }
+                            _ = discard(maybeAutomod(post))
                           yield Redirect(url)
                   )
                 }
@@ -79,12 +79,12 @@ final class ForumPost(env: Env) extends LilaController(env) with ForumController
         res <- bindForm(forms.postEdit(inOwnTeam, post.text))(
           _ => Redirect(routes.ForumPost.redirect(postId)).toFuccess,
           data =>
-            limit.forumPost(ctx.ip, rateLimited):
+            limit.forumPost.use(rateLimited):
               for
                 post <- postApi.editPost(postId, data.changes)
                 url = routes.ForumPost.redirect(post.id).url
                 _ <- env.memo.picfitApi.addRef(Markdown(post.text), lila.forum.picRef(post.id), url.some)
-                _ = discard { maybeAutomod(post) }
+                _ = discard(maybeAutomod(post))
               yield Redirect(url)
         )
       yield res

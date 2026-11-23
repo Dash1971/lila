@@ -49,6 +49,8 @@ Spiele schnell und kehre zur Turnierübersicht zurück, um mehr Spiele zu spiele
     <item quantity="other">Alle %s Teams ansehen</item>
   </plurals>
   <string name="newTeamBattle">Neuer Teamkampf</string>
+  <string name="startDate">Startdatum</string>
+  <string name="entryConditions">Teilnahmebedingungen</string>
   <string name="customStartDate">Benutzerdefiniertes Startdatum</string>
   <string name="customStartDateHelp">In deiner eigenen, lokalen Zeitzone. Dies wird die Einstellung \"Zeit bevor das Turnier beginnt\" überschreiben</string>
   <string name="allowBerserk">Berserk erlauben</string>
@@ -89,4 +91,5 @@ Zum Beispiel bedeutet ein Tabellenplatz-Durchschnitt von 3% typischerweise das E
   <string name="berserkRate">Berserker-Rate</string>
   <string name="leaguesAndStreamerBattles">Ligen &amp; Streamer-Kämpfe</string>
   <string name="allowBotAccounts">Bot-Konten erlauben</string>
+
 </resources>

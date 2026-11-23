@@ -19,7 +19,7 @@ class NoSweatBrandingTest extends munit.FunSuite:
     do
       val original = OpenGraph("A & B", "Page description", Url(s"${origin.value}$path"), image = oldImage)
       val branded = ui.muteChessOpenGraph(original, origin, image, upstreamImage)
-      val html = ui.openGraph(branded).map(_.render).mkString
+      val html = ui.OpenGraph.render(branded).map(_.render).mkString
       assert(html.contains("property=\"og:site_name\" content=\"mutechess.org\""))
       assert(html.contains(s"property=\"og:image\" content=\"${image.value}\""))
       assert(html.contains("A &amp; B"))
@@ -39,7 +39,7 @@ class NoSweatBrandingTest extends munit.FunSuite:
 
   test("native Open Graph rendering keeps its original upstream identity unless explicitly branded"):
     val original = OpenGraph("Native page", "Description", Url("https://lichess.org/analysis"))
-    assert(ui.openGraph(original).map(_.render).mkString.contains("content=\"lichess.org\""))
+    assert(ui.OpenGraph.render(original).map(_.render).mkString.contains("content=\"lichess.org\""))
 
   private def staticContent(site: String, domain: String) = new StaticContent(
     NetConfig(
@@ -48,8 +48,6 @@ class NoSweatBrandingTest extends munit.FunSuite:
       baseUrl = BaseUrl(s"https://$domain"),
       stageBanner = false,
       siteName = site,
-      socketDomains = Nil,
-      socketAlts = Nil,
       crawlable = true,
       rateLimit = RateLimit(false),
       email = EmailAddress("unused@example.org"),
@@ -58,11 +56,11 @@ class NoSweatBrandingTest extends munit.FunSuite:
   )
 
   test("Mute organization metadata never inherits Lichess legal identifiers or social accounts"):
-    val branded = staticContent("Mute Chess", "mutechess.org").organizationScript.render
+    val branded = staticContent("Mute Chess", "mutechess.org").organizationScript.map(_.render).getOrElse("")
     assert(branded.contains("Mute Chess"))
     assert(branded.contains("https://github.com/Dash1971/mute-chess"))
     for inherited <- List("lichess.org", "LICHESS", "legalName", "taxID", "iso6523Code", "foundingDate") do
       assert(!branded.contains(inherited), inherited)
-    val upstream = staticContent("lichess.org", "lichess.org").organizationScript.render
+    val upstream = staticContent("lichess.org", "lichess.org").organizationScript.map(_.render).getOrElse("")
     assert(upstream.contains("LICHESS.ORG"))
     assert(upstream.contains("830378717"))

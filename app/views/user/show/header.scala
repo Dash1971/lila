@@ -29,29 +29,29 @@ object header:
 
   private def identityHelp(u: User)(using Context) = frag(
     div(id := "nostr-help-npub", cls := "none")(
-      h2(I18nKey("muteNpubHelpTitle")()),
+      h2(I18nKey.unchecked("muteNpubHelpTitle")()),
       p(
-        I18nKey("muteNpubHelpIdentity")(
+        I18nKey.unchecked("muteNpubHelpIdentity")(
           a(href := "https://nostr.org/", targetBlank, rel := "noopener noreferrer")("Nostr")
         )
       ),
-      p(I18nKey("muteNpubHelpPair")()),
-      p(strong(I18nKey("muteNpubHelpSecret")()), " ", I18nKey("muteNpubHelpWarning")()),
+      p(I18nKey.unchecked("muteNpubHelpPair")()),
+      p(strong(I18nKey.unchecked("muteNpubHelpSecret")()), " ", I18nKey.unchecked("muteNpubHelpWarning")()),
       p(
-        I18nKey("muteNpubHelpApps")(
+        I18nKey.unchecked("muteNpubHelpApps")(
           a(href := "https://primal.net/", targetBlank, rel := "noopener noreferrer")("Primal")
         )
       ),
-      p(I18nKey("muteNpubHelpPrivacy")())
+      p(I18nKey.unchecked("muteNpubHelpPrivacy")())
     ),
     div(id := "nostr-help-handle", cls := "none")(
-      h2(I18nKey("muteHandleHelpTitle")()),
+      h2(I18nKey.unchecked("muteHandleHelpTitle")()),
       p(
         if u.nostrKey.exists(k => u.username.value.equalsIgnoreCase("n" + k.take(19))) then
-          I18nKey("muteHandleHelpDerived")()
-        else I18nKey("muteHandleHelpGeneric")()
+          I18nKey.unchecked("muteHandleHelpDerived")()
+        else I18nKey.unchecked("muteHandleHelpGeneric")()
       ),
-      p(I18nKey("muteHandleHelpLink")())
+      p(I18nKey.unchecked("muteHandleHelpLink")())
     )
   )
 
@@ -131,17 +131,17 @@ object header:
             a(
               cls := "user-show__nostr-link",
               href := s"/@/$npub",
-              ariaTitle(I18nKey("muteCopyNpub").txt())
+              ariaTitle(I18nKey.unchecked("muteCopyNpub").txt())
             )(npub),
-            identityInfo("npub", I18nKey("muteAboutNpub").txt()),
+            identityInfo("npub", I18nKey.unchecked("muteAboutNpub").txt()),
             span(cls := "user-show__nostr-feedback", attr("role") := "status", attr("aria-live") := "polite"),
             span(cls := "user-show__handle")(
               a(
                 cls := "user-show__profile-link",
                 href := userUrl(u.username),
-                ariaTitle(I18nKey("muteCopyProfileLink").txt())
+                ariaTitle(I18nKey.unchecked("muteCopyProfileLink").txt())
               )(s"@${u.username.value}"),
-              identityInfo("handle", I18nKey("muteAboutHandle").txt()),
+              identityInfo("handle", I18nKey.unchecked("muteAboutHandle").txt()),
               span(
                 cls := "user-show__profile-feedback",
                 attr("role") := "status",

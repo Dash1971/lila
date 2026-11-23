@@ -64,6 +64,7 @@ export class OpeningLabel {
     this.label.onclick = () => {
       if (this.label.scrollWidth <= this.label.clientWidth) return;
       domDialog({
+        closeButton: true,
         modal: true,
         show: true,
         easyClose: 'clickOutside',

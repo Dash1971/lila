@@ -8,9 +8,9 @@ import lila.insight.{ InsightDimension, InsightMetric, NoSweatInsights }
 
 final class Insight(env: Env) extends LilaController(env):
 
-  def refresh(username: UserStr) = Open: ctx ?=>
+  def refresh(username: UserStr) = OpenOrScoped(): ctx ?=>
     AccessibleApi(username): user =>
-      val byMod = isGrantedOpt(_.MarkBooster) || isGrantedOpt(_.MarkEngine)
+      val byMod = isGrantedOpt(_.SeeInsight)
       if env.noSweat.enabled && (!ctx.is(user) || user.isBot) then fuccess(Forbidden)
       else env.insight.api.indexAll(user, force = byMod).inject(Ok)
 
@@ -42,30 +42,32 @@ final class Insight(env: Env) extends LilaController(env):
     env.insight.api
       .userStatus(user)
       .flatMap:
-        case NoGame => Ok.page(views.site.message.insightNoGames(user))
-        case Empty => Ok.page(views.insight.empty(user))
+        case NoGame =>
+          Ok.page(if env.noSweat.enabled then views.insight.empty(user)
+          else views.insight.noGames(user, views.site.message.apply))
+        case Empty =>
+          Ok.page(views.insight.empty(user))
         case s =>
           for
             insightUser <- env.insight.api.insightUser(user)
             prefId <- env.insight.share.getPrefId(user)
             page <- renderPage:
+              val raw = env.insight.jsonView
+                .ui(insightUser.families, insightUser.openings, asMod = isGrantedOpt(_.ViewBlurs))
+              val question = env.insight.jsonView.question(metric, dimension, filters)
               views.insight.index(
-                u = user,
-                insightUser = insightUser,
-                prefId = prefId,
-                ui =
-                  val raw = env.insight.jsonView
-                    .ui(insightUser.families, insightUser.openings, asMod = isGrantedOpt(_.ViewBlurs))
-                  if env.noSweat.enabled then NoSweatInsights.ui(raw) else raw
-                ,
-                question = env.insight.jsonView.question(metric, dimension, filters),
-                stale = s == Stale
+                user,
+                insightUser,
+                prefId,
+                if env.noSweat.enabled then NoSweatInsights.ui(raw) else raw,
+                question,
+                s == Stale
               )
           yield Ok(page)
 
   def json(username: UserStr) =
     OpenOrScopedBody(parse.json)(): ctx ?=>
-      AccessibleApi(username) { processQuestion(_, ctx.body) }
+      AccessibleApi(username)(processQuestion(_, ctx.body))
 
   private def processQuestion(user: lila.user.User, body: Request[JsValue])(using Translate) =
     if !lila.insight.JsonQuestion.isValid(body.body)
@@ -77,7 +79,7 @@ final class Insight(env: Env) extends LilaController(env):
           err => BadRequest(jsonError(err.toString)).toFuccess,
           raw =>
             if env.noSweat.enabled && !NoSweatInsights.accepts(raw) then
-              fuccess(JsonBadRequest(lila.core.i18n.I18nKey("muteNotYetSupported").txt()))
+              fuccess(JsonBadRequest(lila.core.i18n.I18nKey.unchecked("muteNotYetSupported").txt()))
             else
               raw.question.fold(BadRequest.toFuccess): q =>
                 env.insight.api
@@ -87,11 +89,14 @@ final class Insight(env: Env) extends LilaController(env):
                   )
                   .map(chart => if env.noSweat.enabled then NoSweatInsights.chart(chart) else chart)
                   .map(env.insight.jsonView.chartWrites.writes)
-                  .map { Ok(_) }
+                  .map(Ok(_))
         )
 
   private def Accessible(username: UserStr)(f: lila.user.User => Fu[Result])(using Context) =
-    isAccessible(username)(f, u => Forbidden.page(views.insight.forbidden(u)))
+    isAccessible(username)(
+      f,
+      u => Forbidden.page(views.insight.forbidden(u, views.site.message.apply))
+    )
 
   private def AccessibleApi(username: UserStr)(f: lila.user.User => Fu[Result])(using Context) =
     isAccessible(username)(f, _ => Forbidden)

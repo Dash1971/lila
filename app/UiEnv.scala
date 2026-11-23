@@ -24,6 +24,7 @@ object UiEnv
   def env: Env = envVar.get
 
   def netConfig = env.net
+  def webSocketConfig = env.web.webSocketConfig
   def picfitUrl = env.memo.picfitUrl
   def imageGetOrigin = env.memo.imageGetOrigin
 
@@ -43,7 +44,10 @@ object UiEnv
   def lightUserSync = env.user.lightUserSync
   def manifest = env.web.manifest
   def staticContent = env.web.static
-  def analyseEndpoints = env.web.analyseEndpoints
+  def analyseEndpoints: lila.ui.AnalyseEndpoints =
+    if env.noSweat.enabled then
+      AnalyseEndpoints("/opening-explorer-disabled", "/tablebase-disabled", "/external-engine-disabled")
+    else env.web.analyseEndpoints
   val translator = lila.i18n.Translator
   val langList = lila.i18n.LangList
   lazy val gameOpening = env.game.gameOpening.of

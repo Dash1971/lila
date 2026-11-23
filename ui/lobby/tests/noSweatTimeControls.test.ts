@@ -5,11 +5,36 @@ import type { VNode } from 'lib/view';
 
 import type LobbyController from '../src/ctrl';
 import type { GameType } from '../src/interfaces';
-import SetupController from '../src/setupCtrl';
+
 // Isolate clock rendering from unrelated native controls using package-self aliases.
 for (const name of ['colorButtons', 'gameModeButtons', 'variantPicker'])
   mock.module(`../src/view/setup/components/${name}`, { namedExports: { [name]: () => null } });
+// The native modal is imperative now. Capture its real render function while
+// isolating asset loading; all clock/control assertions still inspect that view.
+const viewExports = await import('lib/view');
+let renderDialog: any;
+let currentDialog: any;
+mock.module('lib/view', {
+  namedExports: {
+    ...viewExports,
+    snabDialog: async (options: any) => {
+      renderDialog = options.render;
+      currentDialog = {
+        redraw() {},
+        close() {
+          options.onClose?.(currentDialog);
+        },
+      };
+      return currentDialog;
+    },
+  },
+});
+const { default: SetupController } = await import('../src/setupCtrl');
 const { default: setupModal } = await import('../src/view/setup/modal');
+const renderModal = (root: LobbyController): VNode[] => {
+  void setupModal(root);
+  return renderDialog(() => {}, currentDialog);
+};
 window.matchMedia = matchMedia;
 
 const nodes = (node: VNode): VNode[] => [
@@ -70,7 +95,7 @@ for (const gameType of ['hook', 'friend'] as GameType[])
         assert.equal(ctrl.valid(), true);
         const root = ctrl.root;
         root.setupCtrl = ctrl;
-        const play = setupModal(root)!
+        const play = renderModal(root)
           .flatMap(nodes)
           .find(n => n.sel?.includes('lobby__start__button'));
         assert.ok(play);
@@ -106,11 +131,14 @@ for (const gameType of ['hook', 'friend'] as GameType[])
     const before = site.blindMode;
     try {
       site.blindMode = false;
-      const view = setupModal(root)!.flatMap(nodes);
-      assert.equal(view.find(n => n.sel === 'input.range')?.data?.attrs?.min, 4);
+      const view = renderModal(root).flatMap(nodes);
+      assert.equal(
+        view.find(n => n.sel === 'input.range' && n.data?.attrs?.id === 'gameTime')?.data?.attrs?.min,
+        4,
+      );
       assert.equal(view.filter(n => n.sel === 'button.preset-btn').length, 1);
       site.blindMode = true;
-      const select = setupModal(root)!
+      const select = renderModal(root)
         .flatMap(nodes)
         .find(n => n.sel === 'select#sf_time');
       assert.ok(select);
@@ -138,3 +166,14 @@ for (const gameType of ['hook', 'friend'] as GameType[])
     ctrl.timeControl.timeV(5); // 1.5 minutes differs from the normalized one-minute constraint.
     assert.equal(ctrl.valid(), false);
   });
+
+test('native imperative modal is retained for redraw and clears its game type on close', async () => {
+  const root = makeRoot(true, true);
+  const ctrl = new SetupController(root);
+  root.setupCtrl = ctrl;
+  await ctrl.openModal('hook', { time: 1, increment: 0 });
+  assert.equal(ctrl.dialog, currentDialog);
+  assert.equal(ctrl.gameType, 'hook');
+  ctrl.dialog!.close();
+  assert.equal(ctrl.gameType, null);
+});

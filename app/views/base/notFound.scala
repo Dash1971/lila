@@ -5,7 +5,7 @@ import lila.core.i18n.I18nKey
 
 def notFound(msg: Option[String])(using Context) =
   if env.noSweat.enabled then
-    val title = I18nKey("mutePageNotFound").txt()
+    val title = I18nKey.unchecked("mutePageNotFound").txt()
     Page(msg | title).css("bits.not-found"):
       main(cls := "not-found page-small box box-pad")(
         header(
@@ -13,7 +13,7 @@ def notFound(msg: Option[String])(using Context) =
           div(
             strong(title),
             msg.map(em(_)),
-            p(a(href := routes.Lobby.home)(I18nKey("muteReturnToHomepage")()))
+            p(a(href := routes.Lobby.home)(I18nKey.unchecked("muteReturnToHomepage")()))
           )
         )
       )

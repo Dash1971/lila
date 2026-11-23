@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="gameSetup">إعداد اللعبة</string>
   <string name="challengeAFriend" comment="be mindful how 'friend' translates in gendered languages. look for a more neutral term if there's an issue, or base your translation on a different phrase like 'invite to a game'. keep it short and convey the button's meaning without offense.">تحدَّ صديقًا</string>
   <string name="playAgainstComputer">العب ضدّ الحاسب</string>
   <string name="gameMode">وضع اللعب</string>
@@ -552,11 +551,12 @@
   <string name="pasteTheFenStringHere">ألصق الـFEN هنا</string>
   <string name="pasteThePgnStringHere">ألصق الـPGN هنا</string>
   <string name="orUploadPgnFile">أو حمل مِلف PGN</string>
+  <string name="selectImage">اختيار صورة</string>
   <string name="continueFromHere">تابع من هنا</string>
   <string name="toStudy">دراسة</string>
   <string name="importGame">استورد مباراة</string>
-  <string name="importGameExplanation">عند لصق مباراة PGN تحصل على إمكانية كرار استعراضها وتحليل حاسوبي ودردشة للمباراة ورابط قابل للمشاركة.</string>
-  <string name="importGameDataPrivacyWarning">يمكن لأي أحد الوصول إلى PGN، إذا أردت إنشاء تحليل خاص، استخدم قسم دراسة.</string>
+  <string name="importGameExplanation">ألصق تدوين المباراة بصيغة PGN للحصول على إعادة عرض تفاعلية يمكنك تصفّح نقلاتها، وتحليلها باستخدام الحاسوب، ومناقشتها عبر دردشة المباراة، ومشاركة رابطها.</string>
+  <string name="importGameDataPrivacyWarning">يمكن للجميع الاطّلاع على مِلَفّ PGN هذا. لاستيراد مباراة بشكل خاص، استخدم دراسة.</string>
   <plurals name="nbImportedGames">
     <item quantity="zero">مباراة مستوردة %s</item>
     <item quantity="one">مباراة مستوردة %s</item>
@@ -639,6 +639,7 @@
   <string name="standByX">تأهب يا %s، جارٍ مزاوجة اللاعبين، استعد!</string>
   <string name="pause">الإيقاف المؤقت</string>
   <string name="resume">استئناف</string>
+  <string name="stop">توقّف</string>
   <string name="youArePlaying">أنت تلعب!</string>
   <string name="winRate">معدّل الفوز</string>
   <string name="performance">تقييم الأداء</string>
@@ -850,7 +851,8 @@ https://lichess. org/report.</string>
   <string name="aboutX">عن %s</string>
   <string name="xIsAFreeYLibreOpenSourceChessServer">%1$s موقع شطرنج مجاني (%2$s)، حرّ ومفتوح المصدر، بلا إعلانات.</string>
   <string name="really">حقاً</string>
-  <string name="lichessUpdates">تحديثات Lichess</string>
+  <string name="lichessUpdates">Lichess تحديثات</string>
+  <string name="allUpdates">جميع التحديثات</string>
   <string name="contribute">ساهم</string>
   <string name="changelog">سجل التغييرات</string>
   <string name="termsOfService">شروط الخدمة</string>
@@ -1164,6 +1166,8 @@ https://lichess. org/report.</string>
   <string name="onlyMembersOfTeam">اعضاء الفريق فقط</string>
   <string name="noRestriction">لا قيود</string>
   <string name="minimumRatedGames">الحد الأدنى لعدد المباريات المُصنَّفة</string>
+  <string name="minimumAccountAge">الحد الأدنى لعمر الحساب</string>
+  <string name="titledPlayersBypassRestriction">يُستثنى اللاعبون الحاصلون على ألقاب من هذا القيد.</string>
   <string name="minimumRating">الحد الأدنى للتصنيف</string>
   <string name="maximumWeeklyRating">أعلى تصنيف أسبوعي</string>
   <string name="positionInputHelp">الصق رمز FEN صالحًا لبدء كل مباراة من وضعية محددة.
@@ -1221,6 +1225,7 @@ https://lichess. org/report.</string>
   <string name="offline" comment="status of a user">غير متصل </string>
   <string name="search">بحث</string>
   <string name="clearSearch">مسح البحث</string>
+  <string name="searchInX">البحث في «%s»</string>
   <string name="thereAreNoResultsForX">لا توجد نتائج لـ \"%s\"</string>
   <string name="tags">تصنيفات</string>
   <string name="enPassant">حقوق  الأخذ بالتجاوز </string>

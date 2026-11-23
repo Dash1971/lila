@@ -167,7 +167,7 @@ final class PlanApi(
 
     def userCustomerId(user: User): Fu[Option[StripeCustomerId]] =
       userPatron(user).map:
-        _.flatMap { _.stripe.map(_.customerId) }
+        _.flatMap(_.stripe.map(_.customerId))
 
     def userCustomer(user: User): Fu[Option[StripeCustomer]] =
       userCustomerId(user).flatMapz(stripeClient.getCustomer)
@@ -257,7 +257,7 @@ final class PlanApi(
 
     def getEvent = payPalClient.getEvent
 
-    def onLegacyCharge(ipn: PlanForm.Ipn, ip: IpAddress, key: String): Funit = for
+    def onLegacyCharge(ipn: PlanForm.Ipn, key: String)(using ip: IpAddress): Funit = for
       money <- ipn.money.fold[Fu[Money]](fufail(s"Invalid paypal charge ${ipn.txnId}"))(fuccess)
       pricing <- pricingApi.pricingFor(money.currency).orFail(s"Invalid paypal currency $money")
       usd <- currencyApi.toUsd(money).orFail(s"Invalid paypal currency $money")
@@ -324,7 +324,7 @@ final class PlanApi(
 
     def userSubscriptionId(user: User): Fu[Option[PayPalSubscriptionId]] =
       userPatron(user).map:
-        _.flatMap { _.payPalCheckout.flatMap(_.subscriptionId) }
+        _.flatMap(_.payPalCheckout.flatMap(_.subscriptionId))
 
     def userSubscription(user: User): Fu[Option[PayPalSubscription]] =
       userSubscriptionId(user).flatMapz(payPalClient.getSubscription)
@@ -338,7 +338,7 @@ final class PlanApi(
     def createSubscription(checkout: PlanCheckout, user: User) =
       payPalClient.createSubscription(checkout, user)
 
-    def captureOrder(orderId: PayPalOrderId, ip: IpAddress) = for
+    def captureOrder(orderId: PayPalOrderId)(using ip: IpAddress) = for
       order <- payPalClient.captureOrder(orderId)
       money <- order.capturedMoney.fold[Fu[Money]](fufail(s"Invalid paypal capture $order"))(fuccess)
       pricing <- pricingApi.pricingFor(money.currency).orFail(s"Invalid paypal currency $money")
@@ -393,10 +393,7 @@ final class PlanApi(
           }
     yield ()
 
-    def captureSubscription(
-        orderId: PayPalOrderId,
-        subId: PayPalSubscriptionId,
-        user: User,
+    def captureSubscription(orderId: PayPalOrderId, subId: PayPalSubscriptionId, user: User)(using
         ip: IpAddress
     ) = for
       order <- payPalClient.getOrder(orderId).orFail(s"Missing paypal order for id $orderId")
@@ -420,7 +417,7 @@ final class PlanApi(
     yield ()
 
     def subscriptionUser(id: PayPalSubscriptionId): Fu[Option[User]] =
-      subscriptionIdPatron(id).flatMap { _.map(_.id).so(userApi.byId) }
+      subscriptionIdPatron(id).flatMap(_.map(_.id).so(userApi.byId))
 
     // only used for automatically renewing subscription charges
     def onCaptureCompleted(capture: PayPalCapture) =

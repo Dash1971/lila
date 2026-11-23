@@ -104,7 +104,7 @@ final class UserShow(helpers: Helpers, bits: UserBits, focused: Boolean = false)
   def newPlayer(u: User)(using Translate) =
     import trans.onboarding as tro
     div(cls := "new-player")(
-      h2(if focused then I18nKey("muteWelcomeTitle")() else tro.welcomeToLichess()),
+      h2(if focused then I18nKey.unchecked("muteWelcomeTitle")() else tro.welcomeToLichess()),
       p(tro.thisIsYourProfilePage()),
       (!focused).option(
         p(
@@ -118,7 +118,7 @@ final class UserShow(helpers: Helpers, bits: UserBits, focused: Boolean = false)
       ul(
         li(a(href := routes.Learn.index)(tro.learnChessRules())),
         li(a(href := routes.Puzzle.home)(tro.improveWithChessTacticsPuzzles())),
-        if focused then li(a(href := routes.Lobby.home)(I18nKey("muteWelcomePlayMaia")()))
+        if focused then li(a(href := routes.Lobby.home)(I18nKey.unchecked("muteWelcomePlayMaia")()))
         else
           frag(
             li(a(href := s"${routes.Lobby.home}#ai")(tro.playTheArtificialIntelligence())),
@@ -127,10 +127,11 @@ final class UserShow(helpers: Helpers, bits: UserBits, focused: Boolean = false)
         ,
         li(
           a(href := routes.User.list)(
-            if focused then I18nKey("muteWelcomeFindFriends")() else tro.followYourFriendsOnLichess()
+            if focused then I18nKey.unchecked("muteWelcomeFindFriends")()
+            else tro.followYourFriendsOnLichess()
           )
         ),
-        if focused then li(a(href := routes.UserAnalysis.index)(I18nKey("muteWelcomeAnalyze")()))
+        if focused then li(a(href := routes.UserAnalysis.index)(I18nKey.unchecked("muteWelcomeAnalyze")()))
         else
           frag(
             li(a(href := routes.Tournament.home)(tro.playInTournaments())),
@@ -144,7 +145,7 @@ final class UserShow(helpers: Helpers, bits: UserBits, focused: Boolean = false)
         ,
         li(
           a(href := routes.Pref.form("display"))(
-            if focused then I18nKey("muteWelcomeSettings")() else tro.configureLichess()
+            if focused then I18nKey.unchecked("muteWelcomeSettings")() else tro.configureLichess()
           )
         ),
         li(tro.exploreTheSiteAndHaveFun())

@@ -1,6 +1,6 @@
 import { wireCropDialog } from 'bits/crop';
 
-import { frag } from 'lib';
+import { frag, isComposing } from 'lib';
 import { licon } from 'lib/licon';
 import { domDialog, type Dialog, alert, confirm } from 'lib/view';
 
@@ -48,6 +48,7 @@ export class AssetDialog {
             this.dlg.close();
           };
         this.dlg = await domDialog({
+          closeButton: true,
           class: `dev-view asset-dialog${this.isChooser ? ' chooser' : ''}`,
           htmlText: this.bodyHtml(),
           easyClose: 'clickOutside',
@@ -138,6 +139,7 @@ export class AssetDialog {
   };
 
   private readonly nameKeyDown = (e: KeyboardEvent): void => {
+    if (isComposing(e)) return;
     const el = e.target as HTMLElement;
     if (e.key === 'Enter') {
       const key = el.closest('.asset-item')!.getAttribute('data-asset')!;
@@ -167,6 +169,7 @@ export class AssetDialog {
     const name = (
       await domDialog({
         class: 'alert',
+        closeButton: true,
         htmlText: `<div>push as: <input type="text" value="${this.local.get(key) ?? key}"></div>
           <span><button class="button">upload</button></span>`,
         easyClose: 'clickOutside',
@@ -286,6 +289,7 @@ export class AssetDialog {
           const suggested = file.name.endsWith('.pgn') ? file.name.slice(0, -4) : file.name;
           domDialog({
             class: 'dev-view import-dialog',
+            closeButton: true,
             htmlText: `<h2>import opening book</h2>
               <div class="options">
                 <span>

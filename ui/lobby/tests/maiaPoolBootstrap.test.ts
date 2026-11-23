@@ -5,6 +5,7 @@ import { h } from 'snabbdom';
 document.documentElement.lang = 'en-US';
 // Keep the real lobby controller, pool view and Snabbdom bootstrap. The unrelated
 // sidebar and carousel are not needed to exercise automatic pool entry.
+mock.module('../src/view/setup/modal', { defaultExport: async () => ({ redraw() {}, close() {} }) });
 mock.module('../src/view/table', { defaultExport: () => h('div.lobby__table') });
 mock.module('../src/view/carousel', { namedExports: { makeCarousel: () => {} } });
 mock.module('../src/view/playing', { defaultExport: () => h('div.now-playing') });

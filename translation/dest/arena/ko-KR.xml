@@ -48,6 +48,8 @@
     <item quantity="other">모두 %s개 팀 보기</item>
   </plurals>
   <string name="newTeamBattle">새 팀 배틀</string>
+  <string name="startDate">시작일</string>
+  <string name="entryConditions">참가 조건</string>
   <string name="customStartDate">시작 시간 설정</string>
   <string name="customStartDateHelp">당신의 현지 시간대입니다. \"토너먼트 시작까지 시간\" 설정을 덮어씁니다.</string>
   <string name="allowBerserk">버서크 모드 허용</string>

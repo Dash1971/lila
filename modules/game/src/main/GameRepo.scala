@@ -50,7 +50,7 @@ final class GameRepo(
     coll.one[Game](bid(gameId) ++ Query.finished)
 
   def player(gameId: GameId, color: Color): Fu[Option[Player]] =
-    game(gameId).dmap2 { _.player(color) }
+    game(gameId).dmap2(_.player(color))
 
   def player(gameId: GameId, playerId: GamePlayerId): Fu[Option[Player]] =
     game(gameId).dmap: gameOption =>
@@ -60,10 +60,10 @@ final class GameRepo(
     player(playerRef.gameId, playerRef.playerId)
 
   def pov(gameId: GameId, color: Color): Fu[Option[Pov]] =
-    game(gameId).dmap2 { Pov(_, color) }
+    game(gameId).dmap2(Pov(_, color))
 
   def pov(playerRef: PlayerRef): Fu[Option[Pov]] =
-    game(playerRef.gameId).dmap { _.flatMap { _.playerIdPov(playerRef.playerId) } }
+    game(playerRef.gameId).dmap(_.flatMap(_.playerIdPov(playerRef.playerId)))
 
   def pov(fullId: GameFullId): Fu[Option[Pov]] = pov(PlayerRef(fullId))
 
@@ -84,7 +84,7 @@ final class GameRepo(
   def recentPovsByUserFromSecondary[U: UserIdOf](user: U, nb: Int, select: Bdoc = emptyBdoc): Fu[List[Pov]] =
     recentGamesFromSecondaryCursor(Query.user(user) ++ select)
       .list(nb)
-      .map { _.flatMap(Pov(_, user)) }
+      .map(_.flatMap(Pov(_, user)))
 
   def recentGamesFromSecondaryCursor(select: Bdoc = emptyBdoc) =
     coll
@@ -234,7 +234,7 @@ final class GameRepo(
     coll
       .list[Game](Query.nowPlaying(user.id), maxPlaying.value + 5)
       .dmap:
-        _.flatMap { Pov(_, user) }
+        _.flatMap(Pov(_, user))
 
   def countNowPlaying(userId: UserId): Fu[Int] = coll.secondary.countSel(Query.nowPlaying(userId))
 
@@ -263,12 +263,12 @@ final class GameRepo(
       .find(Query.recentlyPlaying(userId), bid(true).some)
       .sort(Query.sortMovedAtNoIndex)
       .one[Bdoc](readPreference = ReadPref.pri)
-      .dmap { _.flatMap(_.getAsOpt[GameId](F.id)) }
+      .dmap(_.flatMap(_.getAsOpt[GameId](F.id)))
 
   def allPlaying[U: UserIdOf](user: U): Fu[List[Pov]] =
     coll
       .list[Game](Query.nowPlaying(user))
-      .dmap { _.flatMap { Pov(_, user) } }
+      .dmap(_.flatMap(Pov(_, user)))
 
   def lastPlayed(userId: UserId): Fu[Option[Pov]] =
     coll
@@ -276,14 +276,14 @@ final class GameRepo(
       .sort(sort.desc(F.createdAt))
       .cursor[Game]()
       .list(2)
-      .dmap { _.sortBy(_.movedAt).lastOption.flatMap(Pov(_, userId)) }
+      .dmap(_.sortBy(_.movedAt).lastOption.flatMap(Pov(_, userId)))
 
   def quickLastPlayedId(userId: UserId): Fu[Option[GameId]] =
     coll.secondary
       .find(Query.user(userId), bid(true).some)
       .sort(sort.desc(F.createdAt))
       .one[Bdoc]
-      .dmap { _.flatMap(_.getAsOpt[GameId](F.id)) }
+      .dmap(_.flatMap(_.getAsOpt[GameId](F.id)))
 
   def setTv(id: GameId) = coll.updateFieldUnchecked(bid(id), F.tvAt, nowInstant)
 
@@ -479,11 +479,10 @@ final class GameRepo(
     coll.withReadPreference(readPref).primitiveOne[Fen.Full](bid(gameId), F.initialFen)
 
   def initialFen(game: Game): Fu[Option[Fen.Full]] =
-    if game.sourceIs(_.Import) || !game.variant.standardInitialPosition then
+    needsInitialFen(game).so:
       initialFen(game.id, if game.finished then _.sec else _.pri).dmap:
         case None if game.variant == chess.variant.Chess960 => Fen.initial.some
         case fen => fen
-    else fuccess(none)
 
   def gameWithInitialFen(gameId: GameId): Fu[Option[WithInitialFen]] =
     game(gameId).flatMapz: game =>
@@ -491,11 +490,36 @@ final class GameRepo(
         WithInitialFen(game, fen).some
 
   def withInitialFen(game: Game): Fu[WithInitialFen] =
-    initialFen(game).dmap { WithInitialFen(game, _) }
+    initialFen(game).dmap(WithInitialFen(game, _))
+
+  private def needsInitialFen(g: Game) = g.sourceIs(_.Import) || !g.variant.standardInitialPosition
+
+  private def initialFenMap(games: Seq[Game], readPref: ReadPref): Fu[Map[GameId, Fen.Full]] =
+    games.nonEmpty.so:
+      coll
+        .withReadPreference(readPref)
+        .primitiveMap[GameId, Fen.Full](
+          games.map(_.id),
+          F.initialFen,
+          _.getAsOpt[Fen.Full](F.initialFen)
+        )
+
+  def initialFens(games: Seq[Game]): Fu[Map[GameId, Fen.Full]] =
+    val needFen = games.filter(needsInitialFen)
+    val (finished, playing) = needFen.partition(_.finished)
+    (initialFenMap(finished, _.sec), initialFenMap(playing, _.pri)).mapN: (sec, pri) =>
+      needFen
+        .flatMap: g =>
+          sec
+            .get(g.id)
+            .orElse(pri.get(g.id))
+            .orElse((g.variant == chess.variant.Chess960).option(Fen.initial))
+            .map(g.id -> _)
+        .toMap
 
   def withInitialFens(games: List[Game]): Fu[List[(Game, Option[Fen.Full])]] =
-    games.parallel: game =>
-      initialFen(game).dmap { game -> _ }
+    initialFens(games).map: fens =>
+      games.map(g => g -> fens.get(g.id))
 
   def count(query: Query.type => Bdoc): Fu[Int] = coll.countSel(query(Query))
   def countSec(query: Query.type => Bdoc): Fu[Int] = coll.secondary.countSel(query(Query))
@@ -526,7 +550,7 @@ final class GameRepo(
         )
       .map(_.flatMap: obj =>
         obj.getAsOpt[UserId](F.id).flatMap { id =>
-          obj.int("gs").map { id -> _ }
+          obj.int("gs").map(id -> _)
         })
 
   def random: Fu[Option[Game]] =

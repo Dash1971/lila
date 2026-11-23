@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="gameSetup">Ρύθμιση παρτίδας</string>
   <string name="challengeAFriend" comment="be mindful how 'friend' translates in gendered languages. look for a more neutral term if there's an issue, or base your translation on a different phrase like 'invite to a game'. keep it short and convey the button's meaning without offense.">Προκαλέστε φίλο</string>
   <string name="playAgainstComputer">Νέα παρτίδα εναντίον μηχανής</string>
   <string name="gameMode">Τύπος παιχνιδιού</string>
@@ -436,6 +435,7 @@
   <string name="pasteTheFenStringHere">Επικολλήστε τον κώδικα FEN εδώ</string>
   <string name="pasteThePgnStringHere">Επικολλήστε το κείμενο του PGN εδώ</string>
   <string name="orUploadPgnFile">Ή μεταφορτώστε ένα αρχείο PGN</string>
+  <string name="selectImage">Επιλέξτε εικόνα</string>
   <string name="continueFromHere">Συνέχεια από εδώ</string>
   <string name="toStudy">Μελέτη</string>
   <string name="importGame">Εισαγωγή παιχνιδιού</string>
@@ -699,7 +699,7 @@
   <string name="aboutX">Σχετικά με το %s</string>
   <string name="xIsAFreeYLibreOpenSourceChessServer">Το %1$s είναι (%2$s) μια δωρεάν, ελεύθερη, χωρίς διαφημίσεις, ανοικτού κώδικα ιστοσελίδα για διαδικτυακό σκάκι.</string>
   <string name="really">πραγματικά</string>
-  <string name="lichessUpdates">Ενημερώσεις Lichess</string>
+  <string name="allUpdates">Όλες οι ενημερώσεις</string>
   <string name="contribute">Συνεισφέρετε</string>
   <string name="changelog">Αρχείο αλλαγών</string>
   <string name="termsOfService">Όροι χρήσης</string>
@@ -993,6 +993,8 @@
   <string name="onlyMembersOfTeam">Μόνο μέλη της ομάδας</string>
   <string name="noRestriction">Χωρίς περιορισμούς</string>
   <string name="minimumRatedGames">Ελάχιστος αριθμός βαθμολογημένων παρτίδων</string>
+  <string name="minimumAccountAge">Ελάχιστη ηλικία λογαριασμού</string>
+  <string name="titledPlayersBypassRestriction">Οι παίκτες με τίτλο παρακάμπτουν αυτόν τον περιορισμό.</string>
   <string name="minimumRating">Ελάχιστη βαθμολογία</string>
   <string name="maximumWeeklyRating">Μέγιστη εβδομαδιαία βαθμολογία</string>
   <string name="positionInputHelp">Επικολλήστε ένα έγκυρο FEN αν θέλετε κάθε παρτίδα να ξεκινάει από μια συγκεκριμένη θέση.
@@ -1049,6 +1051,7 @@
   <string name="offline" comment="status of a user">εκτός σύνδεσης</string>
   <string name="search">Αναζήτηση</string>
   <string name="clearSearch">Εκκαθάριση πεδίου αναζήτησης</string>
+  <string name="searchInX">Αναζήτηση στο \"%s\"</string>
   <string name="thereAreNoResultsForX">Δε βρέθηκαν αποτελέσματα για το «%s»</string>
   <string name="tags">Ετικέτες</string>
   <string name="enPassant">En passant</string>

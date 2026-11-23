@@ -218,6 +218,7 @@ export class BoardReview {
     const iframe = `<iframe src="${positionShareUrl(this.ctrl, true)}"
 width=600 height=397 frameborder=0></iframe>`;
     void domDialog({
+      closeButton: true,
       modal: true,
       show: true,
       easyClose: 'clickOutside',

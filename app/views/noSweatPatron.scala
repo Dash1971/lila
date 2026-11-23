@@ -22,11 +22,11 @@ object noSweatPatron:
           cls := "box box-pad",
           id := "nostr-patron",
           attr("data-pubkey") := pubkey.getOrElse(""),
-          attr("data-paid-status") := I18nKey("muteDonationPaid").txt(),
-          attr("data-waiting") := I18nKey("muteDonationWaiting").txt(),
-          attr("data-dismissed") := I18nKey("muteDonationDismissed").txt(),
-          attr("data-dismiss-failed") := I18nKey("muteDonationDismissFailed").txt(),
-          attr("data-signer-needed") := I18nKey("muteDonationSignInAgain").txt()
+          attr("data-paid-status") := I18nKey.unchecked("muteDonationPaid").txt(),
+          attr("data-waiting") := I18nKey.unchecked("muteDonationWaiting").txt(),
+          attr("data-dismissed") := I18nKey.unchecked("muteDonationDismissed").txt(),
+          attr("data-dismiss-failed") := I18nKey.unchecked("muteDonationDismissFailed").txt(),
+          attr("data-signer-needed") := I18nKey.unchecked("muteDonationSignInAgain").txt()
         )(
           div(cls := "patron-heading")(
             h1("Support Mute Chess"),
@@ -53,7 +53,7 @@ object noSweatPatron:
             span(cls := "patron-paid-wing", attr("aria-hidden") := "true")(iconTag(patronIconChar)),
             span(cls := "patron-paid-check", attr("aria-hidden") := "true")(iconTag(Icon.Checkmark)),
             " ",
-            I18nKey("mutePatronThanks")()
+            I18nKey.unchecked("mutePatronThanks")()
           ),
           pubkey.fold[Frag](
             p(
@@ -101,10 +101,10 @@ object noSweatPatron:
                     "Check payment"
                   ),
                   button(id := "patron-dismiss", tpe := "button", cls := "button button-empty")(
-                    I18nKey("muteDonationDismiss")()
+                    I18nKey.unchecked("muteDonationDismiss")()
                   )
                 ),
-                p(cls := "patron-note")(I18nKey("muteDonationDismissHelp")())
+                p(cls := "patron-note")(I18nKey.unchecked("muteDonationDismissHelp")())
               )
             )
           ),

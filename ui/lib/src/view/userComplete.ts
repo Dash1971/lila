@@ -30,11 +30,12 @@ export function userComplete(opts: UserCompleteOpts): void {
 
   complete<LightUserOnline>({
     input: opts.input,
+    minLength: 3,
     fetch: t => debouncedXhr(t).then(checkDebouncedResultAgainstTerm(t)),
     render: (o: LightUserOnline) => renderUserEntry(o, opts.tag),
     populate: opts.populate || (r => r.name),
     onSelect: opts.onSelect,
-    regex: /^[a-z][\w-]{3,28}$/i,
+    regex: /^[a-z][\w-]{2,28}$/i,
   });
   if (opts.focus) setTimeout(() => opts.input.focus());
 }
@@ -68,7 +69,7 @@ export const renderUserEntry = (o: LightUserOnline, tag = 'a'): string => {
   const patronClass = o.patronColor ? ` paco${o.patronColor}` : '';
   const hrefAttr = tag === 'a' ? 'href' : 'data-href';
   const title = o.title
-    ? `<span class="utitle"${o.title === 'BOT' ? ' data-bot="data-bot"' : ''}>${o.title}</span>&nbsp;`
+    ? `<span class="utitle"${o.title === 'BOT' ? ' data-bot' : ''}>${o.title}</span>&nbsp;`
     : '';
   const flair = o.flair ? `<img class="uflair" src="${site.asset.flairSrc(o.flair)}" alt="" />` : '';
   return `<${tag} class="complete-result ulpt user-link${o.online ? ' online' : ''}" ${hrefAttr}="${profileUrl(o.name)}"><icon class="line${o.patron ? ' patron' : ''}${patronClass}"></icon>${title}${escapeHtml(o.displayName || o.name)}${flair}</${tag}>`;

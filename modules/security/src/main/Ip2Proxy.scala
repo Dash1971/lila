@@ -3,7 +3,6 @@ package lila.security
 import play.api.libs.json.*
 import play.api.libs.ws.JsonBodyReadables.*
 import play.api.libs.ws.StandaloneWSClient
-import play.api.mvc.RequestHeader
 
 import lila.common.HTTPRequest
 import lila.core.net.IpAddress
@@ -11,7 +10,7 @@ import lila.core.security.{ Ip2ProxyApi, IsProxy }
 import lila.mon.extensions.*
 
 final class Ip2ProxySkip extends Ip2ProxyApi:
-  def ofReq(req: RequestHeader): Fu[IsProxy] = fuccess(IsProxy.empty)
+  def ofReq(req: Req): Fu[IsProxy] = fuccess(IsProxy.empty)
   def ofIp(ip: IpAddress): Fu[IsProxy] = fuccess(IsProxy.empty)
   def keepProxies(ips: Seq[IpAddress]): Fu[Map[IpAddress, String]] = fuccess(Map.empty)
 
@@ -19,28 +18,27 @@ final class Ip2ProxyServer(
     ws: StandaloneWSClient,
     cacheApi: lila.memo.CacheApi,
     checkUrl: String,
-    tor: Tor,
-    ipTiers: IpTiers
+    tor: Tor
 )(using Executor, Scheduler)
     extends Ip2ProxyApi:
 
   def ofIp(ip: IpAddress): Fu[IsProxy] =
-    if ipTiers.trustedIp.is(ip) then fuccess(IsProxy.empty)
-    else if tor.isExitNode(ip) then fuccess(IsProxy.tor)
+    if tor.isExitNode(ip) then fuccess(IsProxy.tor)
     else cache.get(ip.value)
 
-  def ofReq(req: RequestHeader): Fu[IsProxy] =
-    ofIp(HTTPRequest.ipAddress(req))
-      .map: proxy =>
-        if proxy.no && req.headers.get("X-HTTP-Version").exists(_.startsWith("HTTP/1.")) then IsProxy.http1
-        else proxy
-      .addEffect:
-        _.name.foreach: name =>
-          lila.mon.security.proxy.hit(name, HTTPRequest.actionName(req)).increment()
+  def ofReq(req: Req): Fu[IsProxy] =
+    if HTTPRequest.ipTier(req).yes then fuccess(IsProxy.empty)
+    else
+      ofIp(HTTPRequest.ipAddress(req))
+        .map: proxy =>
+          if proxy.no && req.headers.get("X-HTTP-Version").exists(_.startsWith("HTTP/1.")) then IsProxy.http1
+          else proxy
+        .addEffect:
+          _.name.foreach: name =>
+            lila.mon.security.proxy.hit(name, HTTPRequest.actionName(req)).increment()
 
   def getCached(ip: IpAddress): Option[Fu[IsProxy]] =
-    if ipTiers.trustedIp.is(ip) then fuccess(IsProxy.empty).some
-    else if tor.isExitNode(ip) then fuccess(IsProxy.tor).some
+    if tor.isExitNode(ip) then fuccess(IsProxy.tor).some
     else cache.getIfPresent(ip.value)
 
   def keepProxies(ips: Seq[IpAddress]): Fu[Map[IpAddress, String]] =

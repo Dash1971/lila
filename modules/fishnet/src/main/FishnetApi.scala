@@ -37,7 +37,7 @@ final class FishnetApi(
 
   def keyExists(key: FishnetKey) = repo.getEnabledClient(key).map(_.isDefined)
 
-  def authenticateClient(key: FishnetKey, version: Client.Version, ip: IpAddress): Fu[Try[Client]] = {
+  def authenticateClient(key: FishnetKey, version: Client.Version)(using ip: IpAddress): Fu[Try[Client]] = {
     if config.offlineMode then repo.getOfflineClient.map(some)
     else repo.getEnabledClient(key)
   }.map {
@@ -63,11 +63,10 @@ final class FishnetApi(
     workQueue {
       analysisColl
         .find(
-          bdoc("acquired".exists(false)) ++ {
+          bdoc("acquired".exists(false)) ++
             (!client.offline).so(bdoc("lastTryByKey".neq(client.key))) // client alternation
-          } ++ {
+            ++
             slow.so(bdoc("origin".in(Work.Origin.slowOk)))
-          }
         )
         .sort(
           bdoc(
@@ -78,7 +77,7 @@ final class FishnetApi(
         .one[Work.Analysis]
         .flatMapz: work =>
           repo.updateAnalysis(work.assignTo(client)).inject(work.some): Fu[Option[Work.Analysis]]
-    }.map { _.map(JsonApi.analysisFromWork) }
+    }.map(_.map(JsonApi.analysisFromWork))
 
   def postAnalysis(
       workId: Work.Id,
@@ -131,7 +130,7 @@ final class FishnetApi(
       )
     )
 
-  def status: Fu[JsonStr] = monitor.statusCache.get({}).map(_.json)
+  def status: Fu[JsonStr] = monitor.statusCache.get {}.map(_.json)
   export monitor.statusTtl
 
   private[fishnet] def createClient(userId: UserId): Fu[Client] =

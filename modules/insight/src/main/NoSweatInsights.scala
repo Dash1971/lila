@@ -15,7 +15,7 @@ object NoSweatInsights:
     metrics(q.metric) && dimensions(q.dimension) && q.filters.keySet.subsetOf(filterDimensions) &&
       q.filters.get("variant").forall(_.forall(speeds))
 
-  def text(key: String)(using Translate): String = I18nKey(s"muteInsight$key").txt()
+  def text(key: String)(using Translate): String = I18nKey.unchecked(s"muteInsight$key").txt()
 
   private val names = Map(
     "Game result" -> "Result",
@@ -72,7 +72,7 @@ object NoSweatInsights:
                   .map: v =>
                     val name = if key == "period" then
                       if (v \ "key").as[String] == "1" then text("LastDay")
-                      else I18nKey("muteInsightLastDays").txt((v \ "key").as[String])
+                      else I18nKey.unchecked("muteInsightLastDays").txt((v \ "key").as[String])
                     else label((v \ "name").as[String])
                     v ++ Json.obj("name" -> name)
               )

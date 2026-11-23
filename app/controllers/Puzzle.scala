@@ -104,7 +104,8 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
 
   def complete(angleStr: String, id: PuzzleId) = OpenBody:
     NoBot:
-      onComplete(env.puzzle.forms.round)(id, PuzzleAngle.findOrMix(angleStr), mobileBc = false)
+      Found(PuzzleAngle.find(angleStr)): angle =>
+        onComplete(env.puzzle.forms.round)(id, angle, mobileBc = false)
 
   def mobileBcRound(nid: Long) = OpenBody:
     env.web.lichobileDisables.anonPuzzle match
@@ -261,13 +262,13 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
           selector
             .nextPuzzleFor(angle, none, PuzzleDifficulty.fromReqSession(req))
             .flatMap:
-              _.fold(redirectNoPuzzle) { renderShow(_, angle, langPath = langPath) }
+              _.fold(redirectNoPuzzle)(renderShow(_, angle, langPath = langPath))
         case _ =>
           Puz.toId(angleOrId) match
             case Some(id) =>
               Found(env.puzzle.api.puzzle.find(id)): puzzle =>
                 for
-                  _ <- ctx.me.so { env.puzzle.api.casual.setCasualIfNotYetPlayed(_, puzzle) }
+                  _ <- ctx.me.so(env.puzzle.api.casual.setCasualIfNotYetPlayed(_, puzzle))
                   isDaily <- env.puzzle.daily.get.map(_.exists(_.puzzle.id == puzzle.id))
                   result <- renderShow(puzzle, PuzzleAngle.mix, langPath = langPath, isDaily = isDaily)
                 yield result
@@ -281,16 +282,16 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
 
   def showWithAngle(angleKey: String, id: PuzzleId) = Open:
     NoBot:
-      val angle = PuzzleAngle.findOrMix(angleKey)
-      Found(env.puzzle.api.puzzle.find(id)): puzzle =>
-        if angle.asTheme.exists(theme => !puzzle.themes.contains(theme))
-        then Redirect(routes.Puzzle.show(puzzle.id.value))
-        else
-          WithPuzzlePerf:
-            for
-              _ <- ctx.me.so(env.puzzle.api.casual.setCasualIfNotYetPlayed(_, puzzle))
-              res <- renderShow(puzzle, angle)
-            yield res
+      Found(PuzzleAngle.find(angleKey)): angle =>
+        Found(env.puzzle.api.puzzle.find(id)): puzzle =>
+          if angle.asTheme.exists(theme => !puzzle.themes.contains(theme))
+          then Redirect(routes.Puzzle.show(puzzle.id.value))
+          else
+            WithPuzzlePerf:
+              for
+                _ <- ctx.me.so(env.puzzle.api.casual.setCasualIfNotYetPlayed(_, puzzle))
+                res <- renderShow(puzzle, angle)
+              yield res
 
   def angleAndColor(angleKey: String, colorKey: String) = Open:
     NoBot:
@@ -302,18 +303,18 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
             selector
               .nextPuzzleFor(angle, color.some, PuzzleDifficulty.fromReqSession(req))
               .flatMap:
-                _.fold(redirectNoPuzzle) { renderShow(_, angle, color = color) }
+                _.fold(redirectNoPuzzle)(renderShow(_, angle, color = color))
 
   private val fetchRateLimit =
-    env.security.ipTrust.rateLimit(300, 1.hour, "puzzle.fetch.ip", _.antiScraping(dch = 5, others = 1))
+    env.security.ipTrust.rateLimit(400, 1.hour, "puzzle.fetch.ip", _.antiScraping(dch = 5, others = 1))
 
   def apiNext = AnonOrScoped(_.Puzzle.Read):
     fetchRateLimit(rateLimited, cost = if ctx.isAuth then 1 else 5):
       WithPuzzlePerf:
-        val angle = PuzzleAngle.findOrMix(~get("angle"))
-        val settings = reqSettings(angle)
-        FoundOk(selector.nextPuzzleFor(angle, settings.color.map(some), settings.difficulty.some)):
-          env.puzzle.jsonView(_, none, none)
+        Found(get("angle").fold(PuzzleAngle.mix.some)(PuzzleAngle.find)): angle =>
+          val settings = reqSettings
+          FoundOk(selector.nextPuzzleFor(angle, settings.color.map(some), settings.difficulty.some)):
+            env.puzzle.jsonView(_, none, none, true)
 
   def frame = Anon:
     InEmbedContext:
@@ -333,7 +334,7 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
 
   def apiDashboard(days: Days) = AuthOrScoped(_.Puzzle.Read, _.Web.Mobile) { _ ?=> me ?=>
     JsonOptionOk:
-      env.puzzle.dashboard(me, days).map2 { env.puzzle.jsonView.dashboardJson(_, days) }
+      env.puzzle.dashboard(me, days).map2(env.puzzle.jsonView.dashboardJson(_, days))
   }
 
   def dashboard(days: Days, path: String = "home", u: Option[UserStr]) =
@@ -390,17 +391,17 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
         .find(angleStr)
         .fold(fuccess(notFoundJson(s"No $angleStr puzzles found"))): angle =>
           WithPuzzlePerf:
-            for puzzles <- batchSelect(angle, reqSettings(angle), nb)
+            for puzzles <- batchSelect(angle, reqSettings, nb)
             yield Ok(puzzles)
 
-  private def reqSettings(angle: PuzzleAngle)(using req: RequestHeader) =
-    PuzzleSettings(PuzzleDifficulty.orDefault(~get("difficulty")), getColor()).in(angle)
+  private def reqSettings(using req: Req) =
+    PuzzleSettings(PuzzleDifficulty.orDefault(~get("difficulty")), getColor())
 
   private def batchSelect(angle: PuzzleAngle, settings: PuzzleSettings, nb: Int)(using Option[Me], Perf) =
     env.puzzle.batch.nextForMe(angle, settings, nb.atMost(50)).flatMap(env.puzzle.jsonView.batch)
 
   private val solveRateLimit =
-    env.security.ipTrust.rateLimit(400, 1.hour, "puzzle.solve.ip", _.proxyMultiplier(2))
+    env.security.ipTrust.rateLimit(500, 1.hour, "puzzle.solve.ip", _.proxyMultiplier(2))
 
   def apiBatchSolve(angleStr: String) = AnonOrScopedBody(parse.json)(_.Puzzle.Write, _.Web.Mobile): ctx ?=>
     if !PuzzleForm.batch.isValid(ctx.body.body)
@@ -415,7 +416,7 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
               if ctx.isMobileOauth then 1 else if ctx.isAuth then 2 else 5
             }
             solveRateLimit(rateLimited, cost = cost):
-              val angle = PuzzleAngle.findOrMix(angleStr)
+              val angle = PuzzleAngle.find(angleStr) | PuzzleAngle.mix
               for
                 rounds <- ctx.me match
                   case Some(me) =>
@@ -427,11 +428,11 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
                       yield solves.map(env.puzzle.jsonView.roundJson.api.tupled)
                   case None =>
                     data.solutions
-                      .sequentiallyVoid { sol => env.puzzle.finisher.incPuzzlePlays(sol.id) }
+                      .sequentiallyVoid(sol => env.puzzle.finisher.incPuzzlePlays(sol.id))
                       .inject(Nil)
                 given Option[Me] <- ctx.me.so(env.user.repo.me)
                 nextPuzzles <- WithPuzzlePerf:
-                  batchSelect(angle, reqSettings(angle), ~getInt("nb"))
+                  batchSelect(angle, reqSettings, ~getInt("nb"))
                 result = nextPuzzles ++ Json.obj("rounds" -> rounds)
               yield Ok(result)
         )

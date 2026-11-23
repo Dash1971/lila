@@ -23,8 +23,8 @@ object noSweatInfo:
         content(key)
       )
 
-  private def contactLink(using Context) = a(href := nostrUrl)(I18nKey("muteNostrContactLabel")())
-  private def forumLink(using Context) = a(href := "/forum")(I18nKey("muteForumLabel")())
+  private def contactLink(using Context) = a(href := nostrUrl)(I18nKey.unchecked("muteNostrContactLabel")())
+  private def forumLink(using Context) = a(href := "/forum")(I18nKey.unchecked("muteForumLabel")())
 
   private def content(key: String)(using Context): Frag = key match
     case "about" =>
@@ -48,17 +48,17 @@ object noSweatInfo:
           ),
           li(
             p(
-              I18nKey("muteAboutMaiaEngineCredit")(
+              I18nKey.unchecked("muteAboutMaiaEngineCredit")(
                 strong(a(href := "https://github.com/CSSLab/maia3")("Maia3 by CSSLab"))
               )
             )
           ),
           li(
             p(
-              I18nKey("muteAboutMaiaFrontendCredit")(
+              I18nKey.unchecked("muteAboutMaiaFrontendCredit")(
                 strong(a(href := "https://www.maiachess.com/")("maiachess.com")),
                 a(href := "https://github.com/CSSLab/maia-platform-frontend")(
-                  I18nKey("muteAboutMaiaFrontendSource")()
+                  I18nKey.unchecked("muteAboutMaiaFrontendSource")()
                 )
               )
             )
@@ -152,10 +152,10 @@ object noSweatInfo:
       )
     case "contact" =>
       frag(
-        p(I18nKey("muteContactPublic")(forumLink)),
-        p(I18nKey("muteContactReport")()),
-        p(I18nKey("muteContactPrivate")(contactLink)),
-        p(I18nKey("muteContactDetails")())
+        p(I18nKey.unchecked("muteContactPublic")(forumLink)),
+        p(I18nKey.unchecked("muteContactReport")()),
+        p(I18nKey.unchecked("muteContactPrivate")(contactLink)),
+        p(I18nKey.unchecked("muteContactDetails")())
       )
     case "terms-of-service" =>
       frag(
