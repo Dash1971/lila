@@ -61,22 +61,42 @@ interface I18n {
   app: {
     /** all releases */
     allReleases: string;
+    /** As free as Lichess */
+    asFreeAsLichess: string;
+    /** Built for the love of chess, not money */
+    builtForTheLoveOfChessNotMoney: string;
+    /** Bullet, blitz, classical, variants */
+    bulletBlitzClassicalVariants: string;
+    /** Correspondence chess */
+    correspondenceChess: string;
     /** Download on the Apple App Store */
     downloadOnAppleAppStore: string;
     /** Download on F-Droid */
     downloadOnFdroid: string;
     /** Download on Google Play */
     downloadOnGooglePlay: string;
+    /** Entirely Open Source */
+    entirelyOpenSource: string;
+    /** Fully featured */
+    fullyFeatured: string;
+    /** Game analysis */
+    gameAnalysis: string;
     /** If the app does not open automatically, tap the "%s" button. */
     ifAppDoesNotOpenAutomatically: I18nFormat;
     /** Lichess Mobile App */
     lichessMobileApp: string;
     /** Lichess mobile screen */
     lichessMobileScreen: string;
+    /** No ads, no tracking */
+    noAdsNoTracking: string;
     /** Open the Lichess app */
     openTheApp: string;
+    /** Phone and tablet */
+    phoneAndTablet: string;
     /** Returning to the Lichess app */
     returningToApp: string;
+    /** Unlimited puzzles */
+    unlimitedPuzzles: string;
     /** View %s on GitHub */
     viewAllReleases: I18nFormat;
   };
@@ -301,6 +321,8 @@ interface I18n {
     deleteTournament: string;
     /** Download all rounds */
     downloadAllRounds: string;
+    /** Download PGN */
+    downloadPgn: string;
     /** Edit round study */
     editRoundStudy: string;
     /** Embed this broadcast in your website */
@@ -349,6 +371,8 @@ interface I18n {
     matchHistory: string;
     /** Match Points */
     matchPoints: string;
+    /** Mention this position in chat */
+    mentionPositionInChat: string;
     /** Men */
     menTournament: string;
     /** My broadcasts */
@@ -409,6 +433,8 @@ interface I18n {
     score: string;
     /** Semifinals */
     semifinals: string;
+    /** Share this broadcast by URL */
+    shareThisBroadcastByUrl: string;
     /** Show player scores based on game results */
     showScores: string;
     /** Since you chose to hide the results, all the preview boards are empty to avoid spoilers. */
@@ -679,7 +705,7 @@ interface I18n {
     quicklyGenerateSafeUsernames: string;
     /** Real name */
     realName: string;
-    /** Real, unique email address of the student. We will send a confirmation email to it, with a link to graduate the account. */
+    /** Real, unique email address of the student. We will send a confirmation email to it, with a link to graduate the account. The link expires after 10 minutes. */
     realUniqueEmail: string;
     /** Graduate */
     release: string;
@@ -1345,7 +1371,7 @@ interface I18n {
     verificationForm: string;
     /** View site information popup */
     viewSiteInformationPopUp: string;
-    /** Watch International Master Eric Rosen checkmate %s. */
+    /** Watch International Master Eric Rosen checkmate <a href='%s' target='_blank'>en passant</a>. */
     watchIMRosenCheckmate: I18nFormat;
     /** Unfortunately, we cannot give back rating points for games lost due to lag or disconnection, regardless of whether the problem was at your end or our end. The latter is very rare though. Also note that when Lichess restarts and you lose on time because of that, we abort the game to prevent an unfair loss. */
     weCannotDoThatEvenIfItIsServerSideButThatsRare: string;
@@ -1927,6 +1953,8 @@ interface I18n {
     modActionFeedback: string;
     /** The old app no longer supports puzzles. Please install the new Lichess app: %s */
     oldAppNoLongerSupportsPuzzles: I18nFormat;
+    /** %s doesn't accept new messages. */
+    xDoesntAcceptNewMessages: I18nFormat;
   };
   nvui: {
     /** Actions */
@@ -2107,7 +2135,7 @@ interface I18n {
     insteadGenerateToken: I18nFormat;
     /** Last used %s */
     lastUsed: I18nFormat;
-    /** Manage teams you lead: send direct messages, kick members */
+    /** Manage teams you lead: send direct messages, remove members */
     manageTeamsYouLead: string;
     /** Send private messages to other players */
     msgWrite: string;
@@ -2195,10 +2223,14 @@ interface I18n {
     playTheArtificialIntelligence: string;
     /** This is your profile page. */
     thisIsYourProfilePage: string;
+    /** Verify your account */
+    verifyYourAccount: string;
     /** Welcome! */
     welcome: string;
     /** Welcome to Lichess! */
     welcomeToLichess: string;
+    /** Welcome to Lichess, %s! */
+    welcomeToLichessX: I18nFormat;
     /** What now? Here are a few suggestions: */
     whatNowSuggestions: string;
   };
@@ -2601,7 +2633,7 @@ interface I18n {
     exceptInGame: string;
     /** Can be disabled during a game with the board menu */
     explainCanThenBeTemporarilyDisabled: string;
-    /** Hold the <ctrl> key while promoting to temporarily disable auto-promotion */
+    /** Hold the ctrl key while promoting to temporarily disable auto-promotion */
     explainPromoteToQueenAutomatically: string;
     /** Hides all ratings from Lichess, to help you focus on the game. */
     explainShowPlayerRatings: string;
@@ -2641,8 +2673,6 @@ interface I18n {
     moveListSettings: string;
     /** Move list while playing */
     moveListWhilePlaying: string;
-    /** Multiple choices. */
-    multipleChoices: string;
     /** Network */
     network: string;
     /** Notifications */
@@ -3501,6 +3531,8 @@ interface I18n {
     allSet: string;
     /** All squares */
     allSquaresOfTheBoard: string;
+    /** All updates */
+    allUpdates: string;
     /** Always */
     always: string;
     /** Analysis board */
@@ -4041,8 +4073,6 @@ interface I18n {
     gameOver: string;
     /** Games */
     games: string;
-    /** Game setup */
-    gameSetup: string;
     /** Games played */
     gamesPlayed: string;
     /** Game vs %1$s */
@@ -4217,7 +4247,7 @@ interface I18n {
     lichessPatronInfo: string;
     /** Lichess tournaments */
     lichessTournaments: string;
-    /** Lichess updates */
+    /** Lichess feed */
     lichessUpdates: string;
     /** Lifetime score */
     lifetimeScore: string;
@@ -4775,6 +4805,8 @@ interface I18n {
     security: string;
     /** See best move */
     seeBestMove: string;
+    /** Select image */
+    selectImage: string;
     /** Send */
     send: string;
     /** If you can't find your confirmation email, send an email to %s and we'll confirm your account for you. */
@@ -4877,6 +4909,8 @@ interface I18n {
     startPosition: string;
     /** Stats */
     stats: string;
+    /** Stop */
+    stop: string;
     /** Streamer manager */
     streamerManager: string;
     /** Streamers */
@@ -5559,8 +5593,6 @@ interface I18n {
     blackIsSlightlyBetter: string;
     /** Black is winning */
     blackIsWinning: string;
-    /** Blunder */
-    blunder: string;
     /** Brilliant move */
     brilliantMove: string;
     /** Chapters are saved forever.<br>Have fun organizing your chess content! */
@@ -5689,8 +5721,6 @@ interface I18n {
     inviteOnly: string;
     /** Invite to the study */
     inviteToTheStudy: string;
-    /** Kick */
-    kick: string;
     /** Leave the study */
     leaveTheStudy: string;
     /** Like */
@@ -5711,8 +5741,6 @@ interface I18n {
     manageTopics: string;
     /** Members */
     members: string;
-    /** Mistake */
-    mistake: string;
     /** Most popular */
     mostPopular: string;
     /** My favourite studies */
@@ -5795,6 +5823,8 @@ interface I18n {
     recentlyUpdated: string;
     /** Relevant */
     relevant: string;
+    /** Remove */
+    remove: string;
     /** Request a server analysis */
     requestAServerAnalysis: string;
     /** Right under the board */
@@ -6089,26 +6119,14 @@ interface I18n {
     battleOfNbTeams: I18nPlural;
     /** Your join request is being reviewed by a team leader. */
     beingReviewed: string;
-    /** Close team */
-    closeTeam: string;
-    /** Closes the team forever. */
-    closeTeamDescription: string;
     /** Completed tournaments */
     completedTourns: string;
-    /** Declined Requests */
-    declinedRequests: string;
     /** Team entry code */
     entryCode: string;
     /** (Optional) An entry code that new members must know to join this team. */
     entryCodeDescriptionForLeader: string;
     /** Team forum */
     forumLabel: string;
-    /** Who can see the team forum on the team page?<br>Only team members can post in the team forum. */
-    forumVisibilityHelp: string;
-    /** Hide the forum */
-    forumVisibilityNone: string;
-    /** Hide team member list from non-members. */
-    hideMembersDesc: string;
     /** Incorrect entry code. */
     incorrectEntryCode: string;
     /** Inner team */
@@ -6119,18 +6137,10 @@ interface I18n {
     joinLichessVariantTeam: I18nFormat;
     /** Join team */
     joinTeam: string;
-    /** Kick someone out of the team */
-    kickSomeone: string;
     /** Leaders chat */
     leadersChat: string;
     /** Leader teams */
     leaderTeams: string;
-    /** List the teams that will compete in this battle. */
-    listTheTeamsThatWillCompete: string;
-    /** Manually review admission requests */
-    manuallyReviewAdmissionRequests: string;
-    /** If checked, players will need to request to join the team, which you can accept or decline. */
-    manuallyReviewAdmissionRequestsHelp: string;
     /** My teams */
     myTeams: string;
     /** %s leaders per team */
@@ -6139,20 +6149,8 @@ interface I18n {
     nbMembers: I18nPlural;
     /** New team */
     newTeam: string;
-    /** New team update */
-    newTeamUpdate: string;
     /** No team found */
     noTeamFound: string;
-    /** Number of leaders per team. The sum of their score is the score of the team. */
-    numberOfLeadsPerTeam: string;
-    /** You really shouldn't change this value after the tournament has started! */
-    numberOfLeadsPerTeamHelp: string;
-    /** One team per line. Use the auto-completion. */
-    oneTeamPerLine: string;
-    /** You can copy-paste this list from one tournament to another! */
-    oneTeamPerLineHelp: string;
-    /** Please add a new team leader before leaving, or close the team. */
-    onlyLeaderLeavesTeam: string;
     /** Leave team */
     quitTeam: string;
     /** Your join request was declined by a team leader. */
@@ -6169,12 +6167,8 @@ interface I18n {
     teamBattle: string;
     /** A battle of multiple teams, each player scores points for their team */
     teamBattleOverview: string;
-    /** Full description visible on the team page. */
-    teamDescriptionHelp: string;
     /** Team events */
     teamEvents: string;
-    /** Brief description visible in team listings. Up to 200 chars. */
-    teamIntroductionHelp: string;
     /** Team leaders */
     teamLeaders: I18nPlural;
     /** Recent members */
@@ -6189,16 +6183,96 @@ interface I18n {
     teamTournamentOverview: string;
     /** Team updates */
     teamUpdates: string;
-    /** This tournament is over, and the teams can no longer be updated. */
-    thisTeamBattleIsOver: string;
     /** Upcoming team events */
     upcomingTeamEvents: string;
     /** Upcoming tournaments */
     upcomingTournaments: string;
-    /** Who do you want to kick out of the team? */
-    whoToKick: string;
     /** Your join request will be reviewed by a team leader. */
     willBeReviewed: string;
+  };
+  teamLead: {
+    /** Blocked Users */
+    blockedUsers: string;
+    /** Enter one username per line. These players will be blocked from joining the team. */
+    blockedUsersDesc: string;
+    /** Close team */
+    closeTeam: string;
+    /** Closes the team forever. */
+    closeTeamDescription: string;
+    /** Declined Requests */
+    declinedRequests: string;
+    /** To demote a leader, revoke all their permissions. */
+    demoteLeaderNote: string;
+    /** Who can see the team forum on the team page?<br>Only team members can post in the team forum. */
+    forumVisibilityHelp: string;
+    /** Hide the forum */
+    forumVisibilityNone: string;
+    /** Hide team member list from non-members. */
+    hideMembersDesc: string;
+    /** List the teams that will compete in this battle. */
+    listTheTeamsThatWillCompete: string;
+    /** Manually review admission requests */
+    manuallyReviewAdmissionRequests: string;
+    /** If checked, players will need to request to join the team, which you can accept or decline. */
+    manuallyReviewAdmissionRequestsHelp: string;
+    /** New team update */
+    newTeamUpdate: string;
+    /** Number of leaders per team. The sum of their score is the score of the team. */
+    numberOfLeadsPerTeam: string;
+    /** You really shouldn't change this value after the tournament has started! */
+    numberOfLeadsPerTeamHelp: string;
+    /** One team per line. Use the auto-completion. */
+    oneTeamPerLine: string;
+    /** You can copy-paste this list from one tournament to another! */
+    oneTeamPerLineHelp: string;
+    /** Please add a new team leader before leaving, or close the team. */
+    onlyLeaderLeavesTeam: string;
+    /** Manage leaders' permissions */
+    permAdminDesc: string;
+    /** Admin */
+    permAdminName: string;
+    /** Moderate the forum and team chat */
+    permCommDesc: string;
+    /** Moderation */
+    permCommName: string;
+    /** Send updates to team members */
+    permPmAllDesc: string;
+    /** Updates */
+    permPmAllName: string;
+    /** Appear as a leader on the team page */
+    permPublicDesc: string;
+    /** Public */
+    permPublicName: string;
+    /** Remove members from the team */
+    permRemoveDesc: string;
+    /** Remove */
+    permRemoveName: string;
+    /** Accept or decline join requests */
+    permRequestDesc: string;
+    /** Requests */
+    permRequestName: string;
+    /** Edit team settings and description */
+    permSettingsDesc: string;
+    /** Settings */
+    permSettingsName: string;
+    /** Create, manage and join team tournaments */
+    permTourDesc: string;
+    /** Tournaments */
+    permTourName: string;
+    /** Remove someone */
+    removeSomeone: string;
+    /** Full description visible on the team page. */
+    teamDescriptionHelp: string;
+    /** Brief description visible in team listings. Up to 200 chars. */
+    teamIntroductionHelp: string;
+    /** Tell others about your team! */
+    teamIntroPrompt: string;
+    /** You can send up to %1$s team updates per week. <strong>%2$s</strong> updates remaining until %3$s. */
+    teamUpdatesPerWeek: I18nFormat;
+    /** This tournament is over, and the teams can no longer be updated. */
+    thisTeamBattleIsOver: string;
+    /** Who do you want to remove from the team? */
+    whoToRemove: string;
     /** %s join requests */
     xJoinRequests: I18nPlural;
     /** You may want to link one of these upcoming tournaments? */
@@ -6383,6 +6457,8 @@ interface I18n {
     community: string;
     /** Community blogs */
     communityBlogs: string;
+    /** Contains sponsored content, affiliate links or commercial advertisement */
+    containsSponsoredContent: string;
     /** Continue reading this post */
     continueReadingPost: string;
     /** Cover image */

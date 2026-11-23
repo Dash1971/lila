@@ -1187,7 +1187,7 @@ object NoSweatService:
     if displayName.exists(lila.user.PublicNameKeys.reservedForIdentity) then
       throw NoSweatError(
         409,
-        lila.core.i18n.I18nKey("muteChooseDifferentName").txt(),
+        lila.core.i18n.I18nKey.unchecked("muteChooseDifferentName").txt(),
         Some("reserved_public_name")
       )
     displayName

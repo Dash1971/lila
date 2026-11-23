@@ -160,9 +160,8 @@ final class AccountPref(helpers: Helpers, helper: PrefHelper, bits: AccountUi):
             setting(
               trp.moveConfirmation(),
               frag(
-                bitCheckboxes(form("behavior.submitMove"), submitMoveChoices),
+                toggles(form("behavior.submitMove"), submitMoveChoices),
                 div(cls := "help text shy", dataIcon := Icon.InfoCircle)(
-                  trp.multipleChoices(),
                   trp.explainCanThenBeTemporarilyDisabled()
                 )
               ),
@@ -238,7 +237,7 @@ final class AccountPref(helpers: Helpers, helper: PrefHelper, bits: AccountUi):
   def engineAnalysis(u: User)(using Context) =
     AccountPage(s"Engine Analysis - ${u.username}", "engine-analysis"):
       div(cls := "box box-pad")(
-        h1(cls := "box__top")(I18nKey("muteEngineAnalysis").txt()),
+        h1(cls := "box__top")(I18nKey.unchecked("muteEngineAnalysis").txt()),
         form(cls := "nosweat-engine-preferences")(
           div(id := "nosweat-engine-settings-page"),
           p(cls := "help")("Settings are saved automatically in this browser."),

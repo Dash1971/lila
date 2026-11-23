@@ -1,4 +1,5 @@
 import type { AcplChart, ChartGame } from 'chart';
+import { parsePgn } from 'chessops/pgn';
 
 import { withEffect, type Prop } from 'lib';
 import { clamp } from 'lib/algo';
@@ -17,7 +18,7 @@ import {
   alert,
   confirm,
   jsx,
-  jsxDialog,
+  snabDialog,
   onInsert,
   rangeConfig,
   spinnerVdom,
@@ -27,6 +28,7 @@ import { text as xhrText } from 'lib/xhr';
 import type AnalyseCtrl from '../ctrl';
 import type { AnalysisEngineInfo } from '../interfaces';
 import { gameReviewQuality } from '../noSweatFullReview';
+import { renderFullTxt } from '../pgnExport';
 import { isFinished } from '../study/studyChapters';
 import { LocalAnalysisEngine } from './localAnalysisEngine';
 
@@ -37,14 +39,15 @@ export interface InlineAnalysisHost {
 
 export async function localAnalysisDialog(ctrl: AnalyseCtrl, start = false): Promise<void> {
   const state = new LocalAnalysisDialog(ctrl, await site.asset.loadEsm<ChartGame>('chart.game'));
-  let redraw: Redraw = () => {};
-  redraw = jsxDialog({
+  snabDialog({
+    closeButton: true,
     class: 'local-analysis-dialog',
-    css: [{ hashed: 'analyse.local-dialog' }],
+    show: true,
+    css: [{ key: 'analyse.local-dialog' }],
     modal: true,
     onClose: state.close,
     onShow: dialog => {
-      if (start && ctrl.noSweat) void state.analyse(dialog, redraw);
+      if (start && ctrl.noSweat) void state.analyse(dialog, dialog.redraw);
     },
     render: state.render,
   });
@@ -147,6 +150,7 @@ export class LocalAnalysisDialog {
               this.chart = await this.chartGame!.acpl(canvas, this.ctrl.data, this.engine!.nodes);
             })}
           />
+          <span class={['actions', this.engine && 'none']}>{this.pgnButtons()}</span>
         </div>
         <div class={['working', this.isIdle && 'none']}>
           {spinnerVdom()}
@@ -223,8 +227,8 @@ export class LocalAnalysisDialog {
       const result = await engine.analyse(
         this.customSearch,
         division,
-        (moves: number, totalMoves: number, nodesPerMove: number) => {
-          this.updateEngineStatus(moves, totalMoves, nodesPerMove);
+        (nodeIndex: number, totalNodes: number, nodesPerMove: number) => {
+          this.updateEngineStatus(nodeIndex, totalNodes, nodesPerMove);
           this.chart?.updateData(this.chartData, engine.nodes);
           redraw();
         },
@@ -365,6 +369,44 @@ export class LocalAnalysisDialog {
     }
   };
 
+  private readonly clickCopyPgn = async (e: Event) => {
+    const button = e.currentTarget as HTMLButtonElement;
+    try {
+      if (typeof ClipboardItem === 'undefined') {
+        await navigator.clipboard.writeText(await this.pgn());
+      } else {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/plain': this.pgn().then(pgn => new Blob([pgn], { type: 'text/plain' })),
+          }),
+        ]);
+      }
+      button.style.color = 'var(--c-secondary)';
+      button.innerText = licon.Checkmark;
+      setTimeout(() => {
+        button.style.color = '';
+        button.innerText = licon.Clipboard;
+      }, 1000);
+    } catch (error) {
+      await alert(String(error));
+    }
+  };
+
+  private readonly clickDownloadPgn = async () => {
+    try {
+      const url = URL.createObjectURL(new Blob([await this.pgn()], { type: 'application/x-chess-pgn' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `lichess_${this.ctrl.idbTree.id}.pgn`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      await alert(String(error));
+    }
+  };
+
   private readonly updateEngineStatus = (nodeIndex: number, totalNodes: number, nodesPerMove: number) => {
     this.progress = { done: nodeIndex, total: totalNodes };
     const progress =
@@ -455,7 +497,7 @@ export class LocalAnalysisDialog {
       this.separator(i18n.localAnalysis.willUse),
       <div class="analysis-settings">
         <div class="setting">
-          <label for="local-analysis-engine">Engine:</label>
+          <label for="local-analysis-engine">{i18n.site.engine}:</label>
           {engineSelect(
             this.browserEngines, // TODO - allow external engines once supported
             info.engine.id,
@@ -502,19 +544,20 @@ export class LocalAnalysisDialog {
   private analysisInfo(info: AnalysisEngineInfo): LooseVNodes {
     const isPublished = info === this.ctrl.publishedEvalEngine;
     const isLocal = this.ctrl.idbTree.hasLocalAnalysis && info !== this.ctrl.publishedEvalEngine;
-    const splitVersion = info.engineVersion.split('/');
+    const splitVersion = info.version.split('/');
     const isFishnet = splitVersion.length === 3;
-    const engineName = isFishnet ? splitVersion[1] : info.engineVersion;
+    const engineName = isFishnet ? splitVersion[1] : info.version;
     const [clearText, clearClick] = isLocal
       ? [i18n.study.clearLocal, this.clickClearLocal]
       : [i18n.study.clearPublished, this.clickClearPublished];
-    const provenance = isFishnet ? 'Fishnet' : isLocal ? i18n.localAnalysis.local : i18n.site.by(info.userId);
+    const provenance = isLocal ? i18n.localAnalysis.local : 'Fishnet';
     return [
       <label>{isPublished ? i18n.localAnalysis.published : i18n.localAnalysis.using}</label>,
       <p class="info-line">
         <strong>{provenance}</strong>
-        <span class="weak">
-          {engineName}
+        <span class="weak">{engineName}</span>
+        <span class="actions">
+          {isLocal && this.pgnButtons()}
           {(isLocal ||
             (this.ctrl.study?.members.canContribute() && this.ctrl.study.canMergeAnalysisCleanly())) && (
             <button class="clear" title={clearText} on={{ click: clearClick }}>
@@ -526,6 +569,27 @@ export class LocalAnalysisDialog {
       <label>{i18n.localAnalysis.nodesPerMove}:</label>,
       <strong>{numberFormat(info.nodesPerMove)}</strong>,
     ];
+  }
+
+  private pgnButtons() {
+    return [
+      <button class="button-empty" title="Copy annotated PGN" on={{ click: this.clickCopyPgn }}>
+        {licon.Clipboard}
+      </button>,
+      <button class="button-empty" title="Download annotated PGN" on={{ click: this.clickDownloadPgn }}>
+        {licon.Download}
+      </button>,
+    ];
+  }
+
+  private async pgn(): Promise<string> {
+    const ctrl = this.ctrl;
+    const study = ctrl.study;
+    const url = study
+      ? `/study/${study.data.id}/${study.data.chapter.id}.pgn`
+      : `/game/export/${ctrl.data.game.id}`;
+    const headers = parsePgn(await xhrText(url))[0].headers;
+    return renderFullTxt(ctrl, ctrl.tree.root, true, headers);
   }
 
   private searchQualitySetting(redraw: Redraw) {

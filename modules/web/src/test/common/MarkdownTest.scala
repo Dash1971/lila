@@ -2,8 +2,8 @@ package lila.markdown
 
 import chess.format.pgn.PgnStr
 
-import lila.core.lilaism.Lilaism.*
 import lila.core.config.NetDomain
+import lila.core.lilaism.Lilaism.*
 import lila.core.misc.lpv.LpvEmbed
 
 class MarkdownTest extends munit.FunSuite:
@@ -182,6 +182,18 @@ Line 2""")
 > > > > > Second line""")
     )
 
+  // https://github.com/vsch/flexmark-java/issues/648
+  test("stack overflow detection"):
+    val flood = "A" * 6000
+    val text = s"""[b]: <https://example.com/$flood>"""
+    assertEquals(
+      render(Markdown(text)),
+      Html(
+        s"""<p>[b]: <a href="https://example.com/$flood" target="_blank" rel="nofollow noreferrer">https://example.com/$flood</a></p>
+"""
+      )
+    )
+
   test("markdown 5 quotes to 4 escaped quotes with spaces"):
     assertEquals(
       render(Markdown(">>>>> Hi")),
@@ -243,16 +255,15 @@ Line 2""")
 """)
     )
 
+  val renderTimestamp: Markdown => Html =
+    new MarkdownRender(
+      netDomain = NetDomain("lichess.org").some,
+      header = true,
+      list = true,
+      timestamp = true
+    )("test")
+
   test("markdown datetime rendering"):
-    val renderTimestamp: Markdown => Html =
-      new MarkdownRender(
-        netDomain = NetDomain("lichess.org").some,
-        header = true,
-        list = true,
-        timestamp = true
-      )(
-        "test"
-      )
     val formats = List(
       "d" -> "2025-12-15",
       "D" -> "2025-12-15",
@@ -282,6 +293,23 @@ Line 2""")
       )
     )
 
+  test("markdown datetime invalid"):
+    assertEquals(
+      renderTimestamp(Markdown("Tourney at <t:31556889832780800:f>")),
+      Html("""<p>Tourney at &lt;t:31556889832780800:f&gt;</p>
+""")
+    )
+    assertEquals(
+      renderTimestamp(Markdown("Tourney at <t:99999999999999999999:f>")),
+      Html("""<p>Tourney at &lt;t:99999999999999999999:f&gt;</p>
+""")
+    )
+    assertEquals(
+      renderTimestamp(Markdown("Tourney at <t:23948928374928:Ii>")),
+      Html("""<p>Tourney at &lt;t:23948928374928:Ii&gt;</p>
+""")
+    )
+
   test("remove html entities"):
     val render: Markdown => Html =
       new MarkdownRender(removeHtmlEntities = true)("test")
@@ -293,10 +321,15 @@ Line 2""")
       new MarkdownRender(removeHtmlEntities = false)("test")
     assertEquals(render(Markdown("&#128512;")), Html("<p>&#128512;</p>\n"))
 
-  test("parser stack overflow fallback escapes untrusted HTML"):
+  test("deep parser input escapes untrusted HTML with or without fallback"):
     val raw =
       """<meta http-equiv="refresh" content="0;url=https://example.com"><div>unsafe & text</div>
 [a][b]
 
 [b]: <https://example.com/""" + ("A" * 19000) + ">\n"
-    assertEquals(render(Markdown(raw)), Html(scalalib.StringUtils.escapeHtmlRaw(raw)))
+    // Whether this reaches the fallback depends on the JVM stack size. Both paths must escape HTML.
+    val html = render(Markdown(raw)).value
+    assert(!html.contains("<meta"))
+    assert(!html.contains("<div>unsafe"))
+    assert(html.contains("&lt;meta"))
+    assert(html.contains("unsafe &amp; text"))

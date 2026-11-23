@@ -185,27 +185,35 @@ final class TournamentForm(val helpers: Helpers, showUi: TournamentShow)(
           disabled = fields.disabledAfterStart
         ),
         p(cls := (if enabled then "maia-arena-enabled" else "maia-arena-enabled none"))(
-          I18nKey("muteArenaBotsHelp")()
+          I18nKey.unchecked("muteArenaBotsHelp")()
         ),
         p(cls := (if enabled then "maia-arena-human-only none" else "maia-arena-human-only"))(
-          I18nKey("muteArenaHumanOnly")()
+          I18nKey.unchecked("muteArenaHumanOnly")()
         ),
         div(cls := (if enabled then "maia-arena-fields" else "maia-arena-fields none"))(
           errMsg(form.prefix("noSweatArena")),
-          h3(I18nKey("muteArenaRatingRange")()),
+          h3(I18nKey.unchecked("muteArenaRatingRange")()),
           form3.split(
-            form3.group(form.prefix("noSweatArena.minRating"), I18nKey("muteArenaMinimum")(), half = true)(
+            form3.group(
+              form.prefix("noSweatArena.minRating"),
+              I18nKey.unchecked("muteArenaMinimum")(),
+              half = true
+            )(
               form3.input(_, typ = "number")(required := true)
             ),
-            form3.group(form.prefix("noSweatArena.maxRating"), I18nKey("muteArenaMaximum")(), half = true)(
+            form3.group(
+              form.prefix("noSweatArena.maxRating"),
+              I18nKey.unchecked("muteArenaMaximum")(),
+              half = true
+            )(
               form3.input(_, typ = "number")(required := true)
             )
           ),
-          p(cls := "form-help")(I18nKey("muteArenaRatingHelp")()),
+          p(cls := "form-help")(I18nKey.unchecked("muteArenaRatingHelp")()),
           form3.group(
             form.prefix("noSweatArena.target"),
-            I18nKey("muteArenaTarget")(),
-            help = I18nKey("muteArenaTargetHelp")().some
+            I18nKey.unchecked("muteArenaTarget")(),
+            help = I18nKey.unchecked("muteArenaTargetHelp")().some
           )(form3.input(_, typ = "number")(required := true))
         )
       )

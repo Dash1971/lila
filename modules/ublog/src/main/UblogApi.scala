@@ -3,14 +3,15 @@ package lila.ublog
 import reactivemongo.api.*
 import reactivemongo.api.bson.BSONDocument
 import reactivemongo.pekkostream.{ PekkoStreamCursor, cursorProducer }
+import scalalib.model.Language
 
 import lila.common.LilaFuture.delay
+import lila.core.config.RateLimit
 import lila.core.shutup.ShutupApi
 import lila.core.timeline.{ Propagate, UblogPostLike }
 import lila.core.ublog.BlogsBy
 import lila.core.user.KidMode
 import lila.core.{ LightUser, timeline as tl }
-import lila.core.config.RateLimit
 import lila.db.dsl.{ *, given }
 import lila.memo.CacheApi.buildAsyncTimeout
 import lila.memo.PicfitApi
@@ -41,8 +42,7 @@ final class UblogApi(
       fetchCarouselFromDb().map(_.shuffled.take(9))
 
   def myCarousel(using kid: KidMode) =
-    for posts <- carouselCache.get({})
-    yield posts.filter(_.isLichess || kid.no)
+    for posts <- carouselCache.get {} yield posts.filter(_.isLichess || kid.no)
 
   def getByPrismicId(id: String): Fu[Option[UblogPost]] = colls.post.one[UblogPost](bdoc("prismicId" -> id))
 
@@ -102,13 +102,33 @@ final class UblogApi(
       .cursor[UblogPost.PreviewPost](ReadPref.sec)
       .list(nb)
 
+  def latestPostsWithContent(blogId: UblogBlog.Id, nb: Int): Fu[List[UblogPost]] =
+    colls.post
+      .find(bdoc("blog" -> blogId, "live" -> true), postProjection.some)
+      .sort(userLiveSort)
+      .cursor[UblogPost](ReadPref.sec)
+      .list(nb)
+
+  def communityPostsWithContent(language: Option[Language], nb: Int): Fu[List[UblogPost]] =
+    colls.post
+      .find(
+        bdoc(
+          "live" -> true,
+          "quality".gte(Quality.good),
+          "topics".neq(UblogTopic.offTopic)
+        ) ++ language.so(l => bdoc("language" -> l))
+      )
+      .sort(sort.desc("lived.at"))
+      .cursor[UblogPost](ReadPref.sec)
+      .list(nb)
+
   def userBlogPreviewFor(user: User, nb: Int)(using me: Option[Me]): Fu[Option[UblogPost.BlogPreview]] =
     val blogId = UblogBlog.Id.User(user.id)
     val canView = fuccess(me.exists(_.is(user))) >>|
       colls.blog.secondary
         .primitiveOne[Tier](bid(blogId.full), "tier")
         .dmap(_.exists(_ > Tier.HIDDEN))
-    canView.flatMapz { blogPreview(blogId, nb).dmap(some) }
+    canView.flatMapz(blogPreview(blogId, nb).dmap(some))
 
   def blogPreview(blogId: UblogBlog.Id, nb: Int): Fu[UblogPost.BlogPreview] =
     colls.post.secondary
@@ -376,11 +396,11 @@ final class UblogApi(
   }.flatMap: t =>
     modBlog(userId, t.some, none)
 
-  def canBlog(u: User) = u.isVerified || {
-    !u.isBot && {
+  def canBlog(u: User) = u.isVerified || (
+    !u.isBot && (
       (u.count.game > 0 && u.createdSinceDays(2)) || u.hasTitle || u.isPatron
-    }
-  }
+    )
+  )
 
   private[ublog] def aggregateVisiblePosts(
       select: Bdoc,

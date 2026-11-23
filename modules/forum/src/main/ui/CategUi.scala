@@ -15,15 +15,16 @@ final class CategUi(helpers: Helpers, bits: ForumBits, focused: Boolean = false)
       .css("bits.forum")
       .csp(_.withInlineIconFont)
       .graph(
-        title = if focused then I18nKey("muteForumLabel").txt() else "Lichess community forum",
+        title = if focused then I18nKey.unchecked("muteForumLabel").txt() else "Lichess community forum",
         url = routeUrl(routes.ForumCateg.index),
-        description = if focused then I18nKey("muteForumDescription").txt()
+        description = if focused then I18nKey.unchecked("muteForumDescription").txt()
         else "Chess discussions and feedback about Lichess development"
       ):
         val (teamCategs, globalCategs) = categs.partition(_.categ.isTeam)
         main(cls := "forum index box")(
           boxTop(
-            h1(dataIcon := Icon.BubbleConvo, cls := "text")(if focused then I18nKey("muteForumLabel")()
+            h1(dataIcon := Icon.BubbleConvo, cls := "text")(if focused then
+              I18nKey.unchecked("muteForumLabel")()
             else "Lichess Forum"),
             bits.searchForm()
           ),

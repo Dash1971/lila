@@ -11,7 +11,7 @@ test('socket events do not load disabled challenge or notification widgets', asy
   Object.defineProperty(globalThis, '$', { value: () => empty, configurable: true });
   const load = mock.fn(async () => ({}));
   mock.module(new URL('../src/asset.ts', import.meta.url).href, {
-    namedExports: { loadEsm: load, loadCssPath: () => {} },
+    namedExports: { loadEsm: load, loadCss: () => {} },
   });
   mock.module(new URL('../src/clinput.ts', import.meta.url).href, {
     namedExports: { addClinputKeyHandler: () => {} },

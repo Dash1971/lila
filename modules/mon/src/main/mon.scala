@@ -340,8 +340,6 @@ object relay:
     histogram("relay.push.errors").withTags(histogramTags).record(errors)
     counter("relay.push.games.nb").withTags(counterTags).increment(games)
     counter("relay.push.moves.nb").withTags(counterTags).increment(moves)
-  object listing:
-    def time(section: String) = timer("relay.listing.time").withTag("section", section)
 
 object bot:
   def moves(username: String) = counter("bot.moves").withTag("name", username)
@@ -401,7 +399,6 @@ object security:
     val loadTime = gauge("security.geoip.loadTime").withoutTags()
   object login:
     def attempt(
-        useCase: String,
         byEmail: Boolean,
         pwned: Boolean,
         leaked: Boolean,
@@ -410,7 +407,6 @@ object security:
     ) =
       counter("security.login.attempt").withTags:
         tags(
-          "useCase" -> useCase,
           "by" -> (if byEmail then "email" else "name"),
           "pwned" -> pwned,
           "leaked" -> leaked,

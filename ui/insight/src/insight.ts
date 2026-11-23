@@ -1,17 +1,13 @@
-import { attributesModule, classModule, init } from "snabbdom";
+import { mountApp } from 'lib/view';
 
-import Ctrl from "./ctrl";
-import type { Env } from "./interfaces";
-import { registerMultipleSelect } from "./multipleSelect";
-import { view } from "./view";
-
-const patch = init([classModule, attributesModule]);
+import Ctrl from './ctrl';
+import type { Env } from './interfaces';
+import { registerMultipleSelect } from './multipleSelect';
+import { view } from './view';
 
 registerMultipleSelect();
 
 export function initModule(opts: Env) {
-  const element = document.getElementById("insight")!;
-  const ctrl = new Ctrl(opts, element, redraw);
   if (opts.ui.focused)
     Object.assign($.fn.multipleSelectDefaults, {
       selectAllText: opts.i18n.SelectAll,
@@ -20,16 +16,16 @@ export function initModule(opts: Env) {
       noMatchesFound: opts.i18n.NoMatches,
     });
 
-  const blueprint = view(ctrl);
-  let vnode = patch(element, blueprint);
+  const element = document.getElementById('insight')!;
+  const ctrl = mountApp({
+    el: element,
+    makeCtrl: redraw => new Ctrl(opts, element, redraw),
+    view,
+  });
 
   // Wait until vnode has been initialized to call askQuestion because
   // askQuestion can call redraw
   ctrl.askQuestion();
-
-  function redraw() {
-    vnode = patch(vnode, view(ctrl));
-  }
 
   return ctrl;
 }

@@ -15,6 +15,7 @@ export const saveEnginePreferences = (prefs: EnginePreferences): void =>
 
 export function showMaiaRating(rating: number, choose: (rating: number) => void): void {
   domDialog({
+    closeButton: true,
     class: 'nosweat-rating-dialog',
     modal: true,
     show: true,
@@ -192,6 +193,7 @@ export function showEngineSettings(
       ),
     );
   domDialog({
+    closeButton: true,
     class: 'nosweat-maia-settings-dialog',
     modal: true,
     show: true,

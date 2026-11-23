@@ -35,6 +35,7 @@ boner
 boo+b
 bozo
 brain(dea?d|les+)
+buffoon
 bug+er
 bu[ck]+ake
 bul+sh[i\|\\]t
@@ -283,7 +284,7 @@ payas[ao]
 pendejo
 po(l+|y)a
 put(ic|it|)[ao]
-suic[ií]date
+tonto
 trampa
 trampos[ao]
 tu eres put\w*
@@ -320,6 +321,7 @@ laude ka?rle
   def fr = dict("""
 batard
 blaireau
+bouffon(ne)?
 con+ard?
 cr[eé]tin
 encul[eé]r?
@@ -339,7 +341,8 @@ drecksa(u|ck)
 feigling
 fick(|er)
 fotze
-hurensohn
+hs
+hur?en[ds]ohn
 mistkerl
 neger
 pisser
@@ -368,6 +371,7 @@ bok yedin
 ezik
 gerizekal[iı]
 göt
+g[oö]t([uü](n[uü]|ne|nden)?|den|lek|e)
 gey(ler|sin|dir)?
 ibne
 ka[sş]ar
@@ -405,6 +409,7 @@ n[i\|\\]g+e?r
 rap(ed?|e?ing)
 rope\b
 su?bhu?ma?n
+suic[ií]date
 """)
 
   private def dict(words: String) = words.linesIterator.filter(_.nonEmpty)

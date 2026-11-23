@@ -125,8 +125,9 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
 
   let shapes: DrawShape[] = [];
 
-  const isLastMainline = node === last(ctrl.mainline);
-  const isTerminalVariation = node.children.length === 0 && node.dests().size === 0;
+  const isLastMainline =
+    ctrl.gamePath === undefined ? node === last(ctrl.mainline) : ctrl.path === ctrl.gamePath;
+  const isTerminalVariation = node.children.length === 0 && node.dests().size === 0 && !node.drops()?.length;
 
   if (isLastMainline || isTerminalVariation) {
     const [winner, status] = ctrl.study

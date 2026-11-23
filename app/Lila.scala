@@ -59,6 +59,7 @@ final class LilaComponents(
     )
 
   given ActorSystem = actorSystem
+  given Scheduler = actorSystem.scheduler
 
   given StandaloneWSClient =
     import play.shaded.ahc.org.asynchttpclient.DefaultAsyncHttpClient
@@ -83,7 +84,7 @@ final class LilaComponents(
     c.result
 
   val httpFilters = Seq(
-    new lila.web.HttpFilter(env.net, lila.security.Mobile.LichessMobileUa.parse)
+    new lila.web.HttpFilter(env.net, env.mode, lila.security.Mobile.LichessMobileUa.parse)
   )
 
   override lazy val httpErrorHandler =

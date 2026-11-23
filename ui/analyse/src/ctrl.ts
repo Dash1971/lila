@@ -65,7 +65,7 @@ import type GamebookPlayCtrl from './study/gamebook/gamebookPlayCtrl';
 import type { AnaMove } from './study/interfaces';
 import type StudyCtrl from './study/studyCtrl';
 import { TreeView } from './treeView/treeView';
-import { treeReconstruct, addCrazyData, hasUserContent, mergeReviewData } from './util';
+import { treeReconstruct, addCrazyData, hasUserContent, mergeReviewData, registerPublicApi } from './util';
 import { plural } from './view/util';
 import wikiTheory, { wikiClear, type WikiTheory } from './wiki';
 
@@ -122,7 +122,6 @@ export default class AnalyseCtrl implements CevalHandler {
     'analyse.show-engine',
     this.cevalEnabledProp(),
   );
-  keyboardHelp: boolean = location.hash === '#keyboard';
   threatMode: Prop<boolean> = prop(false);
 
   treeView: TreeView;
@@ -183,7 +182,6 @@ export default class AnalyseCtrl implements CevalHandler {
     if (opts.inlinePgn) this.data = this.changePgn(opts.inlinePgn, false) || this.data;
 
     this.initialize(this.data, false);
-    this.initCeval();
     this.pendingCopy = propWithEffect(null, this.redraw);
     this.pendingDeletionPath = propWithEffect(null, this.redraw);
     this.initialPath = this.makeInitialPath();
@@ -196,6 +194,9 @@ export default class AnalyseCtrl implements CevalHandler {
         ? new makeStudy(opts.study, this, (opts.tagTypes || '').split(','), opts.practice, opts.relay)
         : undefined;
 
+    if (location.hash === '#practice' || this.study?.data.chapter.practice) this.togglePractice();
+    else if (location.hash === '#menu') requestIdleCallbackSafe(this.actionMenu.toggle, 500);
+    this.initCeval();
     if (
       !opts.practice &&
       this.isCevalAllowed() &&
@@ -203,9 +204,6 @@ export default class AnalyseCtrl implements CevalHandler {
     )
       this.noSweat = new NoSweatAnalysis(this);
 
-    if (location.hash === '#practice' || this.study?.data.chapter.practice) this.togglePractice();
-    else if (location.hash === '#menu') requestIdleCallbackSafe(this.actionMenu.toggle, 500);
-    this.setCevalPracticeOpts();
     keyboard.bind(this);
 
     const urlEngine = new URLSearchParams(location.search).get('engine');
@@ -244,11 +242,7 @@ export default class AnalyseCtrl implements CevalHandler {
         redraw();
       }
     });
-    (window as any).lichess.analysis = {
-      playUci: this.playUci,
-      navigate: this.navigate,
-    };
-    (window as any).lichess.chessground = () => this.chessground;
+    registerPublicApi(this);
   }
 
   initialize(data: AnalyseData, merge: boolean): void {
@@ -364,7 +358,7 @@ export default class AnalyseCtrl implements CevalHandler {
 
   private showGround(): void {
     this.noSweat?.positionChanged();
-    if (this.node.pos().isErr || this.node.outcome()) this.ceval.reset();
+    if (this.node.pos().isErr || this.node.outcome()) this.ceval?.reset();
     this.withCg(cg => {
       cg.set(this.makeCgOpts());
       this.setAutoShapes();
@@ -428,7 +422,8 @@ export default class AnalyseCtrl implements CevalHandler {
   });
 
   private readonly updateHref: () => void = debounce(() => {
-    if (!this.opts.study) window.history.replaceState(null, '', '#' + this.node.ply);
+    if (!this.opts.study && !this.synthetic && !this.ongoing)
+      window.history.replaceState(null, '', '#' + this.node.ply);
   }, 750);
 
   jump(path: TreePath): void {
@@ -779,6 +774,7 @@ export default class AnalyseCtrl implements CevalHandler {
       },
       hideErrors: this.isEmbed,
       localEval: () => (this.node.ceval && !this.node.ceval.cloud ? this.node.ceval : null),
+      custom: this.study?.practice?.customCeval ?? this.practice?.customCeval,
       ...mergeOpts,
     };
     if (this.ceval) this.ceval.init(opts);
@@ -819,7 +815,7 @@ export default class AnalyseCtrl implements CevalHandler {
   startCevalIfEnabled = () => {
     if (!this.asyncReady) return;
     if (!this.ceval.download) this.ceval.reset();
-    if (this.node.threefold || !this.cevalEnabled() || this.node.outcome()) return;
+    if (this.node.threefold || !this.cevalEnabled() || this.node.pos().isErr || this.node.outcome()) return;
     this.ceval.start(this.path, this.nodeList, this.threatMode());
     this.evalCache.fetch(this.path, this.ceval.search.multiPv);
   };
@@ -929,22 +925,18 @@ export default class AnalyseCtrl implements CevalHandler {
     if (enable === !!this.practice) return;
     this.practice = undefined;
     if (!enable || !this.isCevalAllowed()) {
-      this.setCevalPracticeOpts();
+      this.initCeval();
       this.showGround();
       if (this.isCevalAllowed()) this.startCevalIfEnabled();
     } else {
       this.closeTools();
       this.threatMode(false);
       this.practice = makePractice(this);
-      this.setCevalPracticeOpts();
+      this.initCeval();
       this.setAutoShapes();
       this.startCevalIfEnabled();
     }
   };
-
-  private setCevalPracticeOpts() {
-    this.initCeval({ custom: this.study?.practice?.customCeval ?? this.practice?.customCeval });
-  }
 
   gamebookPlay = (): GamebookPlayCtrl | undefined => this.study?.gamebookPlay;
 
@@ -1061,6 +1053,7 @@ export default class AnalyseCtrl implements CevalHandler {
 
   explorerMove(uci: Uci): void {
     this.explorer.loading(true);
+    this.explorer.onDirectInteraction();
     this.playUci(uci);
   }
 

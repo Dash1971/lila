@@ -8,15 +8,17 @@ import { type Feature, features } from 'lib/device';
 import { domDialog } from 'lib/view/dialog';
 
 import type { VisionWorkerResponse } from './editor.vision.worker';
+import type { VisionPlacement } from './interfaces';
 
-export async function initModule({ file }: { file: File }): Promise<FEN> {
+type ImageInput = { file: File } | { url: string };
+
+export async function initModule(input: ImageInput): Promise<VisionPlacement> {
   const statusDialog = await domDialog({
     htmlText: $html`
-      <p><strong class="status">Downloading ChessQueries Lite...</strong></p>
+      <p><strong class="status">Downloading ChessQ Lite V5...</strong></p>
       <div class="mini-board cg-wrap is2d standard" style="width: 240px;height:240px"></div>`,
     class: 'vision-status',
     modal: false,
-    noCloseButton: true,
   });
   const cg = Chessground(statusDialog.view.querySelector<HTMLElement>('.mini-board')!, {
     viewOnly: true,
@@ -37,15 +39,12 @@ export async function initModule({ file }: { file: File }): Promise<FEN> {
   const interval = setInterval(randomBoard, 200);
   statusDialog.show();
   try {
-    const [worker, image] = await Promise.all([
-      getReader(),
-      window.createImageBitmap(file, { imageOrientation: 'from-image' }),
-    ]);
-    return await new Promise<FEN>((resolve, reject) => {
+    const [worker, image] = await Promise.all([getReader(), imageBitmap(input)]);
+    return await new Promise<VisionPlacement>((resolve, reject) => {
       statusDialog.view.querySelector<HTMLElement>('.status')!.textContent = 'Processing...';
       worker.onmessage = event => {
         const response = event.data as VisionWorkerResponse;
-        if (response.type === 'placement') resolve(response.boardFen);
+        if (response.type === 'placement') resolve(response);
         else if (response.type === 'error') reject(new Error(response.message));
       };
       worker.onerror = event => reject(new Error(event.message));
@@ -55,6 +54,16 @@ export async function initModule({ file }: { file: File }): Promise<FEN> {
     clearInterval(interval);
     statusDialog.close();
   }
+}
+
+function imageBitmap(input: ImageInput): Promise<ImageBitmap> {
+  if ('file' in input) return createImageBitmap(input.file, { imageOrientation: 'from-image' });
+  // img-src allows any host. The image must be CORS-clean or the bitmap cannot be sent to the worker.
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.referrerPolicy = 'no-referrer';
+  img.src = input.url;
+  return img.decode().then(() => createImageBitmap(img));
 }
 
 type VisionFeature = 'webgpu' | Feature;
@@ -77,7 +86,7 @@ const getReader = memoize<Promise<Worker>>(async () => {
     //   requires: ['wasm', 'webgpu', 'dynamicImportFromWorker'],
     // },
     {
-      model: 'lifat/vision/chessq-lite-v4-int8.onnx',
+      model: 'lifat/vision/chessq-lite-v5-int8.onnx',
       runtime: 'npm/onnxruntime-web/ort.wasm.min.mjs',
       wasm: 'npm/onnxruntime-web/ort-wasm-simd-threaded',
       providers: ['wasm'],

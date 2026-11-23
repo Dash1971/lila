@@ -2,7 +2,6 @@ import * as co from 'chessops';
 import { lichessRules } from 'chessops/compat';
 import { setupPosition } from 'chessops/variant';
 
-import { myUserId } from 'lib';
 import { randomId } from 'lib/algo';
 import type { CustomCeval } from 'lib/ceval/types';
 import { storage } from 'lib/storage';
@@ -31,6 +30,7 @@ type ServerEvalScore = EvalScore & { mateGiven?: boolean };
 
 export interface LocalAnalysisResult {
   localUpdate: AnalysisUpdate;
+  engineId?: string;
   serverDocument: ServerAnalysisDocument;
 }
 
@@ -75,7 +75,7 @@ export class LocalAnalysisEngine {
   async analyse(
     custom: CustomCeval,
     division: Division,
-    status: (moves: number, totalMoves: number, nodesPerMove: number) => void,
+    status: (nodeIndex: number, totalNodes: number, nodesPerMove: number) => void,
   ): Promise<LocalAnalysisResult> {
     try {
       this.busy = true;
@@ -83,12 +83,14 @@ export class LocalAnalysisEngine {
       this.ctrl.initCeval({ emit: this.onEval, custom });
       const update = () => {
         const done = this.nodes.length - this.nodeIndex - 1;
-        status(done, this.nodes.length, this.nodesSearched / done);
+        status(Math.max(0, this.nodeIndex), this.nodes.length, this.nodesSearched / done);
       };
-      for (update(); this.isRunning(); update()) {
+      while (this.isRunning()) {
+        update();
         await this.evaluateNode();
         if (!this.isCurrent) throw 'cancelled';
       }
+      update();
       return this.review(division);
     } finally {
       this.busy = false;
@@ -111,7 +113,7 @@ export class LocalAnalysisEngine {
     const key = mainlineKey(nodes);
     const current = () => this.ctrl.isCevalAllowed() && key === mainlineKey(this.ctrl.mainline);
     const abort = (this.brilliantAbort = new AbortController());
-    const selected = this.ctrl.ceval.engines.getEngine({ id: result.localUpdate.analysis?.engine?.id });
+    const selected = this.ctrl.ceval.engines.getEngine({ id: result.engineId });
     if (!selected || selected.tech === 'EXTERNAL') throw new Error('Classification engine unavailable');
     const fish = new ReviewFish(() => {}, selected);
     const classifier = new ClassifierClient(
@@ -167,7 +169,6 @@ export class LocalAnalysisEngine {
       this.nodes[this.nodeIndex].eval = {
         cp: ev.cp,
         mate: ev.mate,
-        best: ev.bestmove,
         fen: ev.fen,
         knodes: Math.round(ev.nodes / 1000),
         depth: ev.depth,
@@ -198,6 +199,7 @@ export class LocalAnalysisEngine {
   }
 
   private async review(division: Division): Promise<LocalAnalysisResult> {
+    const engineId = this.ctrl.ceval.engines.active()?.id;
     const lines = this.nodes.slice(0, -1).map((parent, i) => {
       const chess = setupPosition(
         lichessRules(this.ctrl.variantKey),
@@ -217,10 +219,8 @@ export class LocalAnalysisEngine {
             this.nodes.reduce((sum, node) => sum + (node.eval?.knodes ?? 1000), 0) / this.nodes.length,
           ) * 1000;
     const engine = {
-      id: String(this.ctrl.ceval.engines.active()!.id),
       nodesPerMove,
-      userId: myUserId() ?? 'lichess',
-      engineVersion: this.ctrl.ceval.engineVersion!,
+      version: this.ctrl.ceval.engineVersion!,
     };
     const serverDocument: ServerAnalysisDocument = {
       id: this.ctrl.idbTree.id,
@@ -250,6 +250,7 @@ export class LocalAnalysisEngine {
         return;
       }
       const [parent, bad] = this.nodes.slice(i, i + 2);
+      if (bad.eval) bad.eval.best = lines[i].ucis[0];
       bad.comments = [{ id: randomId().slice(0, 4), by: 'lichess', comp: true, text: move.judgment.comment }];
       bad.glyphs = [{ ...move.judgment.glyph, comp: true }];
       parent.children.push(
@@ -282,6 +283,7 @@ export class LocalAnalysisEngine {
         },
       },
       serverDocument,
+      engineId,
     };
   }
 

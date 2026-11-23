@@ -51,5 +51,5 @@ class NoSweatPresetChatTest extends munit.FunSuite:
     respond(
       () => Future.successful(true),
       () => Future.successful(true),
-      () => Future.successful { replies += 1 }
+      () => Future.successful(replies += 1)
     ).map(_ => assertEquals(replies, 1))

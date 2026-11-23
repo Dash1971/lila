@@ -68,6 +68,7 @@ class ForumAccessTest extends munit.FunSuite:
     def filterHideForum(ids: Iterable[TeamId]) = throw new UnsupportedOperationException
     def leaderIds(id: TeamId) = throw new UnsupportedOperationException
     def creatorOf(id: TeamId) = throw new UnsupportedOperationException
+    def prizeRecipient(id: TeamId) = throw new UnsupportedOperationException
     def filterUserIdsInTeam(id: TeamId, users: Iterable[UserId]) = throw new UnsupportedOperationException
     def hasCommPerm(id: TeamId)(using lila.core.userId.MyId) = throw new UnsupportedOperationException
     def cursor = throw new UnsupportedOperationException

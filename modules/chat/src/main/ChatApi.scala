@@ -174,7 +174,7 @@ final class ChatApi(
         .so: reason =>
           timeout(
             chatId = data.roomId.into(ChatId),
-            userId = data.userId.id,
+            userId = data.userId,
             reason = reason,
             scope = ChatTimeout.Scope.Global,
             text = data.text,
@@ -189,7 +189,7 @@ final class ChatApi(
       userApi
         .byId(username)
         .flatMapz: user =>
-          chatTimeout.history(user, 20).dmap { UserModInfo(user, _).some }
+          chatTimeout.history(user, 20).dmap(UserModInfo(user, _).some)
 
     private def doTimeout(
         c: UserChat,
@@ -356,7 +356,7 @@ final class ChatApi(
     def preprocessUserInput(in: String, username: Option[UserName]): Option[String] =
       val out1 = multiline:
         spam.replace(noShouting(noPrivateUrl(fullCleanUp(in))))
-      val out2 = username.fold(out1) { removeSelfMention(out1, _) }
+      val out2 = username.fold(out1)(removeSelfMention(out1, _))
       out2.take(Line.textMaxSize).nonEmptyOption
 
     private def removeSelfMention(in: String, username: UserName) =

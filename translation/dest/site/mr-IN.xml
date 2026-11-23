@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="gameSetup">खेळाची मांडणी</string>
   <string name="challengeAFriend" comment="be mindful how 'friend' translates in gendered languages. look for a more neutral term if there's an issue, or base your translation on a different phrase like 'invite to a game'. keep it short and convey the button's meaning without offense.">मित्राला आव्हान द्या</string>
   <string name="playAgainstComputer">संगणकाविरुद्ध खेळा</string>
   <string name="gameMode">खेळाची रीत</string>
@@ -699,7 +698,6 @@
   <string name="aboutX">%s च्याविषयी</string>
   <string name="xIsAFreeYLibreOpenSourceChessServer">%1$s एक विनामूल्य (%2$s), नि: शुल्क, जाहिराती नसलेले, मुक्त स्रोत बुद्धिबळ सर्व्हर आहे.</string>
   <string name="really">खरंच</string>
-  <string name="lichessUpdates">Lichess अद्यतने</string>
   <string name="contribute">हातभार लावा</string>
   <string name="changelog">बदल-नोंद</string>
   <string name="termsOfService">सेवा अटी</string>

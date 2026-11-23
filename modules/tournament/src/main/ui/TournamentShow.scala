@@ -209,18 +209,18 @@ final class TournamentShow(helpers: Helpers, gathering: GatheringUi)(
       tour.conditions.allowsBots.option:
         details(cls := "nosweat-arena-bots")(
           summary(
-            span(lila.core.i18n.I18nKey("muteArenaBotNoticeTitle")()),
+            span(lila.core.i18n.I18nKey.unchecked("muteArenaBotNoticeTitle")()),
             span(dataIcon := Icon.InfoCircle, attr("aria-hidden") := "true")
           ),
           div(cls := "nosweat-arena-bots__body")(
             p(
-              lila.core.i18n.I18nKey("muteArenaBotNoticeIntro")(
+              lila.core.i18n.I18nKey.unchecked("muteArenaBotNoticeIntro")(
                 tour.arenaSettings.minRating,
                 tour.arenaSettings.maxRating,
                 tour.arenaSettings.target
               )
             ),
-            p(lila.core.i18n.I18nKey("muteArenaBotNoticeFill")(tour.arenaSettings.target))
+            p(lila.core.i18n.I18nKey.unchecked("muteArenaBotNoticeFill")(tour.arenaSettings.target))
           )
         )
 

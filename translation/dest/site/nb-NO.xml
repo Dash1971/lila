@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="gameSetup">Partioppsett</string>
   <string name="challengeAFriend" comment="be mindful how 'friend' translates in gendered languages. look for a more neutral term if there's an issue, or base your translation on a different phrase like 'invite to a game'. keep it short and convey the button's meaning without offense.">Utfordre en venn</string>
   <string name="playAgainstComputer">Spill mot maskinen</string>
   <string name="gameMode">Modus</string>
@@ -702,7 +701,6 @@ Venner som spiller: %2$s</string>
   <string name="aboutX">Om %s</string>
   <string name="xIsAFreeYLibreOpenSourceChessServer">%1$s er en fritt tilgjengelig (%2$s), libre, annonsefri, åpen kildekode sjakk-server.</string>
   <string name="really">virkelig</string>
-  <string name="lichessUpdates">Lichess-oppdateringer</string>
   <string name="contribute">Bidra</string>
   <string name="changelog">Endringslogg</string>
   <string name="termsOfService">Tjenestevilkår</string>

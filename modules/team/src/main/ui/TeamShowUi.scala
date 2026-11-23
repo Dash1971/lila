@@ -30,7 +30,7 @@ final class TeamShowUi(helpers: Helpers, teamUi: TeamUi, requestUi: TeamRequestU
       .graph(
         title = s"${team.name} team",
         url = routeUrl(routes.Team.show(team.id)),
-        description = team.intro.so { shorten(_, 152) }
+        description = team.intro.so(shorten(_, 152))
       )
       .js(
         PageModule(
@@ -64,6 +64,9 @@ final class TeamShowUi(helpers: Helpers, teamUi: TeamUi, requestUi: TeamRequestU
                       publicLeaders.map(l => userIdLink(l.some))
                     )
                   ),
+                  canManage.so(team.prizeClaimant).map { claimant =>
+                    p(cls := "staff")("Prize claimant: ", userIdLink(claimant.some))
+                  },
                   ledByMe.option(
                     a(
                       dataIcon := Icon.InfoCircle,
@@ -82,7 +85,7 @@ final class TeamShowUi(helpers: Helpers, teamUi: TeamUi, requestUi: TeamRequestU
               (team.intro.isEmpty && havePerm(_.Settings)).option(
                 div(cls := "flash flash-warning")(
                   div(cls := "flash__content"):
-                    a(href := routes.Team.edit(team.id))("Give your team a short introduction text!")
+                    a(href := routes.Team.edit(team.id))(trans.teamLead.teamIntroPrompt())
                 )
               ),
               modLog.nonEmpty.option:
@@ -98,7 +101,9 @@ final class TeamShowUi(helpers: Helpers, teamUi: TeamUi, requestUi: TeamRequestU
               ),
               (team.enabled && requests.nonEmpty).option(
                 div(cls := "team-show__requests")(
-                  h2(cls := "team-show__section-title")(trt.xJoinRequests.pluralSame(requests.size)),
+                  h2(cls := "team-show__section-title")(
+                    trans.teamLead.xJoinRequests.pluralSame(requests.size)
+                  ),
                   requestUi.list(requests, team.some)
                 )
               ),

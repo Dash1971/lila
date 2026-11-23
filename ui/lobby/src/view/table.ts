@@ -4,8 +4,6 @@ import { bind, onInsert, hl, thunk } from 'lib/view';
 import type LobbyController from '@/ctrl';
 import type { GameType } from '@/interfaces';
 
-import renderSetupModal from './setup/modal';
-
 type ButtonInfo = { gameType: GameType | 'dev' | 'bots'; label: string; disabled?: boolean; title?: string };
 
 export default function table(ctrl: LobbyController) {
@@ -49,7 +47,6 @@ export default function table(ctrl: LobbyController) {
   return hl('div.lobby__table', [
     !opts.noSweat &&
       hl('div.lobby__start', [site.blindMode && hl('h2', i18n.site.play), lobbyButtons.map(makeLobbyButton)]),
-    renderSetupModal(ctrl),
     site.blindMode
       ? undefined
       : // Use a thunk here so that snabbdom does not rerender; we will do so manually after insert
@@ -100,7 +97,7 @@ export default function table(ctrl: LobbyController) {
     return hl(
       `button.button.button-metal.lobby__start__button.lobby__start__button--${gameType}`,
       {
-        class: { active: ctrl.setupCtrl.gameType === gameType, disabled: !!disabled },
+        class: { disabled: !!disabled },
         attrs: { type: 'button', title: title ?? '', 'aria-disabled': disabled ? 'true' : 'false' },
         hook: disabled
           ? {}

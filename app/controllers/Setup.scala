@@ -22,7 +22,7 @@ final class Setup(
 
   def ai = OpenBody:
     limit.setupBotAi(ctx.userId | UserId(""), () => rateLimited): () =>
-      limit.setupPost(ctx.ip, rateLimited()):
+      limit.setupPost.use(rateLimited()):
         bindForm(forms.ai)(
           doubleJsonFormError,
           config =>
@@ -36,7 +36,7 @@ final class Setup(
 
   def friend(userId: Option[UserStr]) =
     OpenBody: ctx ?=>
-      limit.setupPost(ctx.ip, rateLimited()):
+      limit.setupPost.use(rateLimited()):
         bindForm(forms.friend)(
           doubleJsonFormError,
           config =>
@@ -46,10 +46,10 @@ final class Setup(
               denied <- destUser.so(u => env.challenge.granter.isDenied(u.user, config.perfKey.some))
               result <-
                 if env.noSweat.enabled && config.makeClock.isEmpty then
-                  fuccess(JsonBadRequest(lila.core.i18n.I18nKey("muteRealTimeOnly").txt()))
+                  fuccess(JsonBadRequest(lila.core.i18n.I18nKey.unchecked("muteRealTimeOnly").txt()))
                 else if env.noSweat.enabled && !lila.game.NoSweatGameAdmission
                     .hasMinimumClock(config.makeClock)
-                then fuccess(JsonBadRequest(lila.core.i18n.I18nKey("muteMinimumClock").txt()))
+                then fuccess(JsonBadRequest(lila.core.i18n.I18nKey.unchecked("muteMinimumClock").txt()))
                 else if env.noSweat.enabled && (
                     origUser.isEmpty || destUser.isEmpty || origUser.exists(_.user.isBot) ||
                       destUser.exists(_.user.isBot) || destUser.exists(u => ctx.is(u.user)) ||
@@ -116,7 +116,7 @@ final class Setup(
         bindForm(forms.hook)(
           doubleJsonFormError,
           userConfig =>
-            limit.setupPost(req.ipAddress, rateLimited):
+            limit.setupPost.use(rateLimited):
               limit.setupAnonHook(req.ipAddress, () => rateLimited): () =>
                 for
                   me <- ctx.user.traverse(env.user.api.withPerfs)
@@ -133,7 +133,7 @@ final class Setup(
 
   def like(sri: Sri, gameId: GameId) = Open:
     NoBot:
-      limit.setupPost(ctx.ip, rateLimited()):
+      limit.setupPost.use(rateLimited()):
         NoPlaybanOrCurrent:
           Found(env.game.gameRepo.game(gameId)): game =>
             for
@@ -180,7 +180,7 @@ final class Setup(
                     .hook(reqSri | sri, me, sid = sri.into(SessionId).some, lila.core.pool.Blocking(blocking))
                     .match
                       case Left(hook) =>
-                        limit.setupPost(req.ipAddress, rateLimited()):
+                        limit.setupPost.use(rateLimited()):
                           limit
                             .boardApiConcurrency(author.map(_.id))(
                               env.lobby.boardApiHookStream(hook.copy(boardApi = true))
@@ -231,7 +231,7 @@ final class Setup(
   def apiAi = ScopedBody(_.Challenge.Write, _.Bot.Play, _.Board.Play, _.Web.Mobile, _.Web.Takex3) {
     ctx ?=> me ?=>
       limit.setupBotAi(me, () => rateLimited): () =>
-        limit.setupPost(req.ipAddress, rateLimited):
+        limit.setupPost.use(rateLimited):
           bindForm(forms.api.ai)(
             doubleJsonFormError,
             config =>

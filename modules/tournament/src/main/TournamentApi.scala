@@ -188,10 +188,10 @@ final class TournamentApi(
                           socket.reload(tour.id)
                           hadPairings.put(tour.id)
                           featureOneOf(tour, accepted, ranking.ranking) // do outside of queue
-              .monSuccess(lila.mon.tournament.pairing.create)
-              .chronometer
-              .logIfSlow(100, logger)(_ => s"Pairings for https://lichess.org/tournament/${tour.id}")
-              .result
+          .monSuccess(lila.mon.tournament.pairing.create)
+          .chronometer
+          .logIfSlow(100, logger)(_ => s"Pairings for https://lichess.org/tournament/${tour.id}")
+          .result
       yield ()
 
   private def featureOneOf(tour: Tournament, pairings: List[Pairing.WithPlayers], ranking: Ranking): Funit =
@@ -293,8 +293,10 @@ final class TournamentApi(
           if tour.isTeamBattle then
             for
               rankedTeams <- cached.battle.teamStanding.get(tour.id)
-              owners <- rankedTeams.take(payouts.nbWinners).traverse(rt => teamApi.creatorOf(rt.teamId))
-            yield owners.flatten
+              recipients <- rankedTeams
+                .take(payouts.nbWinners)
+                .traverse(rt => teamApi.prizeRecipient(rt.teamId))
+            yield recipients.flatten.distinct
           else
             for players <- playerRepo.bestByTour(tour.id, payouts.nbWinners)
             yield players.map(_.userId)
@@ -429,7 +431,7 @@ final class TournamentApi(
           _ <- playerRepo.withdraw(tour.id, userId)
           pausable <-
             if isPause
-            then cached.ranking(tour).map { _.ranking.get(userId).exists(_ < 7) }
+            then cached.ranking(tour).map(_.ranking.get(userId).exists(_ < 7))
             else fuccess(isStalling)
         yield
           if pausable then pause.add(userId)
@@ -571,7 +573,7 @@ final class TournamentApi(
           publish()
 
   private def recomputePlayerAndSheet(tour: Tournament)(userId: UserId): Funit =
-    tour.rated.yes.so { userApi.perfOptionOf(userId, tour.perfType) }.flatMap { perf =>
+    tour.rated.yes.so(userApi.perfOptionOf(userId, tour.perfType)).flatMap { perf =>
       playerRepo.update(tour.id, userId): player =>
         cached.sheet.recompute(tour, userId).map { sheet =>
           player.copy(
@@ -714,7 +716,7 @@ final class TournamentApi(
         val from = nowInstant.minusDays(1)
         tournamentRepo.calendar(from = from, to = from.plusYears(1))
 
-    def json(using Lang): Fu[JsObject] = cache.get({}).map(apiJsonView.calendar)
+    def json(using Lang): Fu[JsObject] = cache.get {}.map(apiJsonView.calendar)
 
   def history(freq: Schedule.Freq, page: Int): Fu[Paginator[Tournament]] =
     Paginator(
@@ -812,7 +814,7 @@ final class TournamentApi(
       .recentIdsByTourAndUserId(tour.id, userId, nb)
       .flatMap(gameRepo.light.gamesFromPrimary)
       .map:
-        _.flatMap { LightPov(_, userId) }
+        _.flatMap(LightPov(_, userId))
 
   private def notifyBBB(next: Tournament, prev: Option[Tournament])(using me: MyId) =
     if noSweatDiscovery.enabled then publish()
@@ -864,7 +866,7 @@ final class TournamentApi(
     private val throttler = new lila.common.EarlyMultiThrottler[TourId](logger)
 
     def apply(tour: Tournament): Unit =
-      if !tour.isTeamBattle then throttler(tour.id, 15.seconds) { publishNow(tour.id) }
+      if !tour.isTeamBattle then throttler(tour.id, 15.seconds)(publishNow(tour.id))
 
 private object TournamentApi:
 

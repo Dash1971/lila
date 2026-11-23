@@ -70,7 +70,7 @@
   <string name="releaseTheAccount">Выдать аккаунт ученику, чтобы он управлял им самостоятельно.</string>
   <string name="releaseDesc1">Выданный аккаунт не может стать снова &lt;i&gt;управляемым&lt;/i&gt;. Ученик сможет самостоятельно переключать детский режим и менять пароль.</string>
   <string name="releaseDesc2">Ученик останется в классе даже после того, как его аккаунт будет выдан ему.</string>
-  <string name="realUniqueEmail">Настоящий, уникальный электронный адрес ученика. Мы отправим на этот адрес подтверждение со ссылкой, по которой ученику будет выдан его аккаунт.</string>
+  <string name="realUniqueEmail">Настоящий, уникальный адрес электронной почты ученика. Мы отправим на него письмо с подтверждением и ссылкой для завершения регистрации. Ссылка действительна в течение 10 минут.</string>
   <string name="closeStudent">Закрыть аккаунт</string>
   <string name="closeTheAccount">Навсегда закрыть аккаунт ученика.</string>
   <string name="closeDesc1">Ученик больше не сможет пользоваться этим аккаунтом. Решение окончательное. Убедитесь, что ученик понимает это и согласен.</string>
@@ -127,7 +127,7 @@
   <string name="allowMessagingBetweenStudentsDesc">Это применится только к аккаунтам, которые вы создали своим ученикам.</string>
   <string name="quickLoginCode">Код для быстрого входа</string>
   <string name="quickLoginCodes">Коды для быстрого входа</string>
-  <string name="quickLoginCodesDesc1" comment="String is a URL">Используйте эти коды на %s , чтобы дать ученикам войти на Lichess.</string>
+  <string name="quickLoginCodesDesc1" comment="String is a URL">Используйте эти коды на %s, чтобы дать ученикам войти на Lichess.</string>
   <string name="quickLoginCodesDesc2">По истечении срока действия кодов ваши ученики будут оставаться в системе, пока они сами не выполнят выход.</string>
   <string name="expirationInMomentFromNow" comment="String is the translation of, for example, 'in 2 hours'">Истекает %s</string>
 </resources>

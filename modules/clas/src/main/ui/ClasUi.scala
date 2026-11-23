@@ -87,12 +87,17 @@ final class ClasUi(helpers: lila.ui.Helpers)(searchMenu: Context ?=> Frag):
               href := routes.Clas.studentShow(clas.clas.id, s.userId)
             )(s.realName)
         )
-      } | {
+      } |
         a(cls := active.toOption.map(_.active("newClass")), href := routes.Clas.form)(
           trans.clas.newClass()
         )
-      }
     )
+
+  def lobby(classes: List[Clas]) =
+    classes.nonEmpty.option:
+      div(cls := "lobby__classes"):
+        classes.map: clas =>
+          a(href := routes.Clas.show(clas.id), dataIcon := Icon.Group)(clas.name)
 
   object search:
 

@@ -150,7 +150,7 @@ final class ChallengeUi(helpers: Helpers, focused: Boolean = false):
                       ),
                       ctx.isAuth.option(
                         div(cls := "invite__user")(
-                          h2(cls := "ninja-title")(if focused then I18nKey("muteInvitePlayer")()
+                          h2(cls := "ninja-title")(if focused then I18nKey.unchecked("muteInvitePlayer")()
                           else trans.challenge.inviteLichessUser()),
                           friends.nonEmpty.option(
                             div(cls := "invite__user__recent")(
@@ -169,7 +169,7 @@ final class ChallengeUi(helpers: Helpers, focused: Boolean = false):
                               cls := "friend-autocomplete",
                               placeholder := trans.search.search.txt()
                             ),
-                            error.map { p(cls := "error")(_) }
+                            error.map(p(cls := "error")(_))
                           )
                         )
                       ),

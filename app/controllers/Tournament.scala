@@ -9,6 +9,8 @@ import lila.common.HTTPRequest
 import lila.gathering.Condition.GetMyTeamIds
 import lila.mon.extensions.*
 import lila.tournament.{ MyInfo, Tournament as Tour, TournamentForm }
+import lila.api.GameApiV2
+import lila.game.PgnDump.requestPgnFlags
 
 final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Materializer)
     extends LilaController(env):
@@ -22,7 +24,7 @@ final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Mat
 
   private def tournamentNotFound(using Context) = NotFound.page(views.tournament.ui.notFound)
 
-  def home = Open(serveHome)
+  def home = OpenOrScoped(_.Web.Mobile)(serveHome)
   def homeLang = LangPage(routes.Tournament.home)(serveHome)
 
   private def serveHome(using ctx: Context): Fu[Result] =
@@ -98,7 +100,7 @@ final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Mat
           if _ then Ok.async(views.tournament.restricted(tour))
           else
             for
-              myInfo <- ctx.me.so { jsonView.fetchMyInfo(tour, _) }
+              myInfo <- ctx.me.so(jsonView.fetchMyInfo(tour, _))
               verdicts <- api.getVerdicts(tour, myInfo.isDefined)
               version <- env.tournament.version(tour.id)
               playerId = getUserStr("player").map(_.id)
@@ -262,13 +264,13 @@ final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Mat
     WithEditableTournament(id): tour =>
       if !env.noSweat.enabled then fuccess(NotFound)
       else if tour.clock.limitSeconds.value < 60 then
-        fuccess(BadRequest(lila.core.i18n.I18nKey("muteMinimumClock").txt()))
+        fuccess(BadRequest(lila.core.i18n.I18nKey.unchecked("muteMinimumClock").txt()))
       else
         env.noSweat
           .prepareArena(tour)
           .map(_ => Redirect(routes.Tournament.show(id)))
           .recover:
-            case _: NoSweatError => BadRequest(lila.core.i18n.I18nKey("muteArenaUnavailable").txt())
+            case _: NoSweatError => BadRequest(lila.core.i18n.I18nKey.unchecked("muteArenaUnavailable").txt())
   }
 
   def teamBattleForm(teamId: TeamId) = Auth { _ ?=> me ?=>
@@ -327,7 +329,7 @@ final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Mat
                     withScores = false,
                     withAllowList = true,
                     withDescription = true
-                  ).map { Ok(_) }
+                  ).map(Ok(_))
                 )
               yield result
         )
@@ -353,7 +355,7 @@ final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Mat
                   withDescription = true
                 )
               yield
-                discard { env.report.api.automodComms(data.automodText, routes.Tournament.show(tour.id).url) }
+                discard(env.report.api.automodComms(data.automodText, routes.Tournament.show(tour.id).url))
                 Ok(json)
           )
       }
@@ -516,7 +518,19 @@ final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Mat
 
   def downloadGames(id: TourId) = AnonOrScoped(): ctx ?=>
     WithVisibleTournament(id): tour =>
-      apiC.tournamentGamesOf(tour)
+      val onlyUserId = getUserStr("player").map(_.id)
+      val config = GameApiV2.ByTournamentConfig(
+        tour = tour,
+        format = GameApiV2.Format.byRequest,
+        flags = requestPgnFlags(extended = false, delayMoves = true),
+        perSecond = GameApiV2.gamesPerSecond
+      )
+      limit.GlobalConcurrencyLimitPerIP.download.use(
+        env.api.gameApiV2.exportByTournament(config, onlyUserId)
+      ): source =>
+        Ok.chunked(source)
+          .asAttachmentStream(env.api.gameApiV2.filename(tour, config.format))
+          .as(config.contentType)
 
   def downloadResults(id: TourId) = AnonOrScoped():
     val csv = HTTPRequest.acceptsCsv(req) || get("as").has("csv")
@@ -553,7 +567,7 @@ final class Tournament(env: Env, apiC: => Api)(using org.apache.pekko.stream.Mat
 
   private def WithVisibleTournament(id: TourId)(
       f: Tour => Fu[Result]
-  )(using ctx: Context): Fu[Result] =
+  )(using Context): Fu[Result] =
     def nope = negotiate(tournamentNotFound, notFoundJson("No such tournament"))
     cachedTour(id).flatMap:
       case None => nope

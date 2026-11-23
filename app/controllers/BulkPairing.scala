@@ -7,8 +7,9 @@ import lila.api.GameApiV2
 import lila.app.*
 import lila.challenge.ChallengeBulkSetup
 import lila.common.Json.given
+import lila.game.PgnDump.requestPgnFlags
 
-final class BulkPairing(gameC: => Game, env: Env) extends LilaController(env):
+final class BulkPairing(env: Env) extends LilaController(env):
 
   def list = ScopedBody(_.Challenge.Bulk) { _ ?=> me ?=>
     env.challenge.bulk
@@ -33,12 +34,11 @@ final class BulkPairing(gameC: => Game, env: Env) extends LilaController(env):
           val config = GameApiV2.ByIdsConfig(
             ids = bulk.games.map(_.id),
             format = GameApiV2.Format.byRequest,
-            flags = gameC.requestPgnFlags(extended = false).copy(delayMoves = false),
+            flags = requestPgnFlags(extended = false, delayMoves = false),
             perSecond = MaxPerSecond(50)
           )
-          limit.GlobalConcurrencyLimitPerIP
-            .download(req.ipAddress)(env.api.gameApiV2.exportByIds(config)): source =>
-              Ok.chunked(source).as(gameC.gameContentType(config)).noProxyBuffer
+          limit.GlobalConcurrencyLimitPerIP.download.use(env.api.gameApiV2.exportByIds(config)): source =>
+            Ok.chunked(source).as(config.contentType).noProxyBuffer
   }
 
   def delete(id: String) = ScopedBody(_.Challenge.Bulk) { _ ?=> me ?=>

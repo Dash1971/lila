@@ -27,8 +27,6 @@ final class RemoteSocket(
 
   private var stopping = false
 
-  private type UserIds = Set[UserId]
-
   val onlineUserIds: AtomicReference[Set[UserId]] = AtomicReference(initialUserIds)
   private val managedOnlineIds = AtomicReference(Set.empty[UserId])
 
@@ -48,7 +46,7 @@ final class RemoteSocket(
       lags.foreach: (userId, centis) =>
         userLag.put(userId, centis)
       // this shouldn't be necessary... ensure that users are known to be online
-      onlineUserIds.getAndUpdate((x: UserIds) => x ++ lags.keys)
+      onlineUserIds.getAndUpdate(_ ++ lags.keys)
     case In.TellUser(userId, typ, msg) =>
       TellUserIn.make(userId, msg, typ).foreach(Bus.pub[TellUserIn](_))
     case In.ReqResponse(reqId, response) => requester.onResponse(reqId, response)
@@ -73,9 +71,8 @@ final class RemoteSocket(
         makePayload.value.foreach: payload =>
           send.exec(Out.tellUser(userId, payload))
 
-  Bus.sub[Announce]:
-    case Announce(_, _, json) =>
-      send.exec(Out.tellAll(Json.obj("t" -> "announce", "d" -> json)))
+  Bus.sub[Announce]: a =>
+    send.exec(Out.tellAll(Json.obj("t" -> "announce", "d" -> a.json)))
 
   Bus.sub[AnnounceUpdate]: s =>
     send.exec(Out.announceUpdate(s))
@@ -173,18 +170,16 @@ final class RemoteSocket(
       handler: SocketHandler
   ): Funit =
     // subscribe to main channel
-    subscribe(channel, reader)(handler) >> {
+    subscribe(channel, reader)(handler) >>
       // and subscribe to subchannels
       (0 to parallelism)
         .parallelVoid(index => subscribe(s"$channel:$index", reader)(handler))
-    }
 
   private def connectAndSubscribe(channel: Channel)(f: String => Unit): Funit =
     val conn = redisClient.connectPubSub()
-    conn.addListener(
+    conn.addListener:
       new pubsub.RedisPubSubAdapter[String, String]:
         override def message(_channel: String, message: String): Unit = f(message)
-    )
     val subPromise = Promise[Unit]()
     conn.async
       .subscribe(channel)
@@ -229,11 +224,11 @@ object RemoteSocket:
               (Sri(s(0)), UserId.from(s.lift(1)))
             }
           }.some
-        case RawMsg("disconnect/sris", raw) => DisconnectSris(commas(raw.args).map { Sri(_) }).some
+        case RawMsg("disconnect/sris", raw) => DisconnectSris(commas(raw.args).map(Sri(_))).some
         case RawMsg("notified/batch", raw) => NotifiedBatch(UserId.from(commas(raw.args))).some
         case RawMsg("lag", raw) =>
           raw.all.pipe { s =>
-            Centis.from(s.lift(1).flatMap(_.toIntOption)).map { Lag(UserId(s(0)), _) }
+            Centis.from(s.lift(1).flatMap(_.toIntOption)).map(Lag(UserId(s(0)), _))
           }
         case RawMsg("lags", raw) =>
           Lags(commas(raw.args).flatMap {
@@ -254,7 +249,7 @@ object RemoteSocket:
           }
         case RawMsg("req/response", raw) =>
           raw.get(2) { case Array(reqId, response) =>
-            reqId.toIntOption.map { ReqResponse(_, response) }
+            reqId.toIntOption.map(ReqResponse(_, response))
           }
         case RawMsg("ping", raw) => Ping(raw.args).some
         case RawMsg("boot", _) => WsBoot.some

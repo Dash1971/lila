@@ -11,7 +11,7 @@ import lila.chat.BusChan
 import lila.common.Json.given
 import lila.common.{ Bus, Lilakka }
 import lila.core.game.TvSelect
-import lila.core.net.IpAddress
+import lila.core.net.{ ipAddress, IpAddress }
 import lila.core.round.*
 import lila.core.socket.{ protocol as P, * }
 import lila.mon.extensions.*
@@ -40,16 +40,16 @@ final class RoundSocket(
       .map: nb =>
         logger.info(s"$nb round asyncActors have stopped")
 
-  def getGame(gameId: GameId): Fu[Option[Game]] =
+  private[round] def getGame(gameId: GameId): Fu[Option[Game]] =
     rounds
       .getOrMake(gameId)
       .getGame
       .addEffect: g =>
         if g.isEmpty then finishRound(gameId)
 
-  def getGames(gameIds: List[GameId]): Fu[List[(GameId, Option[Game])]] =
+  private[round] def getGames(gameIds: List[GameId]): Fu[List[(GameId, Option[Game])]] =
     gameIds.parallel: id =>
-      rounds.getOrMake(id).getGame.dmap { id -> _ }
+      rounds.getOrMake(id).getGame.dmap(id -> _)
 
   def getMany(gameIds: List[GameId]): Fu[List[GameAndSocketStatus]] =
     gameIds
@@ -265,7 +265,7 @@ final class RoundSocket(
                 gamePromises.get(game.id).foreach(_.success(game.some))
                 ids + game.id
             ,
-            Cursor.ContOnError { (_, err) => bootLog.error("Can't load round game", err) }
+            Cursor.ContOnError((_, err) => bootLog.error("Can't load round game", err))
           )
           .recover { case e: Exception =>
             bootLog.error(s"RoundSocket Can't load ${ids.size} round games", e)
@@ -382,19 +382,19 @@ object RoundSocket:
             for
               mean <- meanS.toIntOption
               sd <- sdS.toIntOption
-              ip <- IpAddress.from(ip)
+              ip <- ipAddress.from(ip)
             yield HoldAlert(GameFullId(fullId), ip, mean, sd)
           }
         case P.RawMsg("r/report", raw) =>
           raw.get(4) { case Array(fullId, ip, user, name) =>
-            IpAddress.from(ip).map { ip =>
+            ipAddress.from(ip).map { ip =>
               SelfReport(GameFullId(fullId), ip, UserId.from(P.In.optional(user)), name)
             }
           }
         case P.RawMsg("r/flag", raw) =>
           raw.get(3) { case Array(gameId, color, playerId) =>
             readColor(color).map:
-              Flag(GameId(gameId), _, P.In.optional(playerId).map { GamePlayerId(_) })
+              Flag(GameId(gameId), _, P.In.optional(playerId).map(GamePlayerId(_)))
           }
         case P.RawMsg("r/get", raw) =>
           raw.get(3) { case Array(reqId, anyId, userId) =>

@@ -28,14 +28,14 @@ final class GameUi(helpers: Helpers):
     )(using ctx: Context): Tag =
       renderMini(
         pov,
-        gameLink(pov.game, pov.color, ownerLink, tv),
+        gameUrl(pov.game, pov.color, ownerLink, tv),
         showRatings = ctx.pref.showRatings
       )
 
     def many(games: List[Game])(using Context): Frag =
       val color = chess.White
       games.map: g =>
-        renderMini(g.pov(color), gameLink(g, color))
+        renderMini(g.pov(color), gameUrl(g, color))
 
     def noCtx(pov: Pov, tv: Boolean = false, channelKey: Option[String] = None): Tag =
       val link = if tv then channelKey.fold(routes.Tv.index)(routes.Tv.onChannel)
@@ -57,7 +57,7 @@ final class GameUi(helpers: Helpers):
         showRatings: Boolean = true
     )(using Translate, Option[Me]): Tag =
       import pov.game
-      a(
+      gameLink(
         href := link,
         cls := s"mini-game mini-game-${game.id} mini-game--init ${game.variant.key} is2d",
         dataLive := game.isBeingPlayed.option(game.id),
@@ -76,7 +76,7 @@ final class GameUi(helpers: Helpers):
           withRating.option(span(cls := "rating")(lila.game.Namer.ratingString(pov.player)))
         ),
         if pov.game.finished then renderResult(pov)
-        else pov.game.clock.map { renderClock(_, pov.color) }
+        else pov.game.clock.map(renderClock(_, pov.color))
       )
 
     private def renderResult(pov: Pov) =
@@ -184,9 +184,10 @@ final class GameUi(helpers: Helpers):
                 case Some(w) if w == u.id => "glpt win" -> "1"
                 case None => "glpt" -> "½"
                 case _ => "glpt loss" -> "0"
-              a(href := s"""${routes.Round.watcher(r.gameId, Color.white)}?pov=${u.id}""", cls := linkClass)(
-                text
-              )
+              gameLink(
+                href := s"""${routes.Round.watcher(r.gameId, Color.white)}?pov=${u.id}""",
+                cls := linkClass
+              )(text)
         ,
         matchup.map: m =>
           div(cls := "crosstable__matchup force-ltr", title := trans.site.currentMatchScore.txt()):
@@ -207,8 +208,8 @@ final class GameUi(helpers: Helpers):
   object importer:
 
     private def analyseHelp(using ctx: Context) =
-      (!ctx.isAuth).option:
-        a(cls := "blue", href := routes.Auth.signup)(trans.site.youNeedAnAccountToDoThat())
+      ctx.isAuth.not.option:
+        a(cls := "blue", href := routes.Auth.login)(trans.site.youNeedAnAccountToDoThat())
 
     def apply(form: play.api.data.Form[?])(using ctx: Context) =
       Page(trans.site.importGame.txt())
@@ -243,7 +244,8 @@ final class GameUi(helpers: Helpers):
               form3.checkboxGroup(
                 form("analyse"),
                 trans.site.requestAComputerAnalysis(),
-                help = analyseHelp
+                help = analyseHelp,
+                disabled = !ctx.isAuth
               ),
               form3.action(form3.submit(trans.site.importGame(), Icon.UploadCloud.some))
             )
@@ -252,6 +254,7 @@ final class GameUi(helpers: Helpers):
   object widgets:
 
     val separator = span(" • ")(cls := "separator")
+    val overlayLink = gameLink(cls := "game-row__overlay")
 
     def apply(g: Game, user: Option[User], ownerLink: Boolean)(
         contextLink: Option[Tag]
@@ -259,7 +262,7 @@ final class GameUi(helpers: Helpers):
       val fromPlayer = user.flatMap(g.player)
       val firstPlayer = fromPlayer | g.player(g.naturalOrientation)
       st.article(cls := "game-row paginated")(
-        a(cls := "game-row__overlay", href := gameLink(g, firstPlayer.color, ownerLink)),
+        overlayLink(href := gameUrl(g, firstPlayer.color, ownerLink)),
         div(cls := "game-row__board")(miniBoard(Pov(g, firstPlayer))(span)),
         div(cls := "game-row__infos")(
           div(cls := "header", dataIcon := gameIcon(g))(
@@ -319,7 +322,7 @@ final class GameUi(helpers: Helpers):
       div(cls := s"player ${player.color.name}"):
         player.userId
           .flatMap: uid =>
-            player.rating.map { (uid, _) }
+            player.rating.map((uid, _))
           .map: (userId, rating) =>
             frag(
               userIdLink(userId.some, withOnline = false),

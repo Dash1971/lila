@@ -1,6 +1,6 @@
 import stringify from 'json-stringify-pretty-compact';
 
-import { frag } from 'lib';
+import { frag, isComposing } from 'lib';
 import { deepFreeze, definedMap } from 'lib/algo';
 import { Bot } from 'lib/bot/bot';
 import type { BotInfo } from 'lib/bot/types';
@@ -60,6 +60,7 @@ export class EditDialog {
 
   async show(): Promise<Dialog> {
     this.dlg = await domDialog({
+      closeButton: true,
       insert: [{ nodes: this.view }],
       actions: this.actions,
       onClose: () => this.janitor.cleanup(),
@@ -227,6 +228,7 @@ export class EditDialog {
     const input = frag<HTMLInputElement>(`<input class="invalid" spellcheck="false" type="text" value="#">`);
     domDialog({
       class: 'dev-view',
+      closeButton: true,
       htmlText: `<h2>Choose a user id</h2><p>must be unique and begin with #</p><span></span>`,
       insert: [
         { nodes: input, selector: 'span' },
@@ -251,7 +253,7 @@ export class EditDialog {
           selector: 'input',
           event: ['keydown'],
           listener: e => {
-            if ('key' in e && e.key === 'Enter') {
+            if ('key' in e && e.key === 'Enter' && !isComposing(e)) {
               ok.click();
               e.stopPropagation();
               e.preventDefault();
@@ -290,6 +292,7 @@ export class EditDialog {
       </div>`);
     const dlg = await domDialog({
       insert: [{ nodes: view }],
+      closeButton: true,
       easyClose: 'clickOutside',
       show: true,
       actions: [
@@ -316,6 +319,7 @@ export class EditDialog {
       </div>`);
     const dlg = await domDialog({
       insert: [{ nodes: view }],
+      closeButton: true,
       easyClose: 'clickOutside',
       show: true,
       actions: [

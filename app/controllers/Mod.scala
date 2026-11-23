@@ -10,7 +10,6 @@ import lila.app.{ *, given }
 import lila.common.HTTPRequest
 import lila.core.id.ImageId
 import lila.core.msg.SystemMsg
-import lila.core.net.IpAddress
 import lila.core.perm.Permission
 import lila.core.security.FingerHash
 import lila.core.userId.ModId
@@ -215,7 +214,7 @@ final class Mod(
   }
 
   def askUsertableCheck(username: UserStr) = Secure(_.SendToZulip) { _ ?=> _ ?=>
-    env.user.lightUser(username.id).orNotFound { env.irc.api.usertableCheck(_).inject(NoContent) }
+    env.user.lightUser(username.id).orNotFound(env.irc.api.usertableCheck(_).inject(NoContent))
   }
 
   def table = Secure(_.Admin) { ctx ?=> _ ?=>
@@ -256,7 +255,7 @@ final class Mod(
       FoundPage(env.user.repo.byId(username)): user =>
         given lila.mod.IpRender.RenderIp = env.mod.ipRender.apply
         env.game.gameRepo
-          .recentPovsByUserFromSecondary(user, 80)
+          .recentPovsByUserFromSecondary(user, 300)
           .mon(lila.mon.mod.comm.segment("recentPovs"))
           .flatMap: povs =>
             (
@@ -325,8 +324,8 @@ final class Mod(
         Ok.chunked(source).asAttachmentStream(s"full-comms-export-of-${user.id}.txt")
     }
 
-  protected[controllers] def redirect(username: UserStr, mod: Boolean = true)(using RequestHeader) =
-    env.web.referrerRedirect.fromReq match
+  protected[controllers] def redirect(username: UserStr, mod: Boolean = true)(using Req) =
+    env.web.referrerRedirect.fromQueryParam match
       case Some(ref) => Redirect(ref.value).flashSuccess
       case None => Redirect(userUrl(username, mod))
 
@@ -381,7 +380,7 @@ final class Mod(
   }
 
   protected[controllers] def searchTerm(query: String)(using Context) =
-    IpAddress.from(query) match
+    lila.core.net.ipAddress.from(query) match
       case Some(ip) => Redirect(routes.Mod.singleIp(ip.value)).toFuccess
       case None =>
         for
@@ -421,7 +420,7 @@ final class Mod(
     val op =
       if v then env.security.firewall.blockIps
       else env.security.firewall.unblockIps
-    val ipAddr = IpAddress.from(ip)
+    val ipAddr = lila.core.net.ipAddress.from(ip)
     op(ipAddr.toList).inject:
       if HTTPRequest.isXhr(ctx.req) then jsonOkResult
       else Redirect(routes.Mod.singleIp(ip))
@@ -464,7 +463,7 @@ final class Mod(
           val newPermissions = Permission.ofDbKeys(permissions).diff(Permission(user))
           (api.setPermissions(user.username, Permission.ofDbKeys(permissions)) >> {
             newPermissions(Permission.Coach).so(env.mailer.automaticEmail.onBecomeCoach(user))
-          } >> {
+          } >>
             Permission
               .ofDbKeys(permissions)
               .exists(p =>
@@ -472,8 +471,8 @@ final class Mod(
                   Permission.ContentTeam
                 ) || p.grants(Permission.BroadcastTeam)
               )
-              .so(env.plan.api.setLifetime(user))
-          }).inject(Redirect(routes.Mod.permissions(user.username)).flashSuccess)
+              .so(env.plan.api.setLifetime(user)))
+            .inject(Redirect(routes.Mod.permissions(user.username)).flashSuccess)
       )
   }
 
@@ -501,7 +500,7 @@ final class Mod(
         email
           .so: em =>
             tryWith(em, em.value)
-              .orElse(username.so { tryWith(em, _) })
+              .orElse(username.so(tryWith(em, _)))
               .recover(lila.db.recoverDuplicateKey(_ => none))
           .getOrElse(BadRequest.page(views.mod.ui.emailConfirm(rawQuery, none, none)))
   }

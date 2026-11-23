@@ -27,13 +27,13 @@ final class ForumTopic(env: Env) extends LilaController(env) with ForumControlle
             bindForm(forms.topic(inOwnTeam))(
               err => BadRequest.page(views.forum.topic.form(categ, err, anyCaptcha)),
               data =>
-                limit.forumTopic(ctx.ip, rateLimited):
+                limit.forumTopic.use(rateLimited):
                   for
                     topic <- topicApi.makeTopic(categ, data)
                     url = routes.ForumTopic.show(categ.id, topic.slug, 1).url
                     ref = lila.forum.picRef(topic.lastPostId)
                     _ <- env.memo.picfitApi.addRef(Markdown(data.post.text), ref, url.some)
-                    _ = discard { env.report.api.automodComms(data.automodText, url) }
+                    _ = discard(env.report.api.automodComms(data.automodText, url))
                   yield Redirect(url)
             )
           }

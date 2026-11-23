@@ -47,6 +47,8 @@ Assim que terminar a sua partida, você voltará a aguardar o emparceiramento co
     <item quantity="other">Ver todas as %s equipes</item>
   </plurals>
   <string name="newTeamBattle">Nova batalha de equipes</string>
+  <string name="startDate">Data de início</string>
+  <string name="entryConditions">Condições para entrar</string>
   <string name="customStartDate">Mudar a data de início</string>
   <string name="customStartDateHelp">No seu próprio fuso horário. Isso irá cancelar a configuração \"Contagem regressiva para início do torneio\"</string>
   <string name="allowBerserk">Permitir Berserk</string>

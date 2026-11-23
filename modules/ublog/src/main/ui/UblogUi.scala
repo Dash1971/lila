@@ -12,7 +12,10 @@ import lila.ublog.UblogPost.PreviewPost
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
-final class UblogUi(helpers: Helpers, atomUi: AtomUi, modMenu: Context ?=> Frag)(
+final class UblogUi(
+    helpers: Helpers,
+    atomUi: AtomUi,
+    modMenu: Context ?=> Frag,
     picfitUrl: lila.memo.PicfitUrl
 ):
   import helpers.{ *, given }
@@ -159,7 +162,7 @@ final class UblogUi(helpers: Helpers, atomUi: AtomUi, modMenu: Context ?=> Frag)
             ),
             if posts.nbResults > 0 then
               div(cls := "ublog-index__posts ublog-post-cards infinite-scroll")(
-                posts.currentPageResults.map { card(_, showAuthor = ShowAt.top) },
+                posts.currentPageResults.map(card(_, showAuthor = ShowAt.top)),
                 pagerNext(
                   posts,
                   p =>
@@ -193,7 +196,7 @@ final class UblogUi(helpers: Helpers, atomUi: AtomUi, modMenu: Context ?=> Frag)
             if posts.nbResults > 0 then
               val url = if blog.allows.edit then editUrlOfPost else urlOfPost
               div(cls := "ublog-index__posts ublog-index__posts--drafts ublog-post-cards infinite-scroll")(
-                posts.currentPageResults.map { card(_, url) },
+                posts.currentPageResults.map(card(_, url)),
                 pagerNext(posts, np => routes.Ublog.drafts(user.username, np).url)
               )
             else div(cls := "ublog-index__posts--empty")(trans.ublog.noDrafts())
@@ -447,7 +450,7 @@ final class UblogUi(helpers: Helpers, atomUi: AtomUi, modMenu: Context ?=> Frag)
             ),
             if posts.nbResults > 0 && posts.currentPageResults.size > 0 then
               div(cls := "ublog-index__posts ublog-post-cards infinite-scroll")(
-                posts.currentPageResults.map { card(_, showAuthor = ShowAt.top) },
+                posts.currentPageResults.map(card(_, showAuthor = ShowAt.top)),
                 pagerNext(posts, np => route(np, filterOpt.getOrElse(QualityFilter.all), by).url)
               )
             else div(cls := "ublog-index__posts--empty")(onEmpty)
@@ -475,7 +478,7 @@ final class UblogUi(helpers: Helpers, atomUi: AtomUi, modMenu: Context ?=> Frag)
           else frag(filterBtn(QualityFilter.best), filterBtn(QualityFilter.all))
       ,
       sortOpt.map: by =>
-        span(
+        span(cls := "sort")(
           trans.search.sortBy(),
           span(cls := "btn-rack")(
             a(btnCls(by == likes), href := route(filter, likes))(trans.site.like()),
@@ -508,32 +511,32 @@ final class UblogUi(helpers: Helpers, atomUi: AtomUi, modMenu: Context ?=> Frag)
     )
 
   object atom:
-    def user(
-        user: User,
-        posts: Seq[UblogPost.PreviewPost]
-    )(using Translate) =
+    type PostAndHtml = (post: UblogPost, html: Html)
+    def user(user: User, posts: Seq[PostAndHtml])(using Translate) =
       atomUi.feed(
         elems = posts,
         htmlCall = routes.Ublog.index(user.username),
         atomCall = routes.Ublog.userAtom(user.username),
         title = trans.ublog.xBlog.txt(user.username),
-        updated = posts.headOption.flatMap(_.lived).map(_.at),
-        language = _.language
-      ): post =>
-        renderPost(post, authorOfBlog(post.blog))
+        updated = posts.headOption.flatMap(_.post.lived).map(_.at),
+        language = _.post.language
+      ): (post, html) =>
+        renderPost(post, authorOfBlog(post.blog), html)
 
-    def community(language: Language, posts: Seq[UblogPost.PreviewPost])(using Translate) =
+    def community(language: Language, posts: Seq[PostAndHtml])(using Translate) =
       atomUi.feed(
         elems = posts,
         htmlCall = routes.Ublog.communityLang(language),
         atomCall = routes.Ublog.communityAtom(language),
         title = "Lichess community blogs",
-        updated = posts.headOption.flatMap(_.lived).map(_.at),
-        language = _.language
-      ): post =>
-        renderPost(post, authorOfBlog(post.blog))
+        updated = posts.headOption.flatMap(_.post.lived).map(_.at),
+        language = _.post.language
+      ): (post, html) =>
+        renderPost(post, authorOfBlog(post.blog), html)
 
-    private def renderPost(post: UblogPost.PreviewPost, authorName: String)(using Translate) =
+    private def renderPost(post: UblogPost, authorName: String, markup: Html)(using
+        Translate
+    ) =
       frag(
         tag("id")(routeUrl(urlOfPost(post))),
         tag("published")(post.lived.map(_.at).map(atomUi.atomDate)),
@@ -551,11 +554,15 @@ final class UblogUi(helpers: Helpers, atomUi: AtomUi, modMenu: Context ?=> Frag)
             scheme = routeUrl(routes.Ublog.topic(topic.url)).some
           )
         },
-        tag("content")(tpe := "html")(
+        tag("content")(
+          tpe := "html",
+          attr("xml:base") := routeUrl(urlOfPost(post))
+        )(
           frag(
             thumbnail(post, _.Size.Large),
             br,
-            post.intro
+            post.intro,
+            markup
           ).render // html as escaped string in xml
         ),
         tag("media:thumbnail")(attr("url") := thumbnailUrl(post, _.Size.Large)),

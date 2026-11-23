@@ -74,7 +74,7 @@ export class CevalCtrl {
   lastStarted?: StartedState;
   showEnginePrefs: Toggle = toggle(false);
   wasUnloadedByAnotherWindow = false;
-
+  private unloadedState = CevalState.Initial;
   private readonly performanceMap = storedMap<Record<ThreadCount, NodesPerSecond[]>>(
     'ceval.perf',
     12,
@@ -90,13 +90,8 @@ export class CevalCtrl {
     this.init();
 
     // another tab has started ceval, we should stop:
-    storage.make('ceval.fen').listen(() => {
-      if (this.isBackground || !this.worker) return;
-      this.worker.destroy();
-      this.worker = undefined; // release memory
-      this.wasUnloadedByAnotherWindow = true;
-      this.opts.redraw();
-    });
+    storage.make('ceval.fen').listen(this.stopFromOtherTab);
+    storage.make('ceval.pullThePlug').listen(this.stopFromOtherTab);
 
     document.addEventListener('visibilitychange', () => {
       if (
@@ -125,7 +120,7 @@ export class CevalCtrl {
       this.rules === 'chess' &&
       !!pos?.unwrap(
         pos => !isStandardMaterial(pos),
-        _ => false,
+        () => false,
       );
     this.analysable =
       !pos?.isErr &&
@@ -146,6 +141,7 @@ export class CevalCtrl {
 
   reset = (): void => {
     this.worker?.stop();
+    this.unloadedState = CevalState.Initial;
     this.wasUnloadedByAnotherWindow = false;
     this.curEval = null;
     this.lastStarted = undefined;
@@ -157,6 +153,10 @@ export class CevalCtrl {
     this.isDeeper(false);
     this.doStart({ path, steps, gameId, threatMode, info: this.info()! });
     return true;
+  };
+
+  stopWorker = (): void => {
+    this.worker?.stop();
   };
 
   setThreads = (threads: number): void => storage.set('ceval.threads', threads.toString());
@@ -182,7 +182,7 @@ export class CevalCtrl {
         searchOverrides && 'by' in searchOverrides
           ? searchOverrides
           : {
-              multiPv: Math.min(this.storedPv(), searchOverrides?.maxMultiPv ?? Infinity),
+              multiPv: clamp(this.storedPv(), { min: 0, max: searchOverrides?.maxMultiPv }),
               by: { movetime: clamp(this.isDeeper() ? Infinity : this.storedMovetime(), { max: maxTime }) },
             },
     };
@@ -210,12 +210,10 @@ export class CevalCtrl {
   }
 
   get state(): CevalState {
-    return this.worker?.getState() ?? CevalState.Initial;
+    return this.worker?.getState() ?? this.unloadedState;
   }
 
   get canGoDeeper(): boolean {
-    // recently raised from 99. keep an eye out for screenshots of wasm exceptions in github issues and
-    // feedback forum.
     return this.state !== CevalState.Computing && (this.opts.localEval?.()?.depth ?? 0) < 245;
   }
 
@@ -265,22 +263,31 @@ export class CevalCtrl {
     if (!this.opts.hideErrors) showEngineError(String(this.engines.active()?.name), msg);
     this.reset();
     this.unload();
+    this.unloadedState = CevalState.Failed;
   }
 
   isFinished(search: Search, step: Step, isThreat: boolean): boolean {
+    const ev = isThreat ? step.threat : step.ceval;
     return (
       !this.isDeeper() &&
       'movetime' in search.by &&
-      !step.ceval?.cloud &&
-      (isThreat ? (step.threat?.millis ?? 0) : (step.ceval?.millis ?? 0)) >= search.by.movetime &&
-      step.ceval?.pvs.length === search.multiPv &&
-      new Set(step.ceval.pvs.map(pv => pv.moves[0])).size === step.ceval.pvs.length &&
-      step.ceval?.engineId === this.engines.active()?.id
+      !!ev &&
+      !ev.cloud &&
+      (ev.millis ?? 0) >= search.by.movetime &&
+      ev.pvs.length === search.multiPv &&
+      new Set(ev.pvs.map(pv => pv.moves[0])).size === ev.pvs.length &&
+      ev.engineId === this.engines.active()?.id
     );
   }
 
   preferLatestEval(latest: ClientEval, stored: ClientEval | undefined): boolean {
-    if (!stored || new Set(stored.pvs.map(pv => pv.moves[0])).size !== stored.pvs.length) return true;
+    // Some search is better than no search. Custom search is always preferred.
+    if (
+      !stored ||
+      Boolean(this.opts.custom?.search) ||
+      new Set(stored.pvs.map(pv => pv.moves[0])).size !== stored.pvs.length
+    )
+      return true;
 
     // If one has the correct multipv and the other doesn't, prefer the right multipv regardless of strength
     const multipv = this.search.multiPv;
@@ -320,9 +327,10 @@ export class CevalCtrl {
     this.performanceMap(engine.id, snapshots);
   }
 
-  private letCloudWin(ev: LocalEval, movetime: number | false, working: StartedState) {
-    const evNode = working.steps[working.steps.length - 1];
-    const { engine, threads } = working.info;
+  private letCloudWin(ev: LocalEval, movetime: number | false, started: StartedState) {
+    if (started.threatMode) return false;
+    const evNode = started.steps[started.steps.length - 1];
+    const { engine, threads } = started.info;
     if (movetime && evNode.ceval?.cloud) {
       const cloudNodes = evNode.ceval.nodes; // TODO node efficiency if cloud has engineId
       const nodesPerSecond =
@@ -333,6 +341,13 @@ export class CevalCtrl {
     }
     return false;
   }
+
+  private readonly stopFromOtherTab = (): void => {
+    if (this.isBackground || !this.worker) return;
+    this.unload();
+    this.wasUnloadedByAnotherWindow = true;
+    this.opts.redraw();
+  };
 
   private readonly doStart = (s: StartedState) => {
     this.lastStarted = s;
@@ -390,7 +405,7 @@ export class CevalCtrl {
       emit: this.opts.emit,
       background: this.isBackground,
       movetime: 'movetime' in this.search.by && this.search.by.movetime,
-      dontStop: Boolean(this.engines.external() || this.opts.custom || this.isDeeper() || this.isInfinite),
+      dontStop: Boolean(this.opts.custom || this.isDeeper() || this.isInfinite),
     };
     const emitter = throttleWithFlush(125, (ev: LocalEval, meta: EvalMeta) => {
       this.curEval = ev;
@@ -400,7 +415,7 @@ export class CevalCtrl {
       this.snapshotPerformance(ev);
       if (!working.fen) {
         working.fen = ev.fen;
-        storage.fire('ceval.fen', ev.fen); // will pause other tabs
+        if (!working.background) storage.fire('ceval.fen', ev.fen); // will pause other tabs
       }
       const color = meta.ply % 2 === (meta.threatMode ? 1 : 0) ? 'white' : 'black';
       ev.pvs.sort((a, b) => povChances(color, b) - povChances(color, a));

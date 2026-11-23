@@ -1,5 +1,6 @@
 package lila.relay
 
+import play.api.i18n.Lang
 import play.api.libs.json.*
 import scalalib.Json.paginatorWriteNoNbResults
 import scalalib.paginator.Paginator
@@ -7,10 +8,10 @@ import scalalib.paginator.Paginator
 import lila.common.Json.{ *, given }
 import lila.core.LightUser.GetterSync
 import lila.core.config.RouteUrl
-import lila.core.study.Study
 import lila.core.fide.PhotosJson
-import lila.core.i18n.Translate
+import lila.core.i18n.{ Translate, defaultLanguage, toLanguage }
 import lila.core.socket.SocketVersion
+import lila.core.study.Study
 import lila.memo.PicfitUrl
 import lila.relay.RelayTour.{ WithFirstRound, WithLastRound, WithRounds }
 import lila.study.{ ChapterPreview, Settings }
@@ -206,18 +207,23 @@ final class RelayJsonView(
   def search(tours: Paginator[WithLastRound | RelayCard])(using Config, Translate) =
     paginatorWriteNoNbResults.writes(tours.map(tourWithAnyRound(_)))
 
-  def responseCache(tour: RelayTour) =
-    Option.unless(tour.isPrivate):
+  def responseCacheByLang(tour: RelayTour)(using Lang) =
+    isDefaultLanguage.so(responseCache(tour))
+
+  def responseCache(tour: RelayTour)(using Lang) =
+    Option.when(isDefaultLanguage && !tour.isPrivate):
       if ~tour.live then 10.seconds
       else if tour.active then 1.minute
       else 10.minutes
 
-  def responseCache(rt: RelayRound.WithTour, study: Study) =
-    Option.unless(rt.tour.isPrivate || study.isPrivate):
-      if rt.round.isFinished then 30.minutes
-      else if rt.round.hasStarted then 10.seconds
-      else if rt.round.startsSoonOrAfterPrevious then 1.minute
-      else 30.minutes
+  def responseCache(rt: RelayRound.WithTour, study: Study)(using Lang) =
+    (isDefaultLanguage && !rt.tour.isPrivate && !study.isPrivate).so:
+      if rt.round.isFinished then 30.minutes.some
+      else if rt.round.hasStarted then none
+      else if rt.round.startsSoonOrAfterPrevious then 1.minute.some
+      else 10.minutes.some
+
+  private def isDefaultLanguage(using lang: Lang) = toLanguage(lang) == defaultLanguage
 
 object RelayJsonView:
 

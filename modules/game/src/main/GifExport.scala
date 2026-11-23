@@ -8,7 +8,6 @@ import org.apache.pekko.util.ByteString
 import play.api.libs.json.*
 import play.api.libs.ws.JsonBodyWritables.*
 import play.api.libs.ws.{ StandaloneWSClient, StandaloneWSResponse }
-import play.api.mvc.RequestHeader
 import scalalib.Maths
 
 import lila.common.HTTPRequest.queryStringBoolOpt
@@ -25,7 +24,7 @@ object GifExport:
   final class Options(val players: Boolean, val ratings: Boolean, val clocks: Boolean, val glyphs: Boolean)
   object Options:
     val default = Options(true, true, true, true)
-    def fromReq(using RequestHeader): Options =
+    def fromReq(using Req): Options =
       Options(
         players = queryStringBoolOpt("players") | default.players,
         ratings = queryStringBoolOpt("ratings") | default.ratings,
@@ -108,10 +107,10 @@ final class GifExport(
             "theme" -> theme,
             "piece" -> piece
           ) ::: List(
-            white.map { "white" -> _ },
-            black.map { "black" -> _ },
-            lastMove.map { lm => "lastMove" -> UciDump.lastMove(lm, position) },
-            position.checkSquare.map { "check" -> _.key }
+            white.map("white" -> _),
+            black.map("black" -> _),
+            lastMove.map(lm => "lastMove" -> UciDump.lastMove(lm, position)),
+            position.checkSquare.map("check" -> _.key)
           ).flatten*
         )
         .stream()
@@ -133,8 +132,8 @@ final class GifExport(
       case Some(median) =>
         val scale = targetMedianTime.centis.toFloat / median.centis.atLeast(1).toFloat
         moveTimes.map { t =>
-          if t * 2 < median then t.atMost(targetMedianTime *~ 0.5)
-          else (t *~ scale).atLeast(targetMedianTime *~ 0.5).atMost(targetMaxTime)
+          if t * 2 < median then t.atMost(targetMedianTime *~ 0.5f)
+          else (t *~ scale).atLeast(targetMedianTime *~ 0.5f).atMost(targetMaxTime)
         }
       case None => moveTimes.map(_.atMost(targetMaxTime))
 
