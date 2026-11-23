@@ -13,67 +13,62 @@ import lila.common.Json.given
 final class Importer(env: Env) extends LilaController(env):
 
   def importGame = OpenBody:
-    if env.noSweat.enabled then notFound
-    else
-      val pgn = ~get("pgn")
-      val data = lila.game.importer.ImportData(PgnStr(pgn), None)
-      Ok.page(views.game.ui.importer(lila.game.importer.form.fill(data)))
+    val pgn = ~get("pgn")
+    val data = lila.game.importer.ImportData(PgnStr(pgn), None)
+    Ok.page(views.game.ui.importer(lila.game.importer.form.fill(data)))
 
   def sendGame = OpenOrScopedBody(parse.anyContent)()(doSendGame)
   def apiSendGame = AnonOrScopedBody(parse.anyContent)()(doSendGame)
   private def doSendGame(using ctx: BodyContext[Any]) =
-    if env.noSweat.enabled then notFound
-    else
-      bindForm(lila.game.importer.form)(
-        err =>
-          negotiate(
-            BadRequest.page(views.game.ui.importer(err)),
-            jsonFormError(err)
-          ),
-        data =>
-          limit.gameImport(ctx.ip, () => rateLimited): () =>
-            env.game.importer
-              .importAsGame(data.pgn)
-              .flatMap: game =>
-                ctx.me.so(env.game.cached.clearNbImportedByCache(_)).inject(Right(game))
-              .recover { case _: Exception =>
-                Left("The PGN contains illegal and/or ambiguous moves.")
-              }
-              .flatMap {
-                case Right(game) =>
-                  negotiate(
-                    html = ctx.me
-                      .filter(_ => data.analyse.isDefined && lila.game.GameExt.analysable(game))
-                      .soUse: me ?=>
-                        env.fishnet
-                          .analyser(
-                            game,
-                            lila.fishnet.Work.Sender(
-                              userId = me,
-                              ip = ctx.ip.some,
-                              mod = isGranted(_.UserEvaluate),
-                              system = false
-                            )
+    bindForm(lila.game.importer.form)(
+      err =>
+        negotiate(
+          BadRequest.page(views.game.ui.importer(err)),
+          jsonFormError(err)
+        ),
+      data =>
+        limit.gameImport(ctx.ip, () => rateLimited): () =>
+          env.game.importer
+            .importAsGame(data.pgn)
+            .flatMap: game =>
+              ctx.me.so(env.game.cached.clearNbImportedByCache(_)).inject(Right(game))
+            .recover: _ =>
+              Left("The PGN contains illegal and/or ambiguous moves.")
+            .flatMap {
+              case Right(game) =>
+                negotiate(
+                  html = ctx.me
+                    .filter(_ => data.analyse.isDefined && lila.game.GameExt.analysable(game))
+                    .soUse: me ?=>
+                      env.fishnet
+                        .analyser(
+                          game,
+                          lila.fishnet.Work.Sender(
+                            userId = me,
+                            ip = ctx.ip.some,
+                            mod = isGranted(_.UserEvaluate),
+                            system = false
                           )
-                          .void
-                      .inject(Redirect(routes.Round.watcher(game.id, Color.white))),
-                    json =
-                      if HTTPRequest.isLichobile
-                      then Redirect(routes.Round.watcher(game.id, Color.white))
-                      else
-                        Ok:
-                          Json.obj(
-                            "id" -> game.id,
-                            "url" -> routeUrl(routes.Round.watcher(game.id, Color.white))
-                          )
-                  )
-                case Left(error) =>
-                  negotiate(
-                    Redirect(routes.Importer.importGame).flashFailure(error),
-                    BadRequest(jsonError(error))
-                  )
-              }
-      )
+                        )
+                        .void
+                    .inject(Redirect(routes.Round.watcher(game.id, Color.white))),
+                  json =
+                    if HTTPRequest.isLichobile
+                    then Redirect(routes.Round.watcher(game.id, Color.white))
+                    else
+                      Ok:
+                        Json.obj(
+                          "id" -> game.id,
+                          "url" -> routeUrl(routes.Round.watcher(game.id, Color.white))
+                        )
+                )
+              case Left(error) =>
+                negotiate(
+                  Redirect(routes.Importer.importGame).flashFailure(error),
+                  BadRequest(jsonError(error))
+                )
+            }
+    )
 
   def masterGame(id: GameId, orientation: Color) = Open:
     Found(env.explorer.importer(id)): game =>

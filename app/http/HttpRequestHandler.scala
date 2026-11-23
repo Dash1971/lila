@@ -37,6 +37,18 @@ final class HttpRequestHandler(
     then optionsHandler.some
     else router.handlerFor(request)
 
+  override protected def filterHandler(request: Req, handler: Handler): Handler =
+    // Generated Liplay routes supply ActionName before filtering. Preserve native
+    // untagged fallback/error/OPTIONS handlers, including their status semantics.
+    val blocked = noSweatEnabled && request.attrs
+      .get(Router.Attrs.ActionName)
+      .exists: action =>
+        !NoSweatFeatures.allows(request.method, request.path, action)
+    super.filterHandler(
+      request,
+      if blocked then controllerComponents.actionBuilder(_ => Results.NotFound) else handler
+    )
+
   // should be handled by nginx in production
   private val optionsHandler =
     controllerComponents.actionBuilder: (req: Req) =>
