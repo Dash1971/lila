@@ -194,6 +194,9 @@ export default class AnalyseCtrl implements CevalHandler {
         ? new makeStudy(opts.study, this, (opts.tagTypes || '').split(','), opts.practice, opts.relay)
         : undefined;
 
+    if (location.hash === '#practice' || this.study?.data.chapter.practice) this.togglePractice();
+    else if (location.hash === '#menu') requestIdleCallbackSafe(this.actionMenu.toggle, 500);
+    this.initCeval();
     if (
       !opts.practice &&
       this.isCevalAllowed() &&
@@ -201,9 +204,6 @@ export default class AnalyseCtrl implements CevalHandler {
     )
       this.noSweat = new NoSweatAnalysis(this);
 
-    if (location.hash === '#practice' || this.study?.data.chapter.practice) this.togglePractice();
-    else if (location.hash === '#menu') requestIdleCallbackSafe(this.actionMenu.toggle, 500);
-    this.initCeval();
     keyboard.bind(this);
 
     const urlEngine = new URLSearchParams(location.search).get('engine');
@@ -358,7 +358,7 @@ export default class AnalyseCtrl implements CevalHandler {
 
   private showGround(): void {
     this.noSweat?.positionChanged();
-    if (this.node.pos().isErr || this.node.outcome()) this.ceval.reset();
+    if (this.node.pos().isErr || this.node.outcome()) this.ceval?.reset();
     this.withCg(cg => {
       cg.set(this.makeCgOpts());
       this.setAutoShapes();

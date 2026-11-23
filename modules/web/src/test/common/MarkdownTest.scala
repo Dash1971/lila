@@ -321,10 +321,15 @@ Line 2""")
       new MarkdownRender(removeHtmlEntities = false)("test")
     assertEquals(render(Markdown("&#128512;")), Html("<p>&#128512;</p>\n"))
 
-  test("parser stack overflow fallback escapes untrusted HTML"):
+  test("deep parser input escapes untrusted HTML with or without fallback"):
     val raw =
       """<meta http-equiv="refresh" content="0;url=https://example.com"><div>unsafe & text</div>
 [a][b]
 
 [b]: <https://example.com/""" + ("A" * 19000) + ">\n"
-    assertEquals(render(Markdown(raw)), Html(scalalib.StringUtils.escapeHtmlRaw(raw)))
+    // Whether this reaches the fallback depends on the JVM stack size. Both paths must escape HTML.
+    val html = render(Markdown(raw)).value
+    assert(!html.contains("<meta"))
+    assert(!html.contains("<div>unsafe"))
+    assert(html.contains("&lt;meta"))
+    assert(html.contains("unsafe &amp; text"))

@@ -6,6 +6,7 @@ import lila.core.email.EmailAddress
 import lila.ui.OpenGraph
 
 class NoSweatBrandingTest extends munit.FunSuite:
+  private given play.api.i18n.Lang = lila.core.i18n.enLang
   private val origin = BaseUrl("https://mutechess.org")
   private val image = Url("https://mutechess.org/assets/nosweat/social.png")
   private val upstreamImage = Url("https://mutechess.org/assets/logo/lichess-tile-wide.png")
