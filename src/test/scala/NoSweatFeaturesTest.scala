@@ -38,3 +38,14 @@ class NoSweatFeaturesTest extends munit.FunSuite:
     assert(NoSweatFeatures.allows("GET", "/games/best/replacement/01234567", "Tv.gameChannelReplacement"))
     assert(!NoSweatFeatures.allows("GET", "/account/preferences/future-setting", "Pref.form"))
     assert(!NoSweatFeatures.allows("POST", "/rel/future-action/alice", "Relation.bcAction"))
+
+  test("missing route metadata fails closed except for owned redirect, refusal and OPTIONS handlers"):
+    assert(!NoSweatFeatures.allowsTagged("GET", "/analysis", None))
+    assert(!NoSweatFeatures.allowsTagged("POST", "/setup/friend", None))
+    assert(NoSweatFeatures.allowsTagged("GET", "/signup", None))
+    assert(NoSweatFeatures.allowsTagged("HEAD", "/signup", None))
+    assert(NoSweatFeatures.allowsTagged("POST", "/login", None))
+    assert(NoSweatFeatures.allowsTagged("POST", "/setup/ai", None))
+    assert(NoSweatFeatures.allowsTagged("OPTIONS", "/analysis", None))
+    assert(!NoSweatFeatures.allowsTagged("OPTIONS", "/analysis", Some("Future.action")))
+    assert(NoSweatFeatures.allowsTagged("GET", "/", Some("Lobby.home")))

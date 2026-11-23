@@ -24,3 +24,17 @@ private[app] object NoSweatFeatures:
     val verb = if method == "HEAD" then "GET" else method
     routes.exists: (allowedMethod, allowedAction, pattern) =>
       verb == allowedMethod && action == allowedAction && pattern.matcher(path).matches()
+
+  // These are owned by HttpRequestHandler itself, before generated routing.
+  def poolOnlyPost(method: String, path: String): Boolean =
+    method == "POST" && (
+      path == "/login" || path.startsWith("/signup") ||
+        (path.startsWith("/setup/") && path != "/setup/friend") ||
+        path.startsWith("/api/challenge") || path == "/api/bot/account/upgrade"
+    )
+
+  def allowsTagged(method: String, path: String, action: Option[String]): Boolean =
+    action.fold(
+      method == "OPTIONS" || ((method == "GET" || method == "HEAD") && path == "/signup") ||
+        poolOnlyPost(method, path)
+    )(allows(method, path, _))
