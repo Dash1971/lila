@@ -1,5 +1,6 @@
 # Fork-specific CI is the sole #363 metadata exception.
-# The companion snapshot supplies the adapter roster and puzzle validator only.
+# The immutable companion snapshot supplies validators and focused feature policy.
+# Re-pin to the resulting merged companion commit before the combined release.
 name: Mute native checks
 on:
   push:
@@ -24,7 +25,7 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: Dash1971/mute-chess
-          ref: b3be2b7660d27228a88d929b87eacd71dfa7e851
+          ref: 997f0ae5af8870f1f8e7b2c66dba318d7da717bc
           path: mute-chess
       - name: Check the unchanged WebSocket patch
         run: |
@@ -35,6 +36,8 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 24.22.1
+      - name: Check reviewed native routes against the public gateway
+        run: node mute-chess/deploy/public/test-feature-surface.mjs lila/conf/noSweatFeatures.json lila/conf/routes
       - name: Build and test the native board and analysis extensions
         working-directory: lila
         run: |
