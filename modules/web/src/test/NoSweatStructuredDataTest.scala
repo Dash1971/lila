@@ -10,6 +10,8 @@ class NoSweatStructuredDataTest extends munit.FunSuite:
     assertEquals("</script>".r.findAllIn(html).length, 1)
     assert(!html.contains("<script id=structured-data-probe>"), html)
     assert(html.contains("structured-data-probe"), html)
+    val json = Json.parse(html.substring(html.indexOf('>') + 1, html.lastIndexOf("</script>")))
+    assertEquals((json \ "description").as[String], attack)
 
   test("ordinary organization metadata retains its wrapper and content"):
     val html = lila.ui.bits
@@ -19,3 +21,6 @@ class NoSweatStructuredDataTest extends munit.FunSuite:
     assert(html.endsWith("</script>"), html)
     assert(html.contains("Mute Chess"), html)
     assert(html.contains("https://mutechess.org"), html)
+    val json = Json.parse(html.substring(html.indexOf('>') + 1, html.lastIndexOf("</script>")))
+    assertEquals((json \ "name").as[String], "Mute Chess")
+    assertEquals((json \ "url").as[String], "https://mutechess.org")

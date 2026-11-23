@@ -146,9 +146,11 @@ object bits:
     )
 
   def structuredData(tpe: String)(json: JsObject) =
-    val js = Json.stringify:
-      Json.obj("@context" -> "https://schema.org", "@type" -> tpe) ++ json
-    script(st.tpe := "application/ld+json")(js)
+    // Escape HTML's tag opener in serialized JSON, preserving valid JSON and its original values.
+    val js = Json
+      .stringify(Json.obj("@context" -> "https://schema.org", "@type" -> tpe) ++ json)
+      .replace("<", "\\u003c")
+    script(st.tpe := "application/ld+json")(raw(js))
 
   def organizationJson(net: NetConfig) = net.domain.isLichessProd.option:
     Json.obj(
