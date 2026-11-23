@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: Dash1971/mute-chess
-          ref: 95d6e2848fe3c328c6482eb949bfc371c0e47298
+          ref: b3be2b7660d27228a88d929b87eacd71dfa7e851
           path: mute-chess
       - name: Check the unchanged WebSocket patch
         run: |
