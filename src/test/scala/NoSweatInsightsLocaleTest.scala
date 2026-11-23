@@ -16,7 +16,7 @@ class NoSweatInsightsLocaleTest extends munit.FunSuite:
       val catalog = Registry.getAll(lang).get
       for key <- NoSweatInsights.clientKeys do assert(catalog.containsKey(s"muteInsight$key"), s"$code/$key")
       assert(catalog.containsKey("muteNotYetSupported"), code)
-      val notice = I18nKey("muteNotYetSupported")().render
+      val notice = I18nKey.unchecked("muteNotYetSupported")().render
       assert(notice.nonEmpty && !notice.contains("muteNotYetSupported"), code)
       if code != "en-GB" then assert(!notice.contains("This functionality"), code)
       val ui = NoSweatInsights.ui(new lila.insight.JsonView().ui(Nil, Nil, asMod = false))
@@ -25,4 +25,4 @@ class NoSweatInsightsLocaleTest extends munit.FunSuite:
       val result = metrics.find(m => (m \ "key").as[String] == "result").get
       assertEquals((result \ "name").as[String], NoSweatInsights.text("Result"))
       assert(!NoSweatInsights.clientText.toString.contains("muteInsight"), code)
-      assert(I18nKey("muteInsightSummary").txt("42").contains("42"), code)
+      assert(I18nKey.unchecked("muteInsightSummary").txt("42").contains("42"), code)

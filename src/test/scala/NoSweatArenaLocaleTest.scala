@@ -48,10 +48,10 @@ class NoSweatArenaLocaleTest extends munit.FunSuite:
       for key <- keys do
         assert(catalog.containsKey(key), s"$code/$key")
         val rendered = (key match
-          case "muteArenaHelp" => I18nKey(key)(1400, 1700, 10)
-          case "muteArenaBotNoticeIntro" => I18nKey(key)(1200, 1700, 10)
-          case "muteArenaBotNoticeFill" => I18nKey(key)(10)
-          case _ => I18nKey(key)()
+          case "muteArenaHelp" => I18nKey.unchecked(key)(1400, 1700, 10)
+          case "muteArenaBotNoticeIntro" => I18nKey.unchecked(key)(1200, 1700, 10)
+          case "muteArenaBotNoticeFill" => I18nKey.unchecked(key)(10)
+          case _ => I18nKey.unchecked(key)()
         ).render
         assert(rendered.nonEmpty && !rendered.contains(key), s"$code/$key")
         if code != "en-GB" then

@@ -104,7 +104,13 @@ object JsonView extends lila.tree.AnalysisJson:
         "moves" -> moves(analysis)
       )
 
-  private given Reads[Engine] = Json.reads
+  // Local review sends the same public metadata emitted by our Engine writer.
+  // Never accept client-supplied account, fishnet key or internal engine identity.
+  private given Reads[Engine] = Reads: json =>
+    for
+      nodesPerMove <- (json \ "nodesPerMove").validate[Int]
+      version <- (json \ "version").validate[String]
+    yield Engine.unknown.copy(nodesPerMove = nodesPerMove, engineVersion = version)
 
   given Reads[Analysis] = Reads: js =>
     for
