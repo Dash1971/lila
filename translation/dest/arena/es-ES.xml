@@ -91,5 +91,5 @@ Por ejemplo, una valoración media del 3% significa que has finalizado en el 3% 
   <string name="berserkRate">Tasa de berserk</string>
   <string name="leaguesAndStreamerBattles">Ligas y Batallas retransmitidas</string>
   <string name="allowBotAccounts">Permitir cuentas bot</string>
-
+  <string name="allowBotAccountsDescription">Permitir que &lt;a href=\'%s\' target=\'_blank\'&gt;bots&lt;/a&gt; se unan al torneo y jueguen con sus motores. Esto no suele gustar a los jugadores humanos.</string>
 </resources>

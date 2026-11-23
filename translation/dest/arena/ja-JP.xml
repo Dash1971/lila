@@ -81,5 +81,6 @@
   <string name="tournamentPairingsAreNowClosed">トーナメントの対局の組み合わせは終了しました。</string>
   <string name="berserkRate">バーサーク率</string>
   <string name="leaguesAndStreamerBattles">リーグとストリーマーバトル</string>
-  <string name="allowBotAccounts">ボットアカウントの参加を許可</string>
+  <string name="allowBotAccounts">ボットアカウントを許可する</string>
+  <string name="allowBotAccountsDescription">&lt;a href=\'%s\' target=\'_blank\'&gt;ボット&lt;/a&gt;がトーナメントに参加し、エンジンで対局できるようにします。多くの場合、人間のプレイヤーが参加を避けます。</string>
 </resources>

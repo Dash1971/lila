@@ -87,5 +87,6 @@ Par exemple, un rang moyen de 3 % signifie que vous êtes habituellement parmi 
   <string name="tournamentPairingsAreNowClosed">Les appariements sont terminés.</string>
   <string name="berserkRate">Taux de berserk</string>
   <string name="leaguesAndStreamerBattles">Ligues et batailles de streamer</string>
-  <string name="allowBotAccounts">Autoriser les comptes bots</string>
+  <string name="allowBotAccounts">Autoriser les comptes de bot</string>
+  <string name="allowBotAccountsDescription">Permettre aux &lt;a href=\'%s\' target=\'_blank\'&gt;bots&lt;/a&gt; de participer au tournoi avec leurs moteurs d\'échecs. Note : Cela repousse souvent les joueurs humains.</string>
 </resources>

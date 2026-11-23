@@ -91,5 +91,5 @@ Zum Beispiel bedeutet ein Tabellenplatz-Durchschnitt von 3% typischerweise das E
   <string name="berserkRate">Berserker-Rate</string>
   <string name="leaguesAndStreamerBattles">Ligen &amp; Streamer-Kämpfe</string>
   <string name="allowBotAccounts">Bot-Konten erlauben</string>
-
+  <string name="allowBotAccountsDescription">Lass &lt;a href=\'%s\' target=\'_blank\'&gt;Bots&lt;/a&gt; am Turnier teilnehmen und mit ihren Engines spielen. Dies schreckt oft menschliche Spieler ab.</string>
 </resources>

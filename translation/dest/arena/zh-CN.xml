@@ -89,5 +89,6 @@
   <string name="tournamentPairingsAreNowClosed">锦标赛配对现已关闭。</string>
   <string name="berserkRate">狂暴率</string>
   <string name="leaguesAndStreamerBattles">联赛和主播对战</string>
-  <string name="allowBotAccounts">允许机器人账号参赛</string>
+  <string name="allowBotAccounts">允许机器人账户</string>
+  <string name="allowBotAccountsDescription">允许&lt;a href=\'%s\' target=\'_blank\'&gt;机器人&lt;/a&gt;加入锦标赛并使用其引擎对弈。这通常会劝退人类棋手。</string>
 </resources>
