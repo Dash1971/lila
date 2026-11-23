@@ -6,10 +6,13 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: "17 0 * * 1" # Mondays at 09:17 Asia/Tokyo.
 permissions:
   contents: read
 jobs:
   upstream-patches:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
@@ -45,6 +48,7 @@ jobs:
           ./ui/build --no-install site lobby analyse round editor dasher puzzle bits learn coordinateTrainer storm user insight tournament
 
   native-forum:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     env:
@@ -66,3 +70,95 @@ jobs:
       - name: Check native Scala formatting, GIF parsing, study plan, forum permissions and user search
         working-directory: lila
         run: sbt -J-Xms128m -J-Xmx3g -J-Xss2m -J-XX:ActiveProcessorCount=2 -Dsbt.task.cpus=2 -Dsbt.supershell=false 'scalafmtCheckAll;security/testOnly lila.security.ModeratorOAuthTest lila.security.PermissionTest;core/testOnly lila.core.NostrNameTest;game/testOnly lila.game.NoSweatAnalysisGifTest;game/testOnly lila.game.NoSweatGameAdmissionTest;game/testOnly lila.game.NoSweatArenaAdmissionTest;chat/testOnly lila.chat.ChatPublicNameTest;round/testOnly lila.round.NoSweatPresetChatTest;round/testOnly lila.round.NoSweatAbandonTest;i18n/testOnly lila.i18n.NoSweatLanguagesTest;analyse/testOnly lila.analyse.NoSweatLocalAnalysisJsonTest;web/testOnly lila.web.NoSweatBrandingTest;web/testOnly lila.markdown.MarkdownTest;relay/testOnly lila.relay.RelaySourceAddressTest lila.relay.RelayFetchTest;bot/testOnly lila.bot.PublicBotActivityTest;tournament/testOnly lila.tournament.NoSweatArenaTest;compile;testOnly lila.app.NoSweatArenaRosterTest lila.app.NoSweatSignupNameTest;testOnly lila.i18n.NoSweatArenaLocaleTest;forum/testOnly lila.forum.ForumAccessTest;user/testOnly lila.user.NoSweatUserSearchTest;user/testOnly lila.user.NoSweatPlayerRatingsTest;testOnly lila.app.NoSweatInsightsTest;testOnly lila.i18n.NoSweatInsightsLocaleTest;testOnly lila.app.NoSweatStudyPlanTest;testOnly lila.app.NoSweatBotCatalogTest;testOnly lila.app.NoSweatDonationTest;user/testOnly lila.user.NoSweatBotIdentityTest;user/testOnly lila.user.NoSweatNostrIdentityTest;user/testOnly lila.user.PublicNameKeysTest;user/testOnly lila.user.PublicNameTest'
+
+  upstream-drift:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GIT_LFS_SKIP_SMUDGE: '1'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Fetch latest Lichess master for a read-only trial
+        run: git fetch --no-tags https://github.com/lichess-org/lila.git master:refs/remotes/upstream-report/master
+      - name: Report conflicts and native footprint
+        shell: bash
+        run: |
+          python3 - <<'PYREPORT'
+          import collections
+          import html
+          import json
+          import os
+          from pathlib import Path
+          import subprocess
+
+
+          def git(*args):
+              return subprocess.check_output(['git', *args])
+
+
+          fork = git('rev-parse', 'HEAD').decode().strip()
+          upstream = git('rev-parse', 'refs/remotes/upstream-report/master').decode().strip()
+          base = git('merge-base', fork, upstream).decode().strip()
+          merge = subprocess.run(
+              ['git', 'merge-tree', '--write-tree', '--name-only', '--no-messages', '-z', fork, upstream],
+              capture_output=True,
+          )
+          if merge.returncode not in (0, 1):
+              raise RuntimeError(merge.stderr.decode(errors='replace'))
+          fields = merge.stdout.split(b'\0')
+          conflicts = sorted({os.fsdecode(path) for path in fields[1:] if path})
+          if bool(conflicts) != (merge.returncode == 1):
+              raise RuntimeError('Unexpected merge-tree result; conflict count unavailable')
+          paths = git('diff', '--no-renames', '--name-status', '-z', base, fork).split(b'\0')
+          status = dict(zip((os.fsdecode(p) for p in paths[1::2]), (p.decode() for p in paths[0::2])))
+          status.pop('.github/workflows/mute.yml', None)  # Approved metadata exception only.
+          counts = collections.Counter(status.values())
+          added = deleted = binary = 0
+          for row in git('diff', '--no-renames', '--numstat', '-z', base, fork).split(b'\0'):
+              if not row:
+                  continue
+              plus, minus, path = row.split(b'\t', 2)
+              if os.fsdecode(path) not in status or status[os.fsdecode(path)] == 'A':
+                  continue
+              if plus == b'-':
+                  binary += 1
+              else:
+                  added += int(plus)
+                  deleted += int(minus)
+          report = {
+              'forkCommit': fork,
+              'upstreamCommit': upstream,
+              'upstreamMergeBase': base,
+              'upstreamCommitsNotInFork': int(git('rev-list', '--count', fork + '..' + upstream)),
+              'conflictedFiles': conflicts,
+              'conflictCount': len(conflicts),
+              'modifiedUpstreamFiles': sum(n for kind, n in counts.items() if kind != 'A'),
+              'muteAddedFiles': counts['A'],
+              'upstreamFileLinesAdded': added,
+              'upstreamFileLinesDeleted': deleted,
+              'modifiedBinaryFiles': binary,
+          }
+          print(json.dumps(report, indent=2))
+          summary = [
+              '# Lichess upstream drift',
+              '',
+              f'- Fork: `{fork}`',
+              f'- Latest upstream master: `{upstream}`',
+              f'- Common upstream base: `{base}`',
+              f'- Upstream commits not in fork: {report["upstreamCommitsNotInFork"]}',
+              f'- Conflicted files in a trial merge: **{len(conflicts)}**',
+              f'- Modified upstream files: **{report["modifiedUpstreamFiles"]}** '
+              f'(+{added} / -{deleted} text lines; {binary} binary files)',
+              f'- Added Mute files: {counts["A"]} (counted separately)',
+              '',
+              'Read-only trial; no branches are merged or pushed. Only `.github/workflows/mute.yml` '
+              'is excluded from footprint metrics. Conflicts are reported for review, not resolved automatically.',
+          ]
+          if conflicts:
+              summary.extend(['', '## Conflicted paths', ''])
+              summary.extend('<code>' + html.escape(path) + '</code><br>' for path in conflicts)
+          Path(os.environ['GITHUB_STEP_SUMMARY']).write_text('\n'.join(summary) + '\n')
+          PYREPORT
