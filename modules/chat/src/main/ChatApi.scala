@@ -215,10 +215,18 @@ final class ChatApi(
             publish(chat.id, OnTimeout(chat.id, user.id), busChan)
             line.foreach: l =>
               publishLine(chat.id, l, busChan)
-            if isMod || isRelayMod then
-              Bus.pub:
-                lila.core.mod.ChatTimeout(mod = mod.userId, user = user.id, reason = reason, text = text)
-              if isNew then Bus.pub(lila.core.security.DeletePublicChats(user.id))
+            publishModerationTimeout(user, reason, text, isNew)
+
+    private def publishModerationTimeout(
+        user: User,
+        reason: ChatTimeout.Reason,
+        text: String,
+        isNew: Boolean
+    )(using mod: Me): Unit =
+      if isMod || isRelayMod then
+        Bus.pub:
+          lila.core.mod.ChatTimeout(mod = mod.userId, user = user.id, reason = reason, text = text)
+        if isNew then Bus.pub(lila.core.security.DeletePublicChats(user.id))
 
     def delete(c: UserChat, user: User, busChan: BusChan.Select): Fu[Boolean] =
       val chat = c.markDeleted(user)
