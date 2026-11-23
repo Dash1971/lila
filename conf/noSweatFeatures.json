@@ -2205,6 +2205,42 @@
       "sample": "/abcdefgh",
       "gateway": "allow",
       "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/account/preferences/:categ",
+      "action": "Pref.form",
+      "pattern": "^/account/preferences/(?:display|chess-clock|game-behavior|privacy|notification|engine-analysis)$",
+      "sample": "/account/preferences/display",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/rel/:action/:user",
+      "action": "Relation.bcAction",
+      "pattern": "^/rel/(?:follow|unfollow|block|unblock)/[A-Za-z0-9_-]{1,30}$",
+      "sample": "/rel/block/alice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/tournament/history/:freq",
+      "action": "Tournament.history",
+      "pattern": "^/tournament/history/unique$",
+      "sample": "/tournament/history/unique",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/games/:chanKey/replacement/$gameId<\\w{8}>",
+      "action": "Tv.gameChannelReplacement",
+      "pattern": "^/games/best/replacement/[A-Za-z0-9]{8}$",
+      "sample": "/games/best/replacement/01234567",
+      "gateway": "allow",
+      "scope": "public"
     }
   ]
 }
