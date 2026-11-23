@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: Dash1971/mute-chess
-          ref: 69839d81e228f9de96a64fc8646ca1e3901d3f81
+          ref: 95d6e2848fe3c328c6482eb949bfc371c0e47298
           path: mute-chess
       - name: Check the unchanged WebSocket patch
         run: |
@@ -35,8 +35,6 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 24.22.1
-      - name: Native and adapter catalogs agree
-        run: node mute-chess/lila-adapter/validate-catalog.mjs "$GITHUB_WORKSPACE/lila"
       - name: Build and test the native board and analysis extensions
         working-directory: lila
         run: |

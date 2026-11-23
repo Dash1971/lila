@@ -1,10 +1,16 @@
 package lila.app
 
+import java.nio.file.{ Files, Path }
 import play.api.libs.json.*
 import lila.core.perf.{ Perf, PerfKey }
 
 /** Initialization of assigned bot priors; native Glicko and earned counts remain unchanged. */
 private[app] object NoSweatBotCatalog:
+  def load(rosterPath: Path, aliasesPath: Path): (List[JsObject], Map[String, String]) =
+    val roster = validate(Json.parse(Files.readString(rosterPath)).as[List[JsObject]])
+    val names = aliases(Json.parse(Files.readString(aliasesPath)).as[Map[String, String]], roster)
+    roster -> names
+
   val customFlairs = Vector(
     "symbols.mute-circuit-knight",
     "symbols.mute-synthetic-eye",

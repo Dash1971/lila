@@ -1,6 +1,5 @@
 package lila.app
 
-import java.nio.file.Files
 import java.util.concurrent.atomic.{ AtomicLong, AtomicReference }
 import play.api.libs.json.*
 import play.api.libs.ws.StandaloneWSClient
@@ -52,18 +51,12 @@ final class NoSweatService(env: Env, ws: StandaloneWSClient)(using ec: Executor)
     "noSweatAdmission",
     lila.mon.asyncActorMonitor.full
   )
-  lazy val roster: List[JsObject] = NoSweatBotCatalog.validate(
-    Json
-      .parse(
-        Files.readString(env.getFile.exec("public/nosweat-roster.json").toPath)
-      )
-      .as[List[JsObject]]
+  private lazy val catalog = NoSweatBotCatalog.load(
+    env.getFile.exec("public/nosweat-roster.json").toPath,
+    env.getFile.exec("public/nosweat-bot-aliases.json").toPath
   )
-  private lazy val botAliases =
-    val path = env.getFile.exec("public/nosweat-bot-aliases.json").toPath
-    val values = if Files.exists(path) then Json.parse(Files.readString(path)).as[Map[String, String]]
-    else Map.empty[String, String]
-    NoSweatBotCatalog.aliases(values, roster)
+  lazy val roster: List[JsObject] = catalog._1
+  private lazy val botAliases = catalog._2
   private def botId(bot: JsObject): UserId = UserId((bot \ "username").as[String].toLowerCase)
   private lazy val botsById = roster.map(bot => botId(bot) -> bot).toMap
   private lazy val botIds = botsById.keySet
