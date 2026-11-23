@@ -1,5 +1,6 @@
 package lila.app
 
+import java.nio.file.{ Files, NoSuchFileException }
 import play.api.libs.json.*
 import lila.core.perf.PerfKey
 
@@ -120,3 +121,28 @@ class NoSweatBotCatalogTest extends munit.FunSuite:
         aliases
       )
     )
+
+  test("runtime catalog loads the same roster and aliases and requires both files"):
+    val root = Files.createTempDirectory("nosweat-catalog-")
+    val rosterPath = root.resolve("roster.json")
+    val aliasesPath = root.resolve("aliases.json")
+    try
+      Files.writeString(rosterPath, Json.stringify(Json.arr(legacy, catalog)))
+      Files.writeString(aliasesPath, Json.stringify(Json.obj("SignalTrain001" -> "Roy Batty")))
+      val (loaded, names) = NoSweatBotCatalog.load(rosterPath, aliasesPath)
+      assertEquals(loaded, List(legacy, catalog))
+      assertEquals(names, Map("signaltrain001" -> "Roy Batty"))
+      intercept[NoSuchFileException]:
+        NoSweatBotCatalog.load(root.resolve("missing-roster.json"), aliasesPath)
+      intercept[NoSuchFileException]:
+        NoSweatBotCatalog.load(rosterPath, root.resolve("missing-aliases.json"))
+      Files.writeString(aliasesPath, Json.stringify(Json.obj("UnknownAccount" -> "Roy Batty")))
+      intercept[IllegalArgumentException]:
+        NoSweatBotCatalog.load(rosterPath, aliasesPath)
+      Files.writeString(rosterPath, "[]")
+      intercept[IllegalArgumentException]:
+        NoSweatBotCatalog.load(rosterPath, aliasesPath)
+    finally
+      Files.deleteIfExists(rosterPath)
+      Files.deleteIfExists(aliasesPath)
+      Files.deleteIfExists(root)
