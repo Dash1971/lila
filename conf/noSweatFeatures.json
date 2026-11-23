@@ -1,0 +1,2246 @@
+{
+  "schema": 1,
+  "routes": [
+    {
+      "method": "GET",
+      "route": "/$key<about|faq|contact|terms-of-service|privacy>",
+      "action": "NoSweat.info",
+      "pattern": "^/(?:about|faq|contact|terms-of-service|privacy)$",
+      "sample": "/about",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/club",
+      "action": "NoSweat.home",
+      "pattern": "^/club$",
+      "sample": "/club",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/club/unsupported",
+      "action": "NoSweat.unsupported",
+      "pattern": "^/club/unsupported$",
+      "sample": "/club/unsupported",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/club/me",
+      "action": "NoSweat.me",
+      "pattern": "^/club/me$",
+      "sample": "/club/me",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/club/roster",
+      "action": "NoSweat.roster",
+      "pattern": "^/club/roster$",
+      "sample": "/club/roster",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/club/challenge",
+      "action": "NoSweat.challenge",
+      "pattern": "^/club/challenge$",
+      "sample": "/club/challenge",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/club/login",
+      "action": "NoSweat.login",
+      "pattern": "^/club/login$",
+      "sample": "/club/login",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/club/security",
+      "action": "NoSweat.securityPage",
+      "pattern": "^/club/security$",
+      "sample": "/club/security",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/club/nostr",
+      "action": "NoSweat.nostrKeys",
+      "pattern": "^/club/nostr$",
+      "sample": "/club/nostr",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/club/security",
+      "action": "NoSweat.securityApply",
+      "pattern": "^/club/security$",
+      "sample": "/club/security",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/club/play",
+      "action": "NoSweat.play",
+      "pattern": "^/club/play$",
+      "sample": "/club/play",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/club/internal/study",
+      "action": "NoSweat.experimentStatus",
+      "pattern": "^/club/internal/study$",
+      "sample": "/club/internal/study",
+      "gateway": "allow",
+      "scope": "private"
+    },
+    {
+      "method": "GET",
+      "route": "/club/internal/study/ratings",
+      "action": "NoSweat.experimentRatings",
+      "pattern": "^/club/internal/study/ratings$",
+      "sample": "/club/internal/study/ratings",
+      "gateway": "allow",
+      "scope": "private"
+    },
+    {
+      "method": "POST",
+      "route": "/club/internal/study",
+      "action": "NoSweat.experimentCreate",
+      "pattern": "^/club/internal/study$",
+      "sample": "/club/internal/study",
+      "gateway": "allow",
+      "scope": "private"
+    },
+    {
+      "method": "POST",
+      "route": "/club/internal/study/stop",
+      "action": "NoSweat.experimentStop",
+      "pattern": "^/club/internal/study/stop$",
+      "sample": "/club/internal/study/stop",
+      "gateway": "allow",
+      "scope": "private"
+    },
+    {
+      "method": "POST",
+      "route": "/club/internal/study/:id/move",
+      "action": "NoSweat.experimentMove",
+      "pattern": "^/club/internal/study/(?:[^/]+)/move$",
+      "sample": "/club/internal/study/abcdefgh/move",
+      "gateway": "allow",
+      "scope": "private"
+    },
+    {
+      "method": "GET",
+      "route": "/club/internal/activity",
+      "action": "NoSweat.activityStatus",
+      "pattern": "^/club/internal/activity$",
+      "sample": "/club/internal/activity",
+      "gateway": "allow",
+      "scope": "private"
+    },
+    {
+      "method": "POST",
+      "route": "/club/internal/activity",
+      "action": "NoSweat.activityPause",
+      "pattern": "^/club/internal/activity$",
+      "sample": "/club/internal/activity",
+      "gateway": "allow",
+      "scope": "private"
+    },
+    {
+      "method": "GET",
+      "route": "/club/internal/games",
+      "action": "NoSweat.games",
+      "pattern": "^/club/internal/games$",
+      "sample": "/club/internal/games",
+      "gateway": "allow",
+      "scope": "private"
+    },
+    {
+      "method": "POST",
+      "route": "/club/internal/:id/move",
+      "action": "NoSweat.move",
+      "pattern": "^/club/internal/(?:[^/]+)/move$",
+      "sample": "/club/internal/abcdefgh/move",
+      "gateway": "allow",
+      "scope": "private"
+    },
+    {
+      "method": "POST",
+      "route": "/club/internal/:id/failure",
+      "action": "NoSweat.failure",
+      "pattern": "^/club/internal/(?:[^/]+)/failure$",
+      "sample": "/club/internal/abcdefgh/failure",
+      "gateway": "allow",
+      "scope": "private"
+    },
+    {
+      "method": "GET",
+      "route": "/club/game/:id",
+      "action": "NoSweat.game",
+      "pattern": "^/club/game/(?:[^/]+)$",
+      "sample": "/club/game/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/",
+      "action": "Lobby.home",
+      "pattern": "^/$",
+      "sample": "/",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/lobby/seeks",
+      "action": "Lobby.seeks",
+      "pattern": "^/lobby/seeks$",
+      "sample": "/lobby/seeks",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/$lang<\\w\\w>",
+      "action": "Lobby.homeLang",
+      "pattern": "^/(?:\\w\\w)$",
+      "sample": "/en",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/timeline",
+      "action": "Timeline.home",
+      "pattern": "^/timeline$",
+      "sample": "/timeline",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/games",
+      "action": "Tv.games",
+      "pattern": "^/games$",
+      "sample": "/games",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/api/rel/follow/:user",
+      "action": "Relation.follow",
+      "pattern": "^/api/rel/follow/(?:[^/]+)$",
+      "sample": "/api/rel/follow/alice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/api/rel/unfollow/:user",
+      "action": "Relation.unfollow",
+      "pattern": "^/api/rel/unfollow/(?:[^/]+)$",
+      "sample": "/api/rel/unfollow/alice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/api/rel/block/:userId",
+      "action": "Relation.block",
+      "pattern": "^/api/rel/block/(?:[^/]+)$",
+      "sample": "/api/rel/block/alice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/api/rel/unblock/:userId",
+      "action": "Relation.unblock",
+      "pattern": "^/api/rel/unblock/(?:[^/]+)$",
+      "sample": "/api/rel/unblock/alice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/rel/unfollow/:user",
+      "action": "Relation.unfollowBc",
+      "pattern": "^/rel/unfollow/(?:[^/]+)$",
+      "sample": "/rel/unfollow/alice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/rel/follow/:user",
+      "action": "Relation.followBc",
+      "pattern": "^/rel/follow/(?:[^/]+)$",
+      "sample": "/rel/follow/alice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/@/:username/following",
+      "action": "Relation.following",
+      "pattern": "^/@/(?:[^/]+)/following$",
+      "sample": "/@/alice/following",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/rel/blocks",
+      "action": "Relation.blocks",
+      "pattern": "^/rel/blocks$",
+      "sample": "/rel/blocks",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/insights/refresh/:username",
+      "action": "Insight.refresh",
+      "pattern": "^/insights/refresh/(?:[^/]+)$",
+      "sample": "/insights/refresh/alice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/insights/data/:username",
+      "action": "Insight.json",
+      "pattern": "^/insights/data/(?:[^/]+)$",
+      "sample": "/insights/data/alice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/insights/:username",
+      "action": "Insight.index",
+      "pattern": "^/insights/(?:[^/]+)$",
+      "sample": "/insights/alice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/insights/:username/:metric/:dimension",
+      "action": "Insight.path",
+      "pattern": "^/insights/(?:[^/]+)/(?:[^/]+)/(?:[^/]+)$",
+      "sample": "/insights/alice/abcdefgh/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/insights/:username/:metric/:dimension/*filters",
+      "action": "Insight.path",
+      "pattern": "^/insights/(?:[^/]+)/(?:[^/]+)/(?:[^/]+)/(?:.+)$",
+      "sample": "/insights/alice/abcdefgh/abcdefgh/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/@/:username/tournaments/:path",
+      "action": "UserTournament.path",
+      "pattern": "^/@/(?:[^/]+)/tournaments/(?:[^/]+)$",
+      "sample": "/@/alice/tournaments/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/@/:username/simuls/hosted",
+      "action": "Simul.byUser",
+      "pattern": "^/@/(?:[^/]+)/simuls/hosted$",
+      "sample": "/@/alice/simuls/hosted",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/@/:username/note",
+      "action": "User.writeNote",
+      "pattern": "^/@/(?:[^/]+)/note$",
+      "sample": "/@/alice/note",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/@/:username/mini",
+      "action": "User.showMini",
+      "pattern": "^/@/(?:[^/]+)/mini$",
+      "sample": "/@/alice/mini",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/@/:username/tv",
+      "action": "User.tv",
+      "pattern": "^/@/(?:[^/]+)/tv$",
+      "sample": "/@/alice/tv",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/@/:username/perf/:perfKey",
+      "action": "User.perfStat",
+      "pattern": "^/@/(?:[^/]+)/perf/(?:[^/]+)$",
+      "sample": "/@/alice/perf/bullet",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/@/:username/all",
+      "action": "User.gamesAll",
+      "pattern": "^/@/(?:[^/]+)/all$",
+      "sample": "/@/alice/all",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/@/:username/download",
+      "action": "User.download",
+      "pattern": "^/@/(?:[^/]+)/download$",
+      "sample": "/@/alice/download",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/@/:username/:filterName",
+      "action": "User.games",
+      "pattern": "^/@/(?:[^/]+)/(?:[^/]+)$",
+      "sample": "/@/alice/alice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/@/$npub<[nN][pP][uU][bB]1[A-Za-z0-9]{58}>",
+      "action": "NoSweat.nostrProfile",
+      "pattern": "^/@/(?:[nN][pP][uU][bB]1[A-Za-z0-9]{58})$",
+      "sample": "/@/npub1AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/@/:username",
+      "action": "User.show",
+      "pattern": "^/@/(?:[^/]+)$",
+      "sample": "/@/alice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/player/search/:term",
+      "action": "User.search",
+      "pattern": "^/player/search/(?:[^/]+)$",
+      "sample": "/player/search/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/player",
+      "action": "User.list",
+      "pattern": "^/player$",
+      "sample": "/player",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/player/top/:perfKey",
+      "action": "User.top",
+      "pattern": "^/player/top/(?:[^/]+)$",
+      "sample": "/player/top/bullet",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/api/player/autocomplete",
+      "action": "User.autocomplete",
+      "pattern": "^/api/player/autocomplete$",
+      "sample": "/api/player/autocomplete",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/dasher",
+      "action": "Dasher.get",
+      "pattern": "^/dasher$",
+      "sample": "/dasher",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/opening",
+      "action": "Opening.index",
+      "pattern": "^/opening$",
+      "sample": "/opening",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/opening/config/:key",
+      "action": "Opening.config",
+      "pattern": "^/opening/config/(?:[^/]+)$",
+      "sample": "/opening/config/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/opening/wiki/:key/:moves",
+      "action": "Opening.wikiWrite",
+      "pattern": "^/opening/wiki/(?:[^/]+)/(?:[^/]+)$",
+      "sample": "/opening/wiki/abcdefgh/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/opening/tree",
+      "action": "Opening.tree",
+      "pattern": "^/opening/tree$",
+      "sample": "/opening/tree",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/opening/:key",
+      "action": "Opening.byKeyAndMoves",
+      "pattern": "^/opening/(?:[^/]+)$",
+      "sample": "/opening/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/opening/:key/:moves",
+      "action": "Opening.byKeyAndMoves",
+      "pattern": "^/opening/(?:[^/]+)/(?:[^/]+)$",
+      "sample": "/opening/abcdefgh/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/training/coordinate",
+      "action": "Coordinate.home",
+      "pattern": "^/training/coordinate$",
+      "sample": "/training/coordinate",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/training/coordinate/score",
+      "action": "Coordinate.score",
+      "pattern": "^/training/coordinate/score$",
+      "sample": "/training/coordinate/score",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/training",
+      "action": "Puzzle.home",
+      "pattern": "^/training$",
+      "sample": "/training",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/training/daily",
+      "action": "Puzzle.daily",
+      "pattern": "^/training/daily$",
+      "sample": "/training/daily",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/training/help",
+      "action": "Puzzle.help",
+      "pattern": "^/training/help$",
+      "sample": "/training/help",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/training/themes",
+      "action": "Puzzle.themes",
+      "pattern": "^/training/themes$",
+      "sample": "/training/themes",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/training/openings",
+      "action": "Puzzle.openings",
+      "pattern": "^/training/openings$",
+      "sample": "/training/openings",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/training/dashboard/$days<\\d+>",
+      "action": "Puzzle.dashboard",
+      "pattern": "^/training/dashboard/(?:\\d+)$",
+      "sample": "/training/dashboard/0",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/training/dashboard/$days<\\d+>/:path",
+      "action": "Puzzle.dashboard",
+      "pattern": "^/training/dashboard/(?:\\d+)/(?:[^/]+)$",
+      "sample": "/training/dashboard/0/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/training/replay/$days<\\d+>/:theme",
+      "action": "Puzzle.replay",
+      "pattern": "^/training/replay/(?:\\d+)/(?:[^/]+)$",
+      "sample": "/training/replay/0/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/training/history",
+      "action": "Puzzle.history",
+      "pattern": "^/training/history$",
+      "sample": "/training/history",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/training/$numericalId<\\d{6,}>/load",
+      "action": "Puzzle.mobileBcLoad",
+      "pattern": "^/training/(?:\\d{6,})/load$",
+      "sample": "/training/000000/load",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/training/:angleOrId",
+      "action": "Puzzle.show",
+      "pattern": "^/training/(?:[^/]+)$",
+      "sample": "/training/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/training/:angle/$color<white|black|random>",
+      "action": "Puzzle.angleAndColor",
+      "pattern": "^/training/(?:[^/]+)/(?:white|black|random)$",
+      "sample": "/training/abcdefgh/white",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/training/:angle/$id<\\w{5}>",
+      "action": "Puzzle.showWithAngle",
+      "pattern": "^/training/(?:[^/]+)/(?:\\w{5})$",
+      "sample": "/training/abcdefgh/aaaaa",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/training/$id<\\w{5}>/vote",
+      "action": "Puzzle.vote",
+      "pattern": "^/training/(?:\\w{5})/vote$",
+      "sample": "/training/aaaaa/vote",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/training/$id<\\w{5}>/report",
+      "action": "Puzzle.report",
+      "pattern": "^/training/(?:\\w{5})/report$",
+      "sample": "/training/aaaaa/report",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/training/$id<\\w{5}>/vote/:theme",
+      "action": "Puzzle.voteTheme",
+      "pattern": "^/training/(?:\\w{5})/vote/(?:[^/]+)$",
+      "sample": "/training/aaaaa/vote/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/training/complete/:theme/$id<\\w{5}>",
+      "action": "Puzzle.complete",
+      "pattern": "^/training/complete/(?:[^/]+)/(?:\\w{5})$",
+      "sample": "/training/complete/abcdefgh/aaaaa",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/training/difficulty/:theme",
+      "action": "Puzzle.setDifficulty",
+      "pattern": "^/training/difficulty/(?:[^/]+)$",
+      "sample": "/training/difficulty/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/streak",
+      "action": "Puzzle.streak",
+      "pattern": "^/streak$",
+      "sample": "/streak",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/api/streak",
+      "action": "Puzzle.apiStreak",
+      "pattern": "^/api/streak$",
+      "sample": "/api/streak",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/storm",
+      "action": "Storm.home",
+      "pattern": "^/storm$",
+      "sample": "/storm",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/storm",
+      "action": "Storm.record",
+      "pattern": "^/storm$",
+      "sample": "/storm",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/storm/dashboard",
+      "action": "Storm.dashboard",
+      "pattern": "^/storm/dashboard$",
+      "sample": "/storm/dashboard",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/storm/dashboard/:username",
+      "action": "Storm.dashboardOf",
+      "pattern": "^/storm/dashboard/(?:[^/]+)$",
+      "sample": "/storm/dashboard/alice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/analysis/help",
+      "action": "UserAnalysis.help",
+      "pattern": "^/analysis/help$",
+      "sample": "/analysis/help",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/analysis/export.gif",
+      "action": "Export.analysisGif",
+      "pattern": "^/analysis/export\\.gif$",
+      "sample": "/analysis/export.gif",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/analysis/pgn/*pgn",
+      "action": "UserAnalysis.pgn",
+      "pattern": "^/analysis/pgn/(?:.+)$",
+      "sample": "/analysis/pgn/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/analysis/*something",
+      "action": "UserAnalysis.parseArg",
+      "pattern": "^/analysis/(?:.+)$",
+      "sample": "/analysis/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/analysis",
+      "action": "UserAnalysis.index",
+      "pattern": "^/analysis$",
+      "sample": "/analysis",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/embed/analysis",
+      "action": "UserAnalysis.embed",
+      "pattern": "^/embed/analysis$",
+      "sample": "/embed/analysis",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/analysis/publish",
+      "action": "Study.postAnalysisXhr",
+      "pattern": "^/analysis/publish$",
+      "sample": "/analysis/publish",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "DELETE",
+      "route": "/analysis/$studyId<\\w{8}>/$chapterId<\\w{8}>",
+      "action": "Study.deleteAnalysisXhr",
+      "pattern": "^/analysis/(?:\\w{8})/(?:\\w{8})$",
+      "sample": "/analysis/aaaaaaaa/aaaaaaaa",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/analysis/review",
+      "action": "Analyse.reviewXhr",
+      "pattern": "^/analysis/review$",
+      "sample": "/analysis/review",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study",
+      "action": "Study.allDefault",
+      "pattern": "^/study$",
+      "sample": "/study",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/staff-picks",
+      "action": "Study.staffPicks",
+      "pattern": "^/study/staff\\-picks$",
+      "sample": "/study/staff-picks",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/all/:order",
+      "action": "Study.all",
+      "pattern": "^/study/all/(?:[^/]+)$",
+      "sample": "/study/all/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/mine/:order",
+      "action": "Study.mine",
+      "pattern": "^/study/mine/(?:[^/]+)$",
+      "sample": "/study/mine/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/member/:order",
+      "action": "Study.mineMember",
+      "pattern": "^/study/member/(?:[^/]+)$",
+      "sample": "/study/member/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/public/:order",
+      "action": "Study.minePublic",
+      "pattern": "^/study/public/(?:[^/]+)$",
+      "sample": "/study/public/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/private/:order",
+      "action": "Study.minePrivate",
+      "pattern": "^/study/private/(?:[^/]+)$",
+      "sample": "/study/private/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/likes/:order",
+      "action": "Study.mineLikes",
+      "pattern": "^/study/likes/(?:[^/]+)$",
+      "sample": "/study/likes/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/by/:username",
+      "action": "Study.byOwnerDefault",
+      "pattern": "^/study/by/(?:[^/]+)$",
+      "sample": "/study/by/alice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/by/:username/:order",
+      "action": "Study.byOwner",
+      "pattern": "^/study/by/(?:[^/]+)/(?:[^/]+)$",
+      "sample": "/study/by/alice/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/study/list-format",
+      "action": "Study.listFormat",
+      "pattern": "^/study/list\\-format$",
+      "sample": "/study/list-format",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/$id<\\w{8}>",
+      "action": "Study.show",
+      "pattern": "^/study/(?:\\w{8})$",
+      "sample": "/study/aaaaaaaa",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/study",
+      "action": "Study.create",
+      "pattern": "^/study$",
+      "sample": "/study",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/study/as",
+      "action": "Study.createAs",
+      "pattern": "^/study/as$",
+      "sample": "/study/as",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/$id<\\w{8}>.pgn",
+      "action": "Study.pgn",
+      "pattern": "^/study/(?:\\w{8})\\.pgn$",
+      "sample": "/study/aaaaaaaa.pgn",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/$id<\\w{8}>/$chapterId<\\w{8}>.pgn",
+      "action": "Study.chapterPgn",
+      "pattern": "^/study/(?:\\w{8})/(?:\\w{8})\\.pgn$",
+      "sample": "/study/aaaaaaaa/aaaaaaaa.pgn",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/$id<\\w{8}>/$chapterId<\\w{8}>.gif",
+      "action": "Study.chapterGif",
+      "pattern": "^/study/(?:\\w{8})/(?:\\w{8})\\.gif$",
+      "sample": "/study/aaaaaaaa/aaaaaaaa.gif",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/study/$id<\\w{8}>/delete",
+      "action": "Study.delete",
+      "pattern": "^/study/(?:\\w{8})/delete$",
+      "sample": "/study/aaaaaaaa/delete",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/$id<\\w{8}>/clone",
+      "action": "Study.cloneStudy",
+      "pattern": "^/study/(?:\\w{8})/clone$",
+      "sample": "/study/aaaaaaaa/clone",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/study/$id<\\w{8}>/cloneApply",
+      "action": "Study.cloneApply",
+      "pattern": "^/study/(?:\\w{8})/cloneApply$",
+      "sample": "/study/aaaaaaaa/cloneApply",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/$id<\\w{8}>/$chapterId<\\w{8}>",
+      "action": "Study.chapter",
+      "pattern": "^/study/(?:\\w{8})/(?:\\w{8})$",
+      "sample": "/study/aaaaaaaa/aaaaaaaa",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/$id<\\w{8}>/$chapterId<\\w{8}>/config",
+      "action": "Study.chapterConfig",
+      "pattern": "^/study/(?:\\w{8})/(?:\\w{8})/config$",
+      "sample": "/study/aaaaaaaa/aaaaaaaa/config",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/embed/$id<\\w{8}>/$chapterId<\\w{8}>",
+      "action": "Study.embed",
+      "pattern": "^/study/embed/(?:\\w{8})/(?:\\w{8})$",
+      "sample": "/study/embed/aaaaaaaa/aaaaaaaa",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/study/$id<\\w{8}>/clear-chat",
+      "action": "Study.clearChat",
+      "pattern": "^/study/(?:\\w{8})/clear\\-chat$",
+      "sample": "/study/aaaaaaaa/clear-chat",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/study/$id<\\w{8}>/import-pgn",
+      "action": "Study.importPgn",
+      "pattern": "^/study/(?:\\w{8})/import\\-pgn$",
+      "sample": "/study/aaaaaaaa/import-pgn",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/study/$id<\\w{8}>/admin",
+      "action": "Study.admin",
+      "pattern": "^/study/(?:\\w{8})/admin$",
+      "sample": "/study/aaaaaaaa/admin",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/topic",
+      "action": "Study.topics",
+      "pattern": "^/study/topic$",
+      "sample": "/study/topic",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/study/topic",
+      "action": "Study.setTopics",
+      "pattern": "^/study/topic$",
+      "sample": "/study/topic",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/topic/:topic/:order",
+      "action": "Study.byTopic",
+      "pattern": "^/study/topic/(?:[^/]+)/(?:[^/]+)$",
+      "sample": "/study/topic/abcdefgh/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/topic/autocomplete",
+      "action": "Study.topicAutocomplete",
+      "pattern": "^/study/topic/autocomplete$",
+      "sample": "/study/topic/autocomplete",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/study/glyphs/:lang.json",
+      "action": "Study.glyphs",
+      "pattern": "^/study/glyphs/(?:[^/]+)\\.json$",
+      "sample": "/study/glyphs/en.json",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/learn",
+      "action": "Learn.index",
+      "pattern": "^/learn$",
+      "sample": "/learn",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/learn/score",
+      "action": "Learn.score",
+      "pattern": "^/learn/score$",
+      "sample": "/learn/score",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/learn/reset",
+      "action": "Learn.reset",
+      "pattern": "^/learn/reset$",
+      "sample": "/learn/reset",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/patron",
+      "action": "Plan.index",
+      "pattern": "^/patron$",
+      "sample": "/patron",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/club/patron",
+      "action": "NoSweat.patronPage",
+      "pattern": "^/club/patron$",
+      "sample": "/club/patron",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/club/patron/pending",
+      "action": "NoSweat.patronPending",
+      "pattern": "^/club/patron/pending$",
+      "sample": "/club/patron/pending",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/club/patron/invoice",
+      "action": "NoSweat.patronInvoice",
+      "pattern": "^/club/patron/invoice$",
+      "sample": "/club/patron/invoice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/club/patron/dismiss",
+      "action": "NoSweat.patronDismiss",
+      "pattern": "^/club/patron/dismiss$",
+      "sample": "/club/patron/dismiss",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/club/patron/receipt",
+      "action": "NoSweat.patronReceipt",
+      "pattern": "^/club/patron/receipt$",
+      "sample": "/club/patron/receipt",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/features",
+      "action": "Plan.features",
+      "pattern": "^/features$",
+      "sample": "/features",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/practice",
+      "action": "Practice.index",
+      "pattern": "^/practice$",
+      "sample": "/practice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/practice/load/:studyId/:chapterId",
+      "action": "Practice.chapter",
+      "pattern": "^/practice/load/(?:[^/]+)/(?:[^/]+)$",
+      "sample": "/practice/load/abcdefgh/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/practice/reset",
+      "action": "Practice.reset",
+      "pattern": "^/practice/reset$",
+      "sample": "/practice/reset",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/practice/:sectionId",
+      "action": "Practice.showSection",
+      "pattern": "^/practice/(?:[^/]+)$",
+      "sample": "/practice/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/practice/:sectionId/:studySlug",
+      "action": "Practice.showStudySlug",
+      "pattern": "^/practice/(?:[^/]+)/(?:[^/]+)$",
+      "sample": "/practice/abcdefgh/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/practice/:sectionId/:studySlug/:studyId",
+      "action": "Practice.show",
+      "pattern": "^/practice/(?:[^/]+)/(?:[^/]+)/(?:[^/]+)$",
+      "sample": "/practice/abcdefgh/abcdefgh/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/practice/:sectionId/:studySlug/:studyId/:chapterId",
+      "action": "Practice.showChapter",
+      "pattern": "^/practice/(?:[^/]+)/(?:[^/]+)/(?:[^/]+)/(?:[^/]+)$",
+      "sample": "/practice/abcdefgh/abcdefgh/abcdefgh/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/practice/complete/:chapterId/:moves",
+      "action": "Practice.complete",
+      "pattern": "^/practice/complete/(?:[^/]+)/(?:[^/]+)$",
+      "sample": "/practice/complete/abcdefgh/1",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/game/$gameId<\\w{8}>",
+      "action": "Round.watcher",
+      "pattern": "^/game/(?:\\w{8})$",
+      "sample": "/game/aaaaaaaa",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/game/$gameId<\\w{8}>/$color<white|black>",
+      "action": "Round.watcher",
+      "pattern": "^/game/(?:\\w{8})/(?:white|black)$",
+      "sample": "/game/aaaaaaaa/white",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/game/$fullId<\\w{12}>",
+      "action": "Round.player",
+      "pattern": "^/game/(?:\\w{12})$",
+      "sample": "/game/aaaaaaaaaaaa",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/game/$gameId<\\w{8}>/$color<white|black>/sides",
+      "action": "Round.sides",
+      "pattern": "^/game/(?:\\w{8})/(?:white|black)/sides$",
+      "sample": "/game/aaaaaaaa/white/sides",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/game/$gameId<\\w{8}>/continue/:mode",
+      "action": "Round.continue",
+      "pattern": "^/game/(?:\\w{8})/continue/(?:[^/]+)$",
+      "sample": "/game/aaaaaaaa/continue/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/game/$gameId<\\w{8}>/note",
+      "action": "Round.readNote",
+      "pattern": "^/game/(?:\\w{8})/note$",
+      "sample": "/game/aaaaaaaa/note",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/game/$gameId<\\w{8}>/note",
+      "action": "Round.writeNote",
+      "pattern": "^/game/(?:\\w{8})/note$",
+      "sample": "/game/aaaaaaaa/note",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/game/$gameId<\\w{8}>/mini",
+      "action": "Round.mini",
+      "pattern": "^/game/(?:\\w{8})/mini$",
+      "sample": "/game/aaaaaaaa/mini",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/game/$gameId<\\w{8}>/$color<white|black>/mini",
+      "action": "Round.mini",
+      "pattern": "^/game/(?:\\w{8})/(?:white|black)/mini$",
+      "sample": "/game/aaaaaaaa/white/mini",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/game/$fullId<\\w{12}>/mini",
+      "action": "Round.miniFullId",
+      "pattern": "^/game/(?:\\w{12})/mini$",
+      "sample": "/game/aaaaaaaaaaaa/mini",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/game/$gameId<\\w{8}>/edit",
+      "action": "Editor.game",
+      "pattern": "^/game/(?:\\w{8})/edit$",
+      "sample": "/game/aaaaaaaa/edit",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/game/$gameId<\\w{8}>/$color<white|black>/analysis",
+      "action": "UserAnalysis.game",
+      "pattern": "^/game/(?:\\w{8})/(?:white|black)/analysis$",
+      "sample": "/game/aaaaaaaa/white/analysis",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/game/$fullId<\\w{12}>/forecasts",
+      "action": "UserAnalysis.forecastsGet",
+      "pattern": "^/game/(?:\\w{12})/forecasts$",
+      "sample": "/game/aaaaaaaaaaaa/forecasts",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/game/$fullId<\\w{12}>/forecasts",
+      "action": "UserAnalysis.forecastsPost",
+      "pattern": "^/game/(?:\\w{12})/forecasts$",
+      "sample": "/game/aaaaaaaaaaaa/forecasts",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/game/$fullId<\\w{12}>/forecasts/:uci",
+      "action": "UserAnalysis.forecastsOnMyTurn",
+      "pattern": "^/game/(?:\\w{12})/forecasts/(?:[^/]+)$",
+      "sample": "/game/aaaaaaaaaaaa/forecasts/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/game/$fullId<\\w{12}>/resign",
+      "action": "Round.resign",
+      "pattern": "^/game/(?:\\w{12})/resign$",
+      "sample": "/game/aaaaaaaaaaaa/resign",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/game/$gameId<\\w{8}>/delete",
+      "action": "Game.delete",
+      "pattern": "^/game/(?:\\w{8})/delete$",
+      "sample": "/game/aaaaaaaa/delete",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/$gameId<\\w{8}>/$color<white|black>",
+      "action": "Round.watcherRedirect",
+      "pattern": "^/(?:\\w{8})/(?:white|black)$",
+      "sample": "/aaaaaaaa/white",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/embed/game/$gameId<\\w{8}>",
+      "action": "Analyse.embedReplayGame",
+      "pattern": "^/embed/game/(?:\\w{8})$",
+      "sample": "/embed/game/aaaaaaaa",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/embed/game/$gameId<\\w{8}>/$color<white|black>",
+      "action": "Analyse.embedReplayGame",
+      "pattern": "^/embed/game/(?:\\w{8})/(?:white|black)$",
+      "sample": "/embed/game/aaaaaaaa/white",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/whats-next/$fullId<\\w{12}>",
+      "action": "Round.whatsNext",
+      "pattern": "^/whats\\-next/(?:\\w{12})$",
+      "sample": "/whats-next/aaaaaaaaaaaa",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/tournament",
+      "action": "Tournament.home",
+      "pattern": "^/tournament$",
+      "sample": "/tournament",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/tournament/new",
+      "action": "Tournament.form",
+      "pattern": "^/tournament/new$",
+      "sample": "/tournament/new",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/tournament/new",
+      "action": "Tournament.webCreate",
+      "pattern": "^/tournament/new$",
+      "sample": "/tournament/new",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/tournament/$id<\\w{8}>/prepare",
+      "action": "Tournament.prepare",
+      "pattern": "^/tournament/(?:\\w{8})/prepare$",
+      "sample": "/tournament/aaaaaaaa/prepare",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/tournament/calendar",
+      "action": "Tournament.calendar",
+      "pattern": "^/tournament/calendar$",
+      "sample": "/tournament/calendar",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/tournament/history",
+      "action": "Tournament.history",
+      "pattern": "^/tournament/history$",
+      "sample": "/tournament/history",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/tournament/$id<\\w{8}>",
+      "action": "Tournament.show",
+      "pattern": "^/tournament/(?:\\w{8})$",
+      "sample": "/tournament/aaaaaaaa",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/tournament/$id<\\w{8}>/standing/:page",
+      "action": "Tournament.standing",
+      "pattern": "^/tournament/(?:\\w{8})/standing/(?:[^/]+)$",
+      "sample": "/tournament/aaaaaaaa/standing/1",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/tournament/$id<\\w{8}>/page-of/:user",
+      "action": "Tournament.pageOf",
+      "pattern": "^/tournament/(?:\\w{8})/page\\-of/(?:[^/]+)$",
+      "sample": "/tournament/aaaaaaaa/page-of/alice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/tournament/$id<\\w{8}>/join",
+      "action": "Tournament.join",
+      "pattern": "^/tournament/(?:\\w{8})/join$",
+      "sample": "/tournament/aaaaaaaa/join",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/tournament/$id<\\w{8}>/withdraw",
+      "action": "Tournament.pause",
+      "pattern": "^/tournament/(?:\\w{8})/withdraw$",
+      "sample": "/tournament/aaaaaaaa/withdraw",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/tournament/$id<\\w{8}>/player/:user",
+      "action": "Tournament.player",
+      "pattern": "^/tournament/(?:\\w{8})/player/(?:[^/]+)$",
+      "sample": "/tournament/aaaaaaaa/player/alice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/tournament/$id<\\w{8}>/terminate",
+      "action": "Tournament.terminate",
+      "pattern": "^/tournament/(?:\\w{8})/terminate$",
+      "sample": "/tournament/aaaaaaaa/terminate",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/tournament/$id<\\w{8}>/edit",
+      "action": "Tournament.edit",
+      "pattern": "^/tournament/(?:\\w{8})/edit$",
+      "sample": "/tournament/aaaaaaaa/edit",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/tournament/$id<\\w{8}>/edit",
+      "action": "Tournament.update",
+      "pattern": "^/tournament/(?:\\w{8})/edit$",
+      "sample": "/tournament/aaaaaaaa/edit",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/tournament/help",
+      "action": "Tournament.help",
+      "pattern": "^/tournament/help$",
+      "sample": "/tournament/help",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/game/$gameId<\\w{8}>/request-analysis",
+      "action": "Analyse.requestAnalysis",
+      "pattern": "^/game/(?:\\w{8})/request\\-analysis$",
+      "sample": "/game/aaaaaaaa/request-analysis",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/game/export/$gameId<\\w{8}>",
+      "action": "Game.exportOne",
+      "pattern": "^/game/export/(?:\\w{8})$",
+      "sample": "/game/export/aaaaaaaa",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/game/export/$gameId<\\w{8}>.pgn",
+      "action": "Game.exportOne",
+      "pattern": "^/game/export/(?:\\w{8})\\.pgn$",
+      "sample": "/game/export/aaaaaaaa.pgn",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/game/export/png/$gameId<\\w{8}>.png",
+      "action": "Export.legacyGameThumbnail",
+      "pattern": "^/game/export/png/(?:\\w{8})\\.png$",
+      "sample": "/game/export/png/aaaaaaaa.png",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/game/export/gif/thumbnail/$gameId<\\w{8}>.gif",
+      "action": "Export.gameThumbnail",
+      "pattern": "^/game/export/gif/thumbnail/(?:\\w{8})\\.gif$",
+      "sample": "/game/export/gif/thumbnail/aaaaaaaa.gif",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/game/export/gif/$gameId<\\w{8}>.gif",
+      "action": "Export.gif",
+      "pattern": "^/game/export/gif/(?:\\w{8})\\.gif$",
+      "sample": "/game/export/gif/aaaaaaaa.gif",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/game/export/gif/:color/$gameId<\\w{8}>.gif",
+      "action": "Export.gif",
+      "pattern": "^/game/export/gif/(?:[^/]+)/(?:\\w{8})\\.gif$",
+      "sample": "/game/export/gif/white/aaaaaaaa.gif",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/export/fen.gif",
+      "action": "Export.fenThumbnail",
+      "pattern": "^/export/fen\\.gif$",
+      "sample": "/export/fen.gif",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/pref/:name",
+      "action": "Pref.set",
+      "pattern": "^/pref/(?:[^/]+)$",
+      "sample": "/pref/alice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/account/preferences",
+      "action": "Pref.formApply",
+      "pattern": "^/account/preferences$",
+      "sample": "/account/preferences",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/account/preferences/notification",
+      "action": "Pref.notifyFormApply",
+      "pattern": "^/account/preferences/notification$",
+      "sample": "/account/preferences/notification",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/setup/friend",
+      "action": "Setup.friend",
+      "pattern": "^/setup/friend$",
+      "sample": "/setup/friend",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/challenge",
+      "action": "Challenge.all",
+      "pattern": "^/challenge$",
+      "sample": "/challenge",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/challenge/$id<\\w{8}>",
+      "action": "Challenge.show",
+      "pattern": "^/challenge/(?:\\w{8})$",
+      "sample": "/challenge/aaaaaaaa",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/challenge/$id<\\w{8}>/accept",
+      "action": "Challenge.accept",
+      "pattern": "^/challenge/(?:\\w{8})/accept$",
+      "sample": "/challenge/aaaaaaaa/accept",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/challenge/$id<\\w{8}>/decline",
+      "action": "Challenge.decline",
+      "pattern": "^/challenge/(?:\\w{8})/decline$",
+      "sample": "/challenge/aaaaaaaa/decline",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/challenge/$id<\\w{8}>/cancel",
+      "action": "Challenge.cancel",
+      "pattern": "^/challenge/(?:\\w{8})/cancel$",
+      "sample": "/challenge/aaaaaaaa/cancel",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/notify",
+      "action": "Notify.recent",
+      "pattern": "^/notify$",
+      "sample": "/notify",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/notify/clear",
+      "action": "Notify.clear",
+      "pattern": "^/notify/clear$",
+      "sample": "/notify/clear",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/translation/select",
+      "action": "I18n.select",
+      "pattern": "^/translation/select$",
+      "sample": "/translation/select",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/login",
+      "action": "Auth.login",
+      "pattern": "^/login$",
+      "sample": "/login",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/login",
+      "action": "Auth.authenticate",
+      "pattern": "^/login$",
+      "sample": "/login",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/logout",
+      "action": "Auth.logoutGet",
+      "pattern": "^/logout$",
+      "sample": "/logout",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/logout",
+      "action": "Auth.logout",
+      "pattern": "^/logout$",
+      "sample": "/logout",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/signup",
+      "action": "Auth.signup",
+      "pattern": "^/signup$",
+      "sample": "/signup",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/signup",
+      "action": "Auth.signupPost",
+      "pattern": "^/signup$",
+      "sample": "/signup",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/forum",
+      "action": "ForumCateg.index",
+      "pattern": "^/forum$",
+      "sample": "/forum",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/forum/:categId",
+      "action": "ForumCateg.show",
+      "pattern": "^/forum/(?:[^/]+)$",
+      "sample": "/forum/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/forum/:categId/form",
+      "action": "ForumTopic.form",
+      "pattern": "^/forum/(?:[^/]+)/form$",
+      "sample": "/forum/abcdefgh/form",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/forum/:categId/new",
+      "action": "ForumTopic.create",
+      "pattern": "^/forum/(?:[^/]+)/new$",
+      "sample": "/forum/abcdefgh/new",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/forum/:categId/mod-feed",
+      "action": "ForumCateg.modFeed",
+      "pattern": "^/forum/(?:[^/]+)/mod\\-feed$",
+      "sample": "/forum/abcdefgh/mod-feed",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/forum/participants/:topicId",
+      "action": "ForumTopic.participants",
+      "pattern": "^/forum/participants/(?:[^/]+)$",
+      "sample": "/forum/participants/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/forum/:categId/:slug",
+      "action": "ForumTopic.show",
+      "pattern": "^/forum/(?:[^/]+)/(?:[^/]+)$",
+      "sample": "/forum/abcdefgh/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/forum/:categId/:slug/close",
+      "action": "ForumTopic.close",
+      "pattern": "^/forum/(?:[^/]+)/(?:[^/]+)/close$",
+      "sample": "/forum/abcdefgh/abcdefgh/close",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/forum/:categId/:slug/sticky",
+      "action": "ForumTopic.sticky",
+      "pattern": "^/forum/(?:[^/]+)/(?:[^/]+)/sticky$",
+      "sample": "/forum/abcdefgh/abcdefgh/sticky",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/forum/:categId/:slug/new",
+      "action": "ForumPost.create",
+      "pattern": "^/forum/(?:[^/]+)/(?:[^/]+)/new$",
+      "sample": "/forum/abcdefgh/abcdefgh/new",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/forum/delete/:id",
+      "action": "ForumPost.delete",
+      "pattern": "^/forum/delete/(?:[^/]+)$",
+      "sample": "/forum/delete/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/forum/relocate/:id",
+      "action": "ForumPost.relocate",
+      "pattern": "^/forum/relocate/(?:[^/]+)$",
+      "sample": "/forum/relocate/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/forum/:categId/react/:id/:reaction/:v",
+      "action": "ForumPost.react",
+      "pattern": "^/forum/(?:[^/]+)/react/(?:[^/]+)/(?:[^/]+)/(?:[^/]+)$",
+      "sample": "/forum/abcdefgh/react/abcdefgh/abcdefgh/true",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/forum/post/:id",
+      "action": "ForumPost.edit",
+      "pattern": "^/forum/post/(?:[^/]+)$",
+      "sample": "/forum/post/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/forum/redirect/post/:id",
+      "action": "ForumPost.redirect",
+      "pattern": "^/forum/redirect/post/(?:[^/]+)$",
+      "sample": "/forum/redirect/post/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/editor/*urlFen",
+      "action": "Editor.load",
+      "pattern": "^/editor/(?:.+)$",
+      "sample": "/editor/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/editor",
+      "action": "Editor.index",
+      "pattern": "^/editor$",
+      "sample": "/editor",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/stat/rating/distribution/:perf",
+      "action": "User.ratingDistribution",
+      "pattern": "^/stat/rating/distribution/(?:[^/]+)$",
+      "sample": "/stat/rating/distribution/bullet",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/api/users/status",
+      "action": "Api.usersStatus",
+      "pattern": "^/api/users/status$",
+      "sample": "/api/users/status",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/api/cloud-eval",
+      "action": "Api.cloudEval",
+      "pattern": "^/api/cloud\\-eval$",
+      "sample": "/api/cloud-eval",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/account/profile",
+      "action": "Account.profile",
+      "pattern": "^/account/profile$",
+      "sample": "/account/profile",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/account/profile",
+      "action": "Account.profileApply",
+      "pattern": "^/account/profile$",
+      "sample": "/account/profile",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/account/twofactor",
+      "action": "Account.twoFactor",
+      "pattern": "^/account/twofactor$",
+      "sample": "/account/twofactor",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/account/security",
+      "action": "Account.security",
+      "pattern": "^/account/security$",
+      "sample": "/account/security",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/account/signout/:sessionId",
+      "action": "Account.signout",
+      "pattern": "^/account/signout/(?:[^/]+)$",
+      "sample": "/account/signout/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/account/now-playing",
+      "action": "Account.nowPlaying",
+      "pattern": "^/account/now\\-playing$",
+      "sample": "/account/now-playing",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/player-count",
+      "action": "Main.playerCount",
+      "pattern": "^/player\\-count$",
+      "sample": "/player-count",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/run/captcha/$id<\\w{8}>",
+      "action": "Main.captchaCheck",
+      "pattern": "^/run/captcha/(?:\\w{8})$",
+      "sample": "/run/captcha/aaaaaaaa",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/terms-of-service",
+      "action": "Cms.tos",
+      "pattern": "^/terms\\-of\\-service$",
+      "sample": "/terms-of-service",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/$key<privacy|thanks|about|ads|changelog>",
+      "action": "Cms.menuPage",
+      "pattern": "^/(?:privacy|thanks|about|ads|changelog)$",
+      "sample": "/privacy",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/contact",
+      "action": "Main.contact",
+      "pattern": "^/contact$",
+      "sample": "/contact",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/faq",
+      "action": "Main.faq",
+      "pattern": "^/faq$",
+      "sample": "/faq",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/source",
+      "action": "Cms.source",
+      "pattern": "^/source$",
+      "sample": "/source",
+      "gateway": "deny",
+      "scope": "gateway-bypass"
+    },
+    {
+      "method": "GET",
+      "route": "/assets/_$v<\\w{6}>/*file",
+      "action": "Main.devAsset",
+      "pattern": "^/assets/_(?:\\w{6})/(?:.+)$",
+      "sample": "/assets/_aaaaaa/abcdefgh",
+      "gateway": "deny",
+      "scope": "gateway-bypass"
+    },
+    {
+      "method": "GET",
+      "route": "/assets/*file",
+      "action": "ExternalAssets.at",
+      "pattern": "^/assets/(?:.+)$",
+      "sample": "/assets/abcdefgh",
+      "gateway": "deny",
+      "scope": "gateway-bypass"
+    },
+    {
+      "method": "GET",
+      "route": "/*path",
+      "action": "User.redirect",
+      "pattern": "^/(?:.+)$",
+      "sample": "/abcdefgh",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/account/preferences/:categ",
+      "action": "Pref.form",
+      "pattern": "^/account/preferences/(?:display|chess-clock|game-behavior|privacy|notification|engine-analysis)$",
+      "sample": "/account/preferences/display",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "POST",
+      "route": "/rel/:action/:user",
+      "action": "Relation.bcAction",
+      "pattern": "^/rel/(?:follow|unfollow|block|unblock)/[A-Za-z0-9_-]{1,30}$",
+      "sample": "/rel/block/alice",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/tournament/history/:freq",
+      "action": "Tournament.history",
+      "pattern": "^/tournament/history/unique$",
+      "sample": "/tournament/history/unique",
+      "gateway": "allow",
+      "scope": "public"
+    },
+    {
+      "method": "GET",
+      "route": "/games/:chanKey/replacement/$gameId<\\w{8}>",
+      "action": "Tv.gameChannelReplacement",
+      "pattern": "^/games/best/replacement/[A-Za-z0-9]{8}$",
+      "sample": "/games/best/replacement/01234567",
+      "gateway": "allow",
+      "scope": "public"
+    }
+  ]
+}
