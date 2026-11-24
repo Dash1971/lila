@@ -103,4 +103,4 @@ export const clockToSpeed = (initial: Seconds, increment: Seconds): Exclude<Spee
 };
 
 // Match native GameId validation, including existing mixed-case IDs.
-export const idRegex: RegExp = /^[A-Za-z0-9_-]{8}$/;
+export const idRegex = /^[A-Za-z0-9_-]{8}$/;
