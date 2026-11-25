@@ -1183,4 +1183,5 @@
   <string name="boardReset">डिफ़ॉल्ट रंग बहाल करें</string>
   <string name="muteAnalysisBoardDescription">इंटरैक्टिव शतरंज बोर्ड पर स्थितियों और विविधताओं का विश्लेषण करें।</string>
   <string name="muteGameReplayHint">खेल दोबारा देखने, उसका विश्लेषण करने और उस पर चर्चा करने के लिए क्लिक करें!</string>
+  <string name="mutePromotionCanceled">पदोन्नति रद्द कर दी गई</string>
 </resources>

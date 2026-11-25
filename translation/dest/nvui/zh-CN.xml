@@ -61,5 +61,4 @@
   <string name="copyToClipboard">复制 %s 到剪贴板</string>
   <string name="copiedToClipboard">%s 已复制到剪贴板</string>
   <string name="pgnAndFen">PGN 与 FEN</string>
-  <string name="promotionCanceled">升变已取消</string>
 </resources>

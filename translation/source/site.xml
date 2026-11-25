@@ -1355,4 +1355,5 @@ Leave empty to start games from the normal initial position.</string>
   <string name="muteAboutMaiaFrontendSource">open-source frontend</string>
   <string name="muteAnalysisBoardDescription">Analyze chess positions and variations on an interactive chess board</string>
   <string name="muteGameReplayHint">Click to replay, analyze, and discuss the game!</string>
+  <string name="mutePromotionCanceled">Promotion canceled</string>
 </resources>

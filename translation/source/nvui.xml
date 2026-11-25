@@ -61,5 +61,4 @@
   <string name="copyToClipboard">Copy %s to clipboard</string>
   <string name="copiedToClipboard">%s copied to clipboard</string>
   <string name="pgnAndFen">PGN and FEN</string>
-  <string name="promotionCanceled">Promotion canceled</string>
 </resources>

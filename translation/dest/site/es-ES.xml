@@ -1356,4 +1356,5 @@ Déjalo vacío para empezar las partidas desde la posición inicial habitual.</s
   <string name="muteAboutMaiaFrontendSource">interfaz web de código abierto</string>
   <string name="muteAnalysisBoardDescription">Analiza posiciones y variantes de ajedrez en un tablero interactivo.</string>
   <string name="muteGameReplayHint">¡Haz clic para reproducir, analizar y comentar la partida!</string>
+  <string name="mutePromotionCanceled">Promoción cancelada</string>
 </resources>

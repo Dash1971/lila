@@ -1311,4 +1311,5 @@
   <string name="muteAboutMaiaFrontendSource">オープンソースのフロントエンド</string>
   <string name="muteAnalysisBoardDescription">対話型のチェス盤で局面や変化を分析できます。</string>
   <string name="muteGameReplayHint">クリックして棋譜を再生し、分析や対局の議論をしましょう！</string>
+  <string name="mutePromotionCanceled">プロモーションがキャンセルされました</string>
 </resources>

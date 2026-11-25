@@ -61,5 +61,4 @@
   <string name="copyToClipboard">%s をクリップボードにコピー</string>
   <string name="copiedToClipboard">%s をクリップボードにコピーしました</string>
   <string name="pgnAndFen">PGN と FEN</string>
-  <string name="promotionCanceled">プロモーションがキャンセルされました</string>
 </resources>

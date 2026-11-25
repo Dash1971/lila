@@ -1355,4 +1355,5 @@ Laissez vide pour commencer les parties à partir de la position initiale normal
   <string name="muteAboutMaiaFrontendSource">interface web open source</string>
   <string name="muteAnalysisBoardDescription">Analysez des positions et des variantes sur un échiquier interactif.</string>
   <string name="muteGameReplayHint">Cliquez pour rejouer, analyser et discuter de la partie !</string>
+  <string name="mutePromotionCanceled">Promotion annulée</string>
 </resources>

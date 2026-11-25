@@ -1437,4 +1437,5 @@
   <string name="muteAboutMaiaFrontendSource">открытый фронтенд</string>
   <string name="muteAnalysisBoardDescription">Анализируйте шахматные позиции и варианты на интерактивной доске.</string>
   <string name="muteGameReplayHint">Нажмите, чтобы просмотреть, проанализировать и обсудить партию!</string>
+  <string name="mutePromotionCanceled">Превращение отменено</string>
 </resources>

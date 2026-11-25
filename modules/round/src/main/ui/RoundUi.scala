@@ -96,7 +96,7 @@ final class RoundUi(helpers: Helpers, gameUi: lila.game.ui.GameUi):
       case (_, _, Draw | Stalemate | UnknownFinish) => "Game is a draw"
       case _ if game.finished => "Game ended"
       case _ => "Game is still ongoing"
-    val replayHint = I18nKey("muteGameReplayHint").txt()
+    val replayHint = I18nKey.unchecked("muteGameReplayHint").txt()
     val moves = (game.ply.value - game.startedAtPly.value + 1) / 2
     s"$p1 $plays $p2 in a $rated $speedAndClock game of $variant. $result after ${pluralize("move", moves)}. $replayHint"
 

@@ -161,7 +161,7 @@ export function selectionHandler(getOpponentColor: () => Color, isTouchDevice = 
             if (promoteTo === 'x') {
               clear('promotion');
               $moveBox.val('');
-              $boardLive.text(i18n.nvui.promotionCanceled);
+              $boardLive.text(i18n.site.mutePromotionCanceled);
             } else {
               $moveBox.val($moveBox.val() + promoteTo);
               clear('all');

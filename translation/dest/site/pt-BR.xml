@@ -1351,4 +1351,5 @@ Deixe em branco para começar as partidas na posição inicial padrão.</string>
   <string name="muteAboutMaiaFrontendSource">frontend de código aberto</string>
   <string name="muteAnalysisBoardDescription">Analise posições e variantes de xadrez em um tabuleiro interativo.</string>
   <string name="muteGameReplayHint">Clique para reproduzir, analisar e discutir a partida!</string>
+  <string name="mutePromotionCanceled">Promoção cancelada</string>
 </resources>

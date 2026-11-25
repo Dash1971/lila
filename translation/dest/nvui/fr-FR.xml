@@ -61,5 +61,4 @@
   <string name="copyToClipboard">Copier %s dans le presse-papiers</string>
   <string name="copiedToClipboard">%s copié dans le presse-papiers</string>
   <string name="pgnAndFen">PGN et FEN</string>
-  <string name="promotionCanceled">Promotion annulée</string>
 </resources>

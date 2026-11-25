@@ -1314,4 +1314,5 @@
   <string name="muteAboutMaiaFrontendSource">开源前端</string>
   <string name="muteAnalysisBoardDescription">在交互式棋盘上分析国际象棋局面和变化。</string>
   <string name="muteGameReplayHint">点击回放、分析和讨论这局棋！</string>
+  <string name="mutePromotionCanceled">升变已取消</string>
 </resources>
