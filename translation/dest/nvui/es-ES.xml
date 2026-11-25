@@ -62,4 +62,5 @@
   <string name="copyToClipboard">Copiar %s al portapapeles</string>
   <string name="copiedToClipboard">%s copiado al portapapeles</string>
   <string name="pgnAndFen">PGN y FEN</string>
+  <string name="promotionCanceled">Promoción cancelada</string>
 </resources>

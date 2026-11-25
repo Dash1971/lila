@@ -61,4 +61,5 @@
   <string name="copyToClipboard">Kopiere %s in die Zwischenablage</string>
   <string name="copiedToClipboard">%s in die Zwischenablage kopiert</string>
   <string name="pgnAndFen">PGN und FEN</string>
+  <string name="promotionCanceled">Umwandlung abgebrochen</string>
 </resources>

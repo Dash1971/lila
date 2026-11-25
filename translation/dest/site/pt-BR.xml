@@ -1349,4 +1349,6 @@ Deixe em branco para começar as partidas na posição inicial padrão.</string>
   <string name="muteAboutMaiaEngineCredit">%s é a base dos nossos adversários com jogo semelhante ao humano, das probabilidades de lances e das previsões de pontuação esperada.</string>
   <string name="muteAboutMaiaFrontendCredit">%1$s e seu %2$s servem de referência para nossa interface de análise: Lances por rating, cores de qualidade dos lances, lógica das descrições de posição e inspiração para o Mapa de lances.</string>
   <string name="muteAboutMaiaFrontendSource">frontend de código aberto</string>
+  <string name="muteAnalysisBoardDescription">Analise posições e variantes de xadrez em um tabuleiro interativo.</string>
+  <string name="muteGameReplayHint">Clique para reproduzir, analisar e discutir a partida!</string>
 </resources>

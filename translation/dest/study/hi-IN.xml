@@ -151,4 +151,6 @@
   <string name="playAgain">फिर से खेलेंगे?</string>
   <string name="whatWouldYouPlay">आप इस स्थिति में क्या खेलेंगे?</string>
   <string name="youCompletedThisLesson">बधाई हो! आपने यह सबक पूरा कर लिया है।</string>
+  <string name="welcomeToLichessStudyText">यह साझा विश्लेषण बोर्ड है।&lt;br&gt;&lt;br&gt;इससे खेलों का विश्लेषण करें और टिप्पणियाँ जोड़ें,&lt;br&gt;दोस्तों के साथ स्थितियों पर चर्चा करें,&lt;br&gt;और शतरंज के पाठ दें!&lt;br&gt;&lt;br&gt;यह एक शक्तिशाली उपकरण है। आइए देखें कि यह कैसे काम करता है।</string>
+  <string name="analyzeOnYourDevice">अपने उपकरण पर विश्लेषण करें</string>
 </resources>

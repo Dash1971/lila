@@ -61,4 +61,5 @@
   <string name="copyToClipboard">Copiar %s para área de transferência</string>
   <string name="copiedToClipboard">%s copiado para a área de transferência</string>
   <string name="pgnAndFen">PGN e FEN</string>
+  <string name="promotionCanceled">Promoção cancelada</string>
 </resources>

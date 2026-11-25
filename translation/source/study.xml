@@ -5,7 +5,7 @@
   <string name="studiesIContributeTo">Studies I contribute to</string>
   <string name="myPublicStudies">My public studies</string>
   <string name="myPrivateStudies">My private studies</string>
-  <string name="myFavoriteStudies">My favourite studies</string>
+  <string name="myFavoriteStudies">My favorite studies</string>
   <string name="whatAreStudies">What are studies?</string>
   <string name="allStudies">All studies</string>
   <string name="studiesCreatedByX">Studies created by %s</string>
@@ -46,7 +46,7 @@
   <string name="commentThisPosition">Comment on this position</string>
   <string name="commentThisMove">Comment on this move</string>
   <string name="annotateWithGlyphs">Annotate with glyphs</string>
-  <string name="theChapterIsTooShortToBeAnalysed">The chapter is too short to be analysed.</string>
+  <string name="theChapterIsTooShortToBeAnalysed">The chapter is too short to be analyzed.</string>
   <string name="onlyContributorsCanRequestAnalysis">Only the study contributors can request a computer analysis.</string>
   <string name="makeSureTheChapterIsComplete">Make sure the chapter is complete. You can only request analysis once.</string>
   <string name="allSyncMembersRemainOnTheSamePosition">All SYNC members remain on the same position</string>
@@ -163,7 +163,7 @@
   <string name="perPage">%s per page</string>
   <string name="getTheTour">Need help? Get the tour!</string>
   <string name="welcomeToLichessStudyTitle">Welcome to Lichess Study!</string>
-  <string name="welcomeToLichessStudyText">This is a shared analysis board.&lt;br&gt;&lt;br&gt;Use it to analyse and annotate games,&lt;br&gt;to discuss positions with friends,&lt;br&gt;and of course for chess lessons!&lt;br&gt;&lt;br&gt;It's a powerful tool. Let's take some time to see how it works.</string>
+  <string name="welcomeToLichessStudyText">This is a shared analysis board.&lt;br&gt;&lt;br&gt;Use it to analyze and annotate games,&lt;br&gt;to discuss positions with friends,&lt;br&gt;and of course for chess lessons!&lt;br&gt;&lt;br&gt;It's a powerful tool. Let's take some time to see how it works.</string>
   <string name="sharedAndSaveTitle" comment="As in: shared with other members and saved to database">Shared and saved</string>
   <string name="sharedAndSavedText">Other members can see your moves in real time!&lt;br&gt;Plus, everything is saved forever.</string>
   <string name="studyMembersTitle">Study members</string>
@@ -199,7 +199,7 @@
   <string name="clearLocal">Clear local analysis?</string>
   <string name="clearPublished">Clear published analysis?</string>
   <string name="requestAServerAnalysis">Request a server analysis</string>
-  <string name="analyzeOnYourDevice">Analyse on your device</string>
+  <string name="analyzeOnYourDevice">Analyze on your device</string>
   <string name="searchChapters">Search chapters</string>
   <string name="searchGames">Search games</string>
 </resources>

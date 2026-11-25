@@ -61,4 +61,5 @@
   <string name="copyToClipboard">Копировать %s в буфер обмена</string>
   <string name="copiedToClipboard">%s скопирован в буфер обмена</string>
   <string name="pgnAndFen">PGN и FEN</string>
+  <string name="promotionCanceled">Превращение отменено</string>
 </resources>

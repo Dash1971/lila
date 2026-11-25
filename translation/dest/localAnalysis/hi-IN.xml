@@ -1,2 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+  <string name="analyse">विश्लेषण करें</string>
+  <string name="chooseYourEngineSettings">मुख्य चाल क्रम का मूल्यांकन करने के लिए विश्लेषण करें पर क्लिक करें।</string>
+</resources>

@@ -5,6 +5,7 @@ import chess.format.{ Fen, Uci }
 import chess.variant.*
 import play.api.libs.json.*
 
+import lila.core.i18n.I18nKey
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
@@ -47,7 +48,7 @@ final class AnalyseUi(helpers: Helpers)(val endpoints: AnalyseEndpoints, standar
       .graph(
         title = "Chess analysis board",
         url = routeUrl(routes.UserAnalysis.index),
-        description = "Analyse chess positions and variations on an interactive chess board"
+        description = I18nKey("muteAnalysisBoardDescription").txt()
       )
       .flag(_.zoom):
         main(

@@ -1,2 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+  <string name="reportCheatBoostHelp">खेलों का लिंक चिपकाएँ और बताएँ कि इस उपयोगकर्ता के व्यवहार में क्या गलत है। केवल “यह धोखा देता है” न कहें; बताएँ कि आप इस निष्कर्ष पर कैसे पहुँचे।</string>
+</resources>

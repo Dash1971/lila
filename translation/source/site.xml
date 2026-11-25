@@ -33,7 +33,7 @@
   <string name="youPlayTheBlackPieces">You play the black pieces</string>
   <string name="itsYourTurn">It's your turn!</string>
   <string name="cheatDetected">Cheat Detected</string>
-  <string name="kingInTheCenter">King in the centre</string>
+  <string name="kingInTheCenter">King in the center</string>
   <string name="threeChecks">Three checks</string>
   <string name="raceFinished">Race finished</string>
   <string name="variantEnding">Variant ending</string>
@@ -316,7 +316,7 @@
   <string name="rematch">Rematch</string>
   <string name="rematchOfferSent">Rematch offer sent</string>
   <string name="rematchOfferAccepted">Rematch offer accepted</string>
-  <string name="rematchOfferCanceled">Rematch offer cancelled</string>
+  <string name="rematchOfferCanceled">Rematch offer canceled</string>
   <string name="rematchOfferDeclined">Rematch offer declined</string>
   <string name="cancelRematchOffer">Cancel rematch offer</string>
   <string name="viewRematch">View rematch</string>
@@ -463,7 +463,7 @@ Playing rated games will increase stability.</string>
   </plurals>
   <string name="friendsOnlineAndPlaying">Friends online: %1$s
 Friends playing: %2$s</string>
-  <string name="favoriteOpponents">Favourite opponents</string>
+  <string name="favoriteOpponents">Favorite opponents</string>
   <string name="follow">Follow</string>
   <string name="following">Following</string>
   <string name="unfollow">Unfollow</string>
@@ -564,7 +564,7 @@ Friends playing: %2$s</string>
   <string name="onlineBots">Online bots</string>
   <string name="aboutBotsOnLichess">About bots on Lichess</string>
   <string name="featuredBots">Featured bots</string>
-  <string name="tryPlayingTheseInnovativeChessEngines">Try playing these innovative chess engines! They are our favourites.</string>
+  <string name="tryPlayingTheseInnovativeChessEngines">Try playing these innovative chess engines! They are our favorites.</string>
   <string name="communityBots">Community bots</string>
   <string name="moreChessEnginesCreatedByTheLichessCommunity">More chess engines created by the Lichess community. They are hosted by their creators, and might not always be online.</string>
   <string name="name">Name</string>
@@ -595,7 +595,7 @@ Friends playing: %2$s</string>
   <string name="cheat">Cheat</string>
   <string name="troll">Troll</string>
   <string name="other">Other</string>
-  <string name="reportCheatBoostHelp">Paste the link to the game(s) and explain what is wrong about this user's behaviour. Don't just say "they cheat", but tell us how you came to this conclusion.</string>
+  <string name="reportCheatBoostHelp">Paste the link to the game(s) and explain what is wrong about this user's behavior. Don't just say "they cheat", but tell us how you came to this conclusion.</string>
   <string name="reportUsernameHelp">Explain why this username is offensive. Don't just say "it's offensive/inappropriate," but tell us how you came to this conclusion, especially if the offense is obscure, not in English, in slang, or a historical/cultural reference.</string>
   <string name="processReportFasterInEnglish" comment="Appears on the &quot;Report a user&quot; page https://lichess.org/report, to encourage users to write in English, so any Lichess moderator can process it.">We can process your report faster if you write in English.</string>
   <string name="by">by %s</string>
@@ -648,7 +648,7 @@ Friends playing: %2$s</string>
   <string name="timeline">Timeline</string>
   <string name="starting">Starting:</string>
   <string name="allInformationIsPublicAndOptional">All information is public and optional.</string>
-  <string name="biographyDescription">Talk about yourself, your interests, what you like in chess, your favourite openings, players, ...</string>
+  <string name="biographyDescription">Talk about yourself, your interests, what you like in chess, your favorite openings, players, ...</string>
   <plurals name="maximumNbCharacters">
     <item quantity="one">Maximum: %s character.</item>
     <item quantity="other">Maximum: %s characters.</item>
@@ -713,7 +713,7 @@ Friends playing: %2$s</string>
   <string name="blockAds">Block ads</string>
   <string name="simultaneousExhibitions">Simultaneous exhibitions</string>
   <string name="host">Host</string>
-  <string name="hostColorX">Host colour: %s</string>
+  <string name="hostColorX">Host color: %s</string>
   <string name="yourPendingSimuls">Your pending simuls</string>
   <string name="createdSimuls">Newly created simuls</string>
   <string name="hostANewSimul">Host a new simul</string>
@@ -761,7 +761,7 @@ Friends playing: %2$s</string>
   <string name="tournamentHomeDescription">Play fast-paced chess tournaments! Join an official scheduled tournament, or create your own. Bullet, Blitz, Classical, Chess960, King of the Hill, Threecheck, and more options available for endless chess fun.</string>
   <string name="tournamentNotFound">Tournament not found</string>
   <string name="tournamentDoesNotExist">This tournament does not exist.</string>
-  <string name="tournamentMayHaveBeenCanceled">The tournament may have been cancelled if all players left before it started.</string>
+  <string name="tournamentMayHaveBeenCanceled">The tournament may have been canceled if all players left before it started.</string>
   <string name="returnToTournamentsHomepage">Return to tournaments homepage</string>
   <string name="weeklyPerfTypeRatingDistribution">Weekly %s rating distribution</string>
   <plurals name="nbPerfTypePlayersThisWeek">
@@ -796,7 +796,7 @@ Friends playing: %2$s</string>
   <string name="crosstable">Crosstable</string>
   <string name="youCanAlsoScrollOverTheBoardToMoveInTheGame">Scroll over the board to move in the game.</string>
   <string name="scrollOverComputerVariationsToPreviewThem">Scroll over computer variations to preview them.</string>
-  <string name="analysisShapesHowTo">Press right-click (or shift+click) to draw circles and arrows on the board. For other colours, combine the following with right-click:</string>
+  <string name="analysisShapesHowTo">Press right-click (or shift+click) to draw circles and arrows on the board. For other colors, combine the following with right-click:</string>
   <string name="primaryColorArrowsHowTo">Ctrl or shift = red; command, alt, or meta = blue; a key from each = yellow.</string>
   <string name="letOtherPlayersMessageYou">Let other players message you</string>
   <string name="receiveForumNotifications">Receive notifications when mentioned in the forum</string>
@@ -851,7 +851,7 @@ Friends playing: %2$s</string>
   <string name="brightness">Brightness</string>
   <string name="contrast">Contrast</string>
   <string name="hue">Hue</string>
-  <string name="boardReset">Reset colours to default</string>
+  <string name="boardReset">Reset colors to default</string>
   <string name="pieceSet">Piece set</string>
   <string name="embedInYourWebsite">Embed in your website</string>
   <string name="usernameAlreadyUsed">This username is already in use, please try another one.</string>
@@ -962,7 +962,7 @@ Friends playing: %2$s</string>
   <string name="important">Important</string>
   <string name="yourQuestionMayHaveBeenAnswered">Your question may already have an answer %1$s</string>
   <string name="inTheFAQ">in the FAQ</string>
-  <string name="toReportSomeoneForCheatingOrBadBehavior">To report a user for cheating or bad behaviour, %1$s</string>
+  <string name="toReportSomeoneForCheatingOrBadBehavior">To report a user for cheating or bad behavior, %1$s</string>
   <string name="useTheReportForm">use the report form</string>
   <string name="toRequestSupport">To request support, %1$s</string>
   <string name="tryTheContactPage">try the contact page</string>
@@ -1007,7 +1007,7 @@ It only works for standard games, not with variants.
 You can use the %s to generate a FEN position, then paste it here.
 Leave empty to start games from the normal initial position.</string>
   <string name="cancelSimul">Cancel the simul</string>
-  <string name="simulHostcolor">Host colour for each game</string>
+  <string name="simulHostcolor">Host color for each game</string>
   <string name="estimatedStart">Estimated start time</string>
   <string name="simulFeatured">Feature on %s</string>
   <string name="simulFeaturedHelp">Show your simul to everyone on %s. Disable for private simuls.</string>
@@ -1043,7 +1043,7 @@ Leave empty to start games from the normal initial position.</string>
   <string name="lichessDbExplanation">Rated games played on Lichess</string>
   <string name="switchSides">Switch sides</string>
   <string name="closingAccountWithdrawAppeal">Closing your account will withdraw your appeal</string>
-  <string name="ourEventTips">Our tips for organising events</string>
+  <string name="ourEventTips">Our tips for organizing events</string>
   <string name="instructions">Instructions</string>
   <string name="showMeEverything">Show me everything</string>
   <string name="lichessPatronInfo">Lichess is a charity and entirely free/libre open source software. We depend on user donations to support our operating costs, development, and content. Without our generous community, we would not be able to keep the site running. Thank you for joining us!</string>
@@ -1160,7 +1160,7 @@ Leave empty to start games from the normal initial position.</string>
   <string name="muteWelcomeSettings">Configure Mute Chess to your liking.</string>
   <string name="muteInvitePlayer">Or invite a Mute Chess player:</string>
   <string name="muteStudyWelcomeTitle">Welcome to Mute Chess studies!</string>
-  <string name="muteStudyWelcomeText">This is a shared analysis board. Use it to analyse and annotate games, discuss positions with friends, or give chess lessons. Let's see how it works.</string>
+  <string name="muteStudyWelcomeText">This is a shared analysis board. Use it to analyze and annotate games, discuss positions with friends, or give chess lessons. Let's see how it works.</string>
   <string name="muteForumDescription">Chess discussions and feedback about Mute Chess.</string>
 <string name="muteDonationDismiss">Dismiss invoice</string>
   <string name="muteDonationDismissHelp">This hides the request. The wallet invoice can still be paid until it expires.</string>
@@ -1193,14 +1193,14 @@ Leave empty to start games from the normal initial position.</string>
   <string name="muteInsightCountSelected"># of % selected</string>
   <string name="muteInsightNoMatches">No matches found</string>
   <string name="muteInsightOpeningPreset">Results by opening</string>
-  <string name="muteInsightColorPreset">Results by colour</string>
+  <string name="muteInsightColorPreset">Results by color</string>
   <string name="muteInsightRatingPreset">Rating gain by time control</string>
   <string name="muteInsightResult">Game result</string>
   <string name="muteInsightRatingGain">Rating gain</string>
   <string name="muteInsightOpponentRating">Opponent rating</string>
   <string name="muteInsightDate">Date</string>
   <string name="muteInsightTimeControl">Time control</string>
-  <string name="muteInsightColor">Colour</string>
+  <string name="muteInsightColor">Color</string>
   <string name="muteInsightOpeningFamily">Opening family</string>
   <string name="muteInsightOpening">Opening variation</string>
   <string name="muteInsightGames">Games</string>
@@ -1353,4 +1353,6 @@ Leave empty to start games from the normal initial position.</string>
   <string name="muteAboutMaiaEngineCredit">%s powers our human-like opponents, move probabilities and expected-score predictions.</string>
   <string name="muteAboutMaiaFrontendCredit">%1$s and its %2$s inform our analysis interface: Moves by Rating, move-quality colors, position-description logic and inspiration for the Move map.</string>
   <string name="muteAboutMaiaFrontendSource">open-source frontend</string>
+  <string name="muteAnalysisBoardDescription">Analyze chess positions and variations on an interactive chess board</string>
+  <string name="muteGameReplayHint">Click to replay, analyze, and discuss the game!</string>
 </resources>

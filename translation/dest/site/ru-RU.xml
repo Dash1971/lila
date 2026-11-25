@@ -1435,4 +1435,6 @@
   <string name="muteAboutMaiaEngineCredit">%s обеспечивает игру наших человекоподобных соперников, вероятности ходов и прогнозы ожидаемого результата.</string>
   <string name="muteAboutMaiaFrontendCredit">%1$s и его %2$s послужили основой для элементов нашего интерфейса анализа: графика «Ходы по рейтингу», цветов качества ходов, логики описаний позиций и идеи «Карты ходов».</string>
   <string name="muteAboutMaiaFrontendSource">открытый фронтенд</string>
+  <string name="muteAnalysisBoardDescription">Анализируйте шахматные позиции и варианты на интерактивной доске.</string>
+  <string name="muteGameReplayHint">Нажмите, чтобы просмотреть, проанализировать и обсудить партию!</string>
 </resources>

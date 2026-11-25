@@ -61,4 +61,5 @@
   <string name="copyToClipboard">%s를 클립보드를 복사</string>
   <string name="copiedToClipboard">%s 클립보드에 복사됨</string>
   <string name="pgnAndFen">PGN과 FEN</string>
+  <string name="promotionCanceled">승격이 취소되었습니다</string>
 </resources>

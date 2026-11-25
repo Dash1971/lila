@@ -1312,4 +1312,6 @@ FEN 포지션을 생성하기 위해 %s를 사용할 수 있습니다.
   <string name="muteAboutMaiaEngineCredit">%s는 인간처럼 두는 상대, 수의 선택 확률, 기대 점수 예측을 구동합니다.</string>
   <string name="muteAboutMaiaFrontendCredit">%1$s와 해당 %2$s는 레이팅별 수, 수의 품질 색상, 포지션 설명 로직, 수 지도에 대한 아이디어 등 분석 인터페이스의 참고 자료를 제공합니다.</string>
   <string name="muteAboutMaiaFrontendSource">오픈 소스 프런트엔드</string>
+  <string name="muteAnalysisBoardDescription">대화형 체스판에서 포지션과 변화 수순을 분석하세요.</string>
+  <string name="muteGameReplayHint">클릭하여 기보를 다시 보고 분석하며 대국에 관해 이야기해 보세요!</string>
 </resources>

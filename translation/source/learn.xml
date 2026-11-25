@@ -84,7 +84,7 @@ but you can defend!</string>
 any undefended piece!</string>
   <string name="combat">Combat</string>
   <string name="captureAndDefendPieces">Capture and defend pieces</string>
-  <string name="combatIntro">A good warrior knows both attack and defence!</string>
+  <string name="combatIntro">A good warrior knows both attack and defense!</string>
   <string name="combatComplete">Congratulations! You know how to fight with chess pieces!</string>
   <string name="checkInOne">Check in one</string>
   <string name="attackTheOpponentsKing">Attack the opponent's king</string>
@@ -101,7 +101,7 @@ but you can block the attack!</string>
   <string name="youCanGetOutOfCheckByTaking">You can get out of check
 by taking the attacking piece.</string>
   <string name="thisKnightIsCheckingThroughYourDefenses">This knight is checking
-through your defences!</string>
+through your defenses!</string>
   <string name="escapeOrBlock">Escape with the king
 or block the attack!</string>
   <string name="outOfCheckComplete">Congratulations! Your king must never be taken, so make sure you can defend against a check!</string>
@@ -125,7 +125,7 @@ They go next to the rooks.</string>
   <string name="placeTheBishops">Place the bishops!
 They go next to the knights.</string>
   <string name="placeTheQueen">Place the queen!
-She goes on her own colour.</string>
+She goes on her own color.</string>
   <string name="placeTheKing">Place the king!
 Right next to his queen.</string>
   <string name="pawnsFormTheFrontLine">Pawns form the front line.
@@ -212,7 +212,7 @@ in two moves!</string>
   <string name="youKnowHowToPlayChess">You know how to play chess, congratulations! Do you want to become a stronger player?</string>
   <string name="register">Register</string>
   <string name="getAFreeLichessAccount">Get a free Lichess account</string>
-  <string name="practice">Practise</string>
+  <string name="practice">Practice</string>
   <string name="learnCommonChessPositions">Learn common chess positions</string>
   <string name="puzzles">Puzzles</string>
   <string name="exerciseYourTacticalSkills">Exercise your tactical skills</string>
