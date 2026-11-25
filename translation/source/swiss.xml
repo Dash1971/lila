@@ -34,7 +34,7 @@
   </plurals>
   <string name="tournStartDate">Tournament start date</string>
   <string name="numberOfRounds">Number of rounds</string>
-  <string name="numberOfRoundsHelp">An odd number of rounds allows optimal color balance.</string>
+  <string name="numberOfRoundsHelp">An odd number of rounds allows optimal colour balance.</string>
   <string name="roundInterval">Interval between rounds</string>
   <string name="customPairings">Custom pairings</string>
   <string name="forbiddenPairings">Forbidden pairings</string>

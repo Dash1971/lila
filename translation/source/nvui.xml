@@ -55,7 +55,7 @@
   <string name="sanLongCastling" comment="O-O-O in standard notation">long castling</string>
   <string name="sanDroppedOn" comment="crazyhouse @">is dropped on</string>
   <string name="invalidMove">Invalid move</string>
-  <string name="premoveCancelled">Premove canceled</string>
+  <string name="premoveCancelled">Premove cancelled</string>
   <string name="premoveRecorded">Premove recorded: %s. Hit enter to cancel</string>
   <string name="pockets" comment="Crazyhouse pockets">Pockets</string>
   <string name="copyToClipboard">Copy %s to clipboard</string>

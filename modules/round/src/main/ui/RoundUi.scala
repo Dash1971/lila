@@ -4,7 +4,6 @@ package ui
 import chess.Square
 import chess.variant.{ Crazyhouse, Variant }
 
-import lila.core.i18n.I18nKey
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
@@ -96,9 +95,8 @@ final class RoundUi(helpers: Helpers, gameUi: lila.game.ui.GameUi):
       case (_, _, Draw | Stalemate | UnknownFinish) => "Game is a draw"
       case _ if game.finished => "Game ended"
       case _ => "Game is still ongoing"
-    val replayHint = I18nKey.unchecked("muteGameReplayHint").txt()
     val moves = (game.ply.value - game.startedAtPly.value + 1) / 2
-    s"$p1 $plays $p2 in a $rated $speedAndClock game of $variant. $result after ${pluralize("move", moves)}. $replayHint"
+    s"$p1 $plays $p2 in a $rated $speedAndClock game of $variant. $result after ${pluralize("move", moves)}. Click to replay, analyze, and discuss the game!"
 
   def povChessground(pov: Pov)(using ctx: Context): Frag =
     val orient = pov.color

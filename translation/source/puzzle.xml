@@ -32,8 +32,8 @@
   <string name="byOpenings">By openings</string>
   <string name="puzzlesByOpenings">Puzzles by openings</string>
   <string name="openingsYouPlayedTheMost">Openings you played the most in rated games</string>
-  <string name="useFindInPage">Use "Find in page" in the browser menu to find your favorite opening!</string>
-  <string name="useCtrlF">Use Ctrl+f to find your favorite opening!</string>
+  <string name="useFindInPage">Use "Find in page" in the browser menu to find your favourite opening!</string>
+  <string name="useCtrlF">Use Ctrl+f to find your favourite opening!</string>
   <string name="notTheMove">That's not the move!</string>
   <string name="trySomethingElse">Try something else.</string>
   <string name="ratingX">Rating: %s</string>
@@ -83,7 +83,7 @@ Play rapid and classical games to increase your chances of having a puzzle added
     <item quantity="one">One puzzle found in games by %2$s</item>
     <item quantity="other">%1$s puzzles found in games by %2$s</item>
   </plurals>
-  <string name="puzzleDashboardDescription">Train, analyze, improve</string>
+  <string name="puzzleDashboardDescription">Train, analyse, improve</string>
   <plurals name="nbPlayed">
     <item quantity="other">%s played</item>
   </plurals>
@@ -92,6 +92,6 @@ Play rapid and classical games to increase your chances of having a puzzle added
   </plurals>
   <string name="percentSolved">%s solved</string>
   <string name="noPuzzlesToShow">Nothing to show, go play some puzzles first!</string>
-  <string name="improvementAreasDescription">Train these to optimize your progress!</string>
+  <string name="improvementAreasDescription">Train these to optimise your progress!</string>
   <string name="strengthDescription">You perform the best in these themes</string>
 </resources>

@@ -1178,10 +1178,5 @@
   <string name="muteAboutMaiaEngineCredit">%s हमारे इंसानों जैसे खेलने वाले प्रतिद्वंद्वियों, चालों की संभावनाओं और अपेक्षित स्कोर के पूर्वानुमानों को संचालित करता है।</string>
   <string name="muteAboutMaiaFrontendCredit">%1$s और उसका %2$s हमारे विश्लेषण इंटरफ़ेस के लिए संदर्भ प्रदान करते हैं: रेटिंग के अनुसार चालें, चालों की गुणवत्ता के रंग, स्थिति के विवरण का तर्क और चालों के मानचित्र की प्रेरणा।</string>
   <string name="muteAboutMaiaFrontendSource">ओपन-सोर्स फ़्रंटएंड</string>
-  <string name="tryPlayingTheseInnovativeChessEngines">इन नए शतरंज इंजनों के साथ खेलकर देखें! ये हमारे पसंदीदा हैं।</string>
-  <string name="reportCheatBoostHelp">खेलों का लिंक चिपकाएँ और बताएँ कि इस उपयोगकर्ता के व्यवहार में क्या गलत है। केवल “यह धोखा देता है” न कहें; बताएँ कि आप इस निष्कर्ष पर कैसे पहुँचे।</string>
-  <string name="boardReset">डिफ़ॉल्ट रंग बहाल करें</string>
-  <string name="muteAnalysisBoardDescription">इंटरैक्टिव शतरंज बोर्ड पर स्थितियों और विविधताओं का विश्लेषण करें।</string>
-  <string name="muteGameReplayHint">खेल दोबारा देखने, उसका विश्लेषण करने और उस पर चर्चा करने के लिए क्लिक करें!</string>
   <string name="mutePromotionCanceled">पदोन्नति रद्द कर दी गई</string>
 </resources>

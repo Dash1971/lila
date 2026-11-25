@@ -45,7 +45,7 @@ interface I18n {
     playedNbMoves: I18nPlural;
     /** Posted %1$s messages in %2$s */
     postedNbMessages: I18nPlural;
-    /** Practiced %1$s positions on %2$s */
+    /** Practised %1$s positions on %2$s */
     practicedNbPositions: I18nPlural;
     /** Ranked #%1$s in %2$s */
     rankedInSwissTournament: I18nFormat;
@@ -503,7 +503,7 @@ interface I18n {
     cannotChallengeDueToProvisionalXRating: I18nFormat;
     /** Challenge accepted! */
     challengeAccepted: string;
-    /** Challenge canceled. */
+    /** Challenge cancelled. */
     challengeCanceled: string;
     /** Challenge declined. */
     challengeDeclined: string;
@@ -833,7 +833,7 @@ interface I18n {
     accountLost: string;
     /** I need account support */
     accountSupport: string;
-    /** Authorization to use Lichess */
+    /** Authorisation to use Lichess */
     authorizationToUse: string;
     /** Appeal for a ban or IP restriction */
     banAppeal: string;
@@ -1039,7 +1039,7 @@ interface I18n {
     startTraining: string;
     /** It makes it easier to talk to your chess friends, since you both understand the 'language of chess'. */
     talkToYourChessFriends: string;
-    /** You can analyze a game more effectively if you can quickly recognize coordinates. */
+    /** You can analyse a game more effectively if you can quickly recognise coordinates. */
     youCanAnalyseAGameMoreEffectively: string;
     /** You have 30 seconds to correctly map as many squares as possible! */
     youHaveThirtySeconds: string;
@@ -1277,7 +1277,7 @@ interface I18n {
     keyboardShortcuts: string;
     /** Some Lichess pages have keyboard shortcuts you can use. Try pressing the '?' key on a study, analysis, puzzle, or game page to list available keyboard shortcuts. */
     keyboardShortcutsExplanation: string;
-    /** If your opponent frequently aborts/leaves games, they get "play banned", which means they're temporarily banned from playing games. This is not publicly indicated on their profile. If this behavior continues, the length of the playban increases - and prolonged behavior of this nature may lead to account closure. */
+    /** If your opponent frequently aborts/leaves games, they get "play banned", which means they're temporarily banned from playing games. This is not publicly indicated on their profile. If this behaviour continues, the length of the playban increases - and prolonged behaviour of this nature may lead to account closure. */
     leavingGameWithoutResigningExplanation: string;
     /** lee-chess */
     leechess: string;
@@ -1337,7 +1337,7 @@ interface I18n {
     ratingLeaderboards: string;
     /** One minute after a player is marked, their 40 latest rated games in the last 5 days are taken. If you were their opponent in one of those games, you lost rating (because of a loss or a draw), and your rating was not provisional, you get a rating refund. The refund is capped based on your peak rating and your rating progress after the game. (For example, if your rating greatly increased after that game, you might get no refund or only a partial refund.) A refund will never exceed 150 points. */
     ratingRefundExplanation: string;
-    /** Ratings are calculated using the Glicko-2 rating method developed by Mark Glickman. This is a very popular rating method, and is used by a significant number of chess organizations (FIDE being a notable counter-example, as they still use the dated Elo rating system). */
+    /** Ratings are calculated using the Glicko-2 rating method developed by Mark Glickman. This is a very popular rating method, and is used by a significant number of chess organisations (FIDE being a notable counter-example, as they still use the dated Elo rating system). */
     ratingSystemUsedByLichess: string;
     /** Threefold repetition is about repeated %1$s, not moves. Repetition does not have to occur consecutively. */
     repeatedPositionsThatMatters: I18nFormat;
@@ -1389,9 +1389,9 @@ interface I18n {
     whenAmIEligibleRatinRefund: string;
     /** What rating system does Lichess use? */
     whichRatingSystemUsedByLichess: string;
-    /** Why are ratings higher compared to other sites and organizations such as FIDE, USCF and the ICC? */
+    /** Why are ratings higher compared to other sites and organisations such as FIDE, USCF and the ICC? */
     whyAreRatingHigher: string;
-    /** It is best not to think of ratings as absolute numbers, or compare them against other organizations. Different organizations have different levels of players, different rating systems (Elo, Glicko, Glicko-2, or a modified version of the aforementioned). These factors can drastically affect the absolute numbers (ratings). */
+    /** It is best not to think of ratings as absolute numbers, or compare them against other organisations. Different organisations have different levels of players, different rating systems (Elo, Glicko, Glicko-2, or a modified version of the aforementioned). These factors can drastically affect the absolute numbers (ratings). */
     whyAreRatingHigherExplanation: string;
     /** Why is Lichess called Lichess? */
     whyIsLichessCalledLichess: string;
@@ -1619,7 +1619,7 @@ interface I18n {
     combat: string;
     /** Congratulations! You know how to fight with chess pieces! */
     combatComplete: string;
-    /** A good warrior knows both attack and defense! */
+    /** A good warrior knows both attack and defence! */
     combatIntro: string;
     /** Defeat the opponent's king */
     defeatTheOpponentsKing: string;
@@ -1765,7 +1765,7 @@ interface I18n {
     playMachine: string;
     /** Play people */
     playPeople: string;
-    /** Practice */
+    /** Practise */
     practice: string;
     /** Progress: %s */
     progressX: I18nFormat;
@@ -1895,13 +1895,13 @@ interface I18n {
     youWillLoseAllYourProgress: string;
   };
   localAnalysis: {
-    /** Analyze */
+    /** Analyse */
     analyse: string;
     /** Analysis upload failed. Try again later. */
     analysisUploadFailed: string;
     /** For the best results in the shortest time, use %1$s with %2$s threads. */
     bestResultsUseXWithYThreads: I18nFormat;
-    /** Click Analyze to score the main line. */
+    /** Click Analyse to score the main line. */
     chooseYourEngineSettings: string;
     /** Current analysis */
     currentAnalysis: string;
@@ -2039,7 +2039,7 @@ interface I18n {
     pieces: string;
     /** Pockets */
     pockets: string;
-    /** Premove canceled */
+    /** Premove cancelled */
     premoveCancelled: string;
     /** Premove recorded: %s. Hit enter to cancel */
     premoveRecorded: I18nFormat;
@@ -2639,7 +2639,7 @@ interface I18n {
     explainShowPlayerRatings: string;
     /** If you have frequent disconnects, try changing the routing. */
     frequentDisconnectsAdvice: string;
-    /** Game behavior */
+    /** Game behaviour */
     gameBehavior: string;
     /** General */
     generalSettings: string;
@@ -2835,7 +2835,7 @@ interface I18n {
     history: string;
     /** Improvement areas */
     improvementAreas: string;
-    /** Train these to optimize your progress! */
+    /** Train these to optimise your progress! */
     improvementAreasDescription: string;
     /** Jump to next puzzle immediately */
     jumpToNextPuzzleImmediately: string;
@@ -2883,7 +2883,7 @@ interface I18n {
     puzzleComplete: string;
     /** Puzzle Dashboard */
     puzzleDashboard: string;
-    /** Train, analyze, improve */
+    /** Train, analyse, improve */
     puzzleDashboardDescription: string;
     /** Puzzle %s */
     puzzleId: I18nFormat;
@@ -2923,9 +2923,9 @@ interface I18n {
     trySomethingElse: string;
     /** Great puzzle! */
     upVote: string;
-    /** Use Ctrl+f to find your favorite opening! */
+    /** Use Ctrl+f to find your favourite opening! */
     useCtrlF: string;
-    /** Use "Find in page" in the browser menu to find your favorite opening! */
+    /** Use "Find in page" in the browser menu to find your favourite opening! */
     useFindInPage: string;
     /** Your puzzle rating will not change. Note that puzzles are not a competition. Your rating helps select the most appropriate puzzles for your skill level. */
     yourPuzzleRatingWillNotChange: string;
@@ -2979,7 +2979,7 @@ interface I18n {
     bodenMateDescription: string;
     /** Capture the defender */
     capturingDefender: string;
-    /** Removing a piece that is critical to defense of another piece, allowing the now undefended piece to be captured on a following move. */
+    /** Removing a piece that is critical to defence of another piece, allowing the now undefended piece to be captured on a following move. */
     capturingDefenderDescription: string;
     /** Castling */
     castling: string;
@@ -3309,9 +3309,9 @@ interface I18n {
     puzzlesYouWonOnFirstTry: I18nFormat;
     /** Your %s recap is ready! */
     recapReady: I18nFormat;
-    /** favorite time control */
+    /** favourite time control */
     shareableFavouriteTimeControl: string;
-    /** favorite variant */
+    /** favourite variant */
     shareableFavouriteVariant: string;
     /** most played opponent */
     shareableMostPlayedOpponent: string;
@@ -3353,7 +3353,7 @@ interface I18n {
     readMoreAboutLichessReports: string;
     /** Sandbagging / Boosting / Match fixing */
     reportBoost: string;
-    /** Paste the link to the game(s) and explain what is wrong about this user's behavior. Don't just say "they cheat", but tell us how you came to this conclusion. */
+    /** Paste the link to the game(s) and explain what is wrong about this user's behaviour. Don't just say "they cheat", but tell us how you came to this conclusion. */
     reportCheatBoostHelp: string;
     /** Harassment / Bullying / Stalking */
     reportHarass: string;
@@ -3389,7 +3389,7 @@ interface I18n {
     analysis: string;
     /** Ascending */
     ascending: string;
-    /** Color */
+    /** Colour */
     color: string;
     /** Date */
     date: string;
@@ -3431,7 +3431,7 @@ interface I18n {
     source: string;
     /** To */
     to: string;
-    /** Winner color */
+    /** Winner colour */
     winnerColor: string;
     /** %s games found */
     xGamesFound: I18nPlural;
@@ -3539,7 +3539,7 @@ interface I18n {
     analysis: string;
     /** Analysis options */
     analysisOptions: string;
-    /** Press right-click (or shift+click) to draw circles and arrows on the board. For other colors, combine the following with right-click: */
+    /** Press right-click (or shift+click) to draw circles and arrows on the board. For other colours, combine the following with right-click: */
     analysisShapesHowTo: string;
     /** and save %s premove lines */
     andSaveNbPremoveLines: I18nPlural;
@@ -3589,7 +3589,7 @@ interface I18n {
     bewareTheGameIsRatedButHasNoClock: string;
     /** Biography */
     biography: string;
-    /** Talk about yourself, your interests, what you like in chess, your favorite openings, players, ... */
+    /** Talk about yourself, your interests, what you like in chess, your favourite openings, players, ... */
     biographyDescription: string;
     /** Black */
     black: string;
@@ -3649,7 +3649,7 @@ interface I18n {
     board: string;
     /** Board editor */
     boardEditor: string;
-    /** Reset colors to default */
+    /** Reset colours to default */
     boardReset: string;
     /** Boards */
     boards: string;
@@ -4019,7 +4019,7 @@ interface I18n {
     extraClockTimeForHost: string;
     /** Fast */
     fast: string;
-    /** Favorite opponents */
+    /** Favourite opponents */
     favoriteOpponents: string;
     /** Featured bots */
     featuredBots: string;
@@ -4099,7 +4099,7 @@ interface I18n {
     host: string;
     /** Host a new simul */
     hostANewSimul: string;
-    /** Host color: %s */
+    /** Host colour: %s */
     hostColorX: I18nFormat;
     /** How to avoid this? */
     howToAvoidThis: string;
@@ -4211,7 +4211,7 @@ interface I18n {
     kidModeExplanation: string;
     /** Kid mode is enabled. */
     kidModeIsEnabled: string;
-    /** King in the center */
+    /** King in the centre */
     kingInTheCenter: string;
     /** Language */
     language: string;
@@ -4545,7 +4545,7 @@ interface I18n {
     other: string;
     /** other players */
     otherPlayers: string;
-    /** Our tips for organizing events */
+    /** Our tips for organising events */
     ourEventTips: string;
     /** Outside the board */
     outsideTheBoard: string;
@@ -4717,7 +4717,7 @@ interface I18n {
     rematch: string;
     /** Rematch offer accepted */
     rematchOfferAccepted: string;
-    /** Rematch offer canceled */
+    /** Rematch offer cancelled */
     rematchOfferCanceled: string;
     /** Rematch offer declined */
     rematchOfferDeclined: string;
@@ -4743,7 +4743,7 @@ interface I18n {
     replyToThisTopic: string;
     /** Report a user */
     reportAUser: string;
-    /** Paste the link to the game(s) and explain what is wrong about this user's behavior. Don't just say "they cheat", but tell us how you came to this conclusion. */
+    /** Paste the link to the game(s) and explain what is wrong about this user's behaviour. Don't just say "they cheat", but tell us how you came to this conclusion. */
     reportCheatBoostHelp: string;
     /** Explain why this username is offensive. Don't just say "it's offensive/inappropriate," but tell us how you came to this conclusion, especially if the offense is obscure, not in English, in slang, or a historical/cultural reference. */
     reportUsernameHelp: string;
@@ -4861,7 +4861,7 @@ interface I18n {
     simulFeatured: I18nFormat;
     /** Show your simul to everyone on %s. Disable for private simuls. */
     simulFeaturedHelp: I18nFormat;
-    /** Host color for each game */
+    /** Host colour for each game */
     simulHostcolor: string;
     /** Host extra clock time per player */
     simulHostExtraTimePerPlayer: string;
@@ -5021,7 +5021,7 @@ interface I18n {
     topGames: string;
     /** Topics */
     topics: string;
-    /** To report a user for cheating or bad behavior, %1$s */
+    /** To report a user for cheating or bad behaviour, %1$s */
     toReportSomeoneForCheatingOrBadBehavior: I18nFormat;
     /** To request support, %1$s */
     toRequestSupport: I18nFormat;
@@ -5043,7 +5043,7 @@ interface I18n {
     tournamentHomeDescription: string;
     /** Chess tournaments featuring various time controls and variants */
     tournamentHomeTitle: string;
-    /** The tournament may have been canceled if all players left before it started. */
+    /** The tournament may have been cancelled if all players left before it started. */
     tournamentMayHaveBeenCanceled: string;
     /** Tournament not found */
     tournamentNotFound: string;
@@ -5067,7 +5067,7 @@ interface I18n {
     tryAnotherMoveForBlack: string;
     /** Try another move for white */
     tryAnotherMoveForWhite: string;
-    /** Try playing these innovative chess engines! They are our favorites. */
+    /** Try playing these innovative chess engines! They are our favourites. */
     tryPlayingTheseInnovativeChessEngines: string;
     /** try the contact page */
     tryTheContactPage: string;
@@ -5571,7 +5571,7 @@ interface I18n {
     analysisEditor: string;
     /** Analysis mode */
     analysisMode: string;
-    /** Analyze on your device */
+    /** Analyse on your device */
     analyzeOnYourDevice: string;
     /** Click the !? button, or right-click on the move list.<br>Annotation glyphs are shared and saved. */
     annotatePositionText: string;
@@ -5743,7 +5743,7 @@ interface I18n {
     members: string;
     /** Most popular */
     mostPopular: string;
-    /** My favorite studies */
+    /** My favourite studies */
     myFavoriteStudies: string;
     /** My private studies */
     myPrivateStudies: string;
@@ -5881,7 +5881,7 @@ interface I18n {
     studyPgn: string;
     /** Study URL */
     studyUrl: string;
-    /** The chapter is too short to be analyzed. */
+    /** The chapter is too short to be analysed. */
     theChapterIsTooShortToBeAnalysed: string;
     /** Time trouble */
     timeTrouble: string;
@@ -5899,7 +5899,7 @@ interface I18n {
     variantsAreSupportedTitle: string;
     /** Visibility */
     visibility: string;
-    /** This is a shared analysis board.<br><br>Use it to analyze and annotate games,<br>to discuss positions with friends,<br>and of course for chess lessons!<br><br>It's a powerful tool. Let's take some time to see how it works. */
+    /** This is a shared analysis board.<br><br>Use it to analyse and annotate games,<br>to discuss positions with friends,<br>and of course for chess lessons!<br><br>It's a powerful tool. Let's take some time to see how it works. */
     welcomeToLichessStudyText: string;
     /** Welcome to Lichess Study! */
     welcomeToLichessStudyTitle: string;
@@ -6005,7 +6005,7 @@ interface I18n {
     numberOfGamesPreDefined: string;
     /** Number of rounds */
     numberOfRounds: string;
-    /** An odd number of rounds allows optimal color balance. */
+    /** An odd number of rounds allows optimal colour balance. */
     numberOfRoundsHelp: string;
     /** One round every %s days */
     oneRoundEveryXDays: I18nPlural;
@@ -6605,7 +6605,7 @@ interface I18n {
     hordeTitle: string;
     /** King of the Hill */
     kingOfTheHill: string;
-    /** Bring your King to the center to win the game. */
+    /** Bring your King to the centre to win the game. */
     kingOfTheHillTitle: string;
     /** Racing Kings */
     racingKings: string;
@@ -6665,9 +6665,9 @@ interface I18n {
     holdShiftKeyWhileSpeaking: string;
     /** Use the %1$s button to toggle voice recognition, the %2$s button to open this help dialog, and the %3$s menu to change speech settings. */
     instructions1: I18nFormat;
-    /** We show arrows for multiple moves when we are not sure. Speak the color or number of a move arrow to select it. */
+    /** We show arrows for multiple moves when we are not sure. Speak the colour or number of a move arrow to select it. */
     instructions2: string;
-    /** If an arrow shows a sweeping radar, that move will be played when the circle is complete. During this time, you may only say %1$s to play the move immediately, %2$s to cancel, or speak the color/number of a different arrow. This timer can be adjusted or turned off in settings. */
+    /** If an arrow shows a sweeping radar, that move will be played when the circle is complete. During this time, you may only say %1$s to play the move immediately, %2$s to cancel, or speak the colour/number of a different arrow. This timer can be adjusted or turned off in settings. */
     instructions3: I18nFormat;
     /** Enable %s in noisy surroundings. Hold Shift when speaking commands while this option is active. */
     instructions4: I18nFormat;

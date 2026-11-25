@@ -82,7 +82,7 @@ Play rapid and classical games to increase your chances of having a puzzle added
     <item quantity="one">One puzzle found in games by %2$s</item>
     <item quantity="other">%1$s puzzles found in games by %2$s</item>
   </plurals>
-  <string name="puzzleDashboardDescription">Train, analyse, improve</string>
+  <string name="puzzleDashboardDescription">Train, analyze, improve</string>
   <plurals name="nbPlayed">
     <item quantity="one">%s played</item>
     <item quantity="other">%s played</item>

@@ -1353,7 +1353,5 @@ Laissez vide pour commencer les parties à partir de la position initiale normal
   <string name="muteAboutMaiaEngineCredit">%s fait fonctionner nos adversaires au style humain, les probabilités des coups et les prédictions de score attendu.</string>
   <string name="muteAboutMaiaFrontendCredit">%1$s et son %2$s servent de références pour notre interface d’analyse : Coups par niveau, couleurs de qualité des coups, logique des descriptions de position et inspiration pour la Carte des coups.</string>
   <string name="muteAboutMaiaFrontendSource">interface web open source</string>
-  <string name="muteAnalysisBoardDescription">Analysez des positions et des variantes sur un échiquier interactif.</string>
-  <string name="muteGameReplayHint">Cliquez pour rejouer, analyser et discuter de la partie !</string>
   <string name="mutePromotionCanceled">Promotion annulée</string>
 </resources>

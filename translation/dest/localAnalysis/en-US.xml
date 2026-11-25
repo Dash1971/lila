@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="analyse" comment="A button label describing an action. &quot;Analyse&quot; or evaluate a chess position or game.">Analyse</string>
+  <string name="analyse" comment="A button label describing an action. &quot;Analyse&quot; or evaluate a chess position or game.">Analyze</string>
   <string name="onTheServer" comment="A header label capturing the property of being shared with others, stored remotely at Lichess, or computed by Lichess. Contrast with &quot;Current analysis&quot; which is visible on the user's device.">On the server</string>
   <string name="currentAnalysis" comment="Phrase to describe analysis results that are currently visible on a game or study chapter's move list and underboard. The current main line analysis being viewed can have a remote origin or be local to the device, but only one analysis can be Current at a time.">Current analysis</string>
   <string name="local" comment="A short inline label describing the property of being computed on a user's own device rather than the Lichess server, usually preceding an engine name">Local</string>
@@ -10,7 +10,7 @@
   <string name="willUse" comment="A label preceding the chess engine that will be used to evaluate the full game if the user clicks the Analyse button.">Will use</string>
   <string name="quality" comment="Label for a slider control to choose the overall strength/quality for an upcoming analysis.">Quality</string>
   <string name="publish" comment="Label for an action button that uploads/publishes a local analysis to the server to share it with others.">Publish</string>
-  <string name="chooseYourEngineSettings" comment="A brief instruction on how to trigger the analysis process.">Click Analyse to score the main line.</string>
+  <string name="chooseYourEngineSettings" comment="A brief instruction on how to trigger the analysis process.">Click Analyze to score the main line.</string>
   <string name="bestResultsUseXWithYThreads" comment="%1$s is the engine name and %2$s is the ideal thread count for a standard main line analysis on the user's device. Recommended threads correspond to the number of CPU cores.">For the best results in the shortest time, use %1$s with %2$s threads.</string>
   <string name="analysisUploadFailed" comment="An error message indicating failure to publish for an unspecified reason. This message should be friendly, vague, and counsel patience because the problem may be temporary.">Analysis upload failed. Try again later.</string>
   <string name="serverAnalysisInProgress" comment="An error message shown when a user attempts to publish a local analysis but a pending server analysis must complete first.">There is a server analysis in progress for this game. You can try again when it\'s done.</string>
