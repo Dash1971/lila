@@ -39,6 +39,14 @@ class NoSweatLanguagesTest extends munit.FunSuite:
 
   test("effective US English catalogs catch common British spellings, including source fallback"):
     Registry.syncLoadLanguages()
+    val promotionKey = I18nKey.unchecked("mutePromotionCanceled")
+    for code <- NoSweatLanguages.codes do
+      val lang = Lang.get(code).get
+      val promotion = promotionKey.txt()(using Translator.to(lang))
+      assert(promotion.nonEmpty && promotion != "mutePromotionCanceled", code)
+      if code != "en-US" then
+        assert(Registry.getAll(lang).get.containsKey("mutePromotionCanceled"), code)
+        assert(promotion != "Promotion canceled", code)
     val english = Registry.getAll(defaultLang).get.asScala.toMap ++ Registry.getAll(enUsLang).get.asScala
     val british = (
       "(?i)\\b(colours?|coloured|colouring|colourful|analys(e|ed|es|ing|er|able)|" +
