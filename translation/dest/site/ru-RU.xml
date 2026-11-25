@@ -1435,4 +1435,5 @@
   <string name="muteAboutMaiaEngineCredit">%s обеспечивает игру наших человекоподобных соперников, вероятности ходов и прогнозы ожидаемого результата.</string>
   <string name="muteAboutMaiaFrontendCredit">%1$s и его %2$s послужили основой для элементов нашего интерфейса анализа: графика «Ходы по рейтингу», цветов качества ходов, логики описаний позиций и идеи «Карты ходов».</string>
   <string name="muteAboutMaiaFrontendSource">открытый фронтенд</string>
+  <string name="mutePromotionCanceled">Превращение отменено</string>
 </resources>

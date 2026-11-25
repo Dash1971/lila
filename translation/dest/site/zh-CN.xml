@@ -1312,4 +1312,5 @@
   <string name="muteAboutMaiaEngineCredit">%s 为我们的类人对手、着法概率和预期得分预测提供支持。</string>
   <string name="muteAboutMaiaFrontendCredit">%1$s 及其%2$s为我们的分析界面提供了参考，包括各等级分着法、着法质量配色、局面描述逻辑，以及着法分布图的设计灵感。</string>
   <string name="muteAboutMaiaFrontendSource">开源前端</string>
+  <string name="mutePromotionCanceled">升变已取消</string>
 </resources>

@@ -66,7 +66,7 @@ test('the disabled rematch explanation renders from all ten native catalogs', ()
   const original = i18n;
   try {
     for (const locale of [
-      'en-GB',
+      'en-US',
       'de-DE',
       'es-ES',
       'fr-FR',
@@ -77,9 +77,10 @@ test('the disabled rematch explanation renders from all ten native catalogs', ()
       'ru-RU',
       'zh-CN',
     ]) {
-      const path = locale === 'en-GB' ? 'source/site.xml' : `dest/site/${locale}.xml`;
-      const catalog = readFileSync(new URL(`../../../translation/${path}`, import.meta.url), 'utf8');
-      const message = catalog.match(/<string name="muteMinimumClock">([^<]+)<\/string>/)?.[1];
+      const source = readFileSync(new URL('../../../translation/source/site.xml', import.meta.url), 'utf8');
+      const catalog = readFileSync(new URL(`../../../translation/dest/site/${locale}.xml`, import.meta.url), 'utf8');
+      const key = /<string name="muteMinimumClock">([^<]+)<\/string>/;
+      const message = (catalog.match(key) ?? (locale === 'en-US' ? source.match(key) : null))?.[1];
       assert.ok(message);
       Object.assign(globalThis, {
         i18n: { site: { muteMinimumClock: message, rematch: 'Rematch', analysis: 'Analysis' } },

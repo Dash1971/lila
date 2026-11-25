@@ -31,8 +31,11 @@ final class ErrorHandler(
       lila.mon.http.errorCount(actionName, ClientName(req).name, req.method, 500).increment()
       loggerHttp.error(s"ERROR 500 $actionName", exception)
       if canShowErrorPage(req) then
+        val lang = if config.getOptional[Boolean]("nosweat.enabled").getOrElse(false) then
+          lila.i18n.NoSweatLanguages.pick(req, None)
+        else lila.core.i18n.defaultLang
         given PageContext = PageContext(
-          lila.api.Context(req, lila.core.i18n.defaultLang, LoginContext.anon, lila.pref.Pref.default),
+          lila.api.Context(req, lang, LoginContext.anon, lila.pref.Pref.default),
           lila.api.PageData.error(HTTPRequest.isSynchronousHttp(req).option(lila.ui.Nonce.random))
         )
         InternalServerError(views.base.page(views.site.ui.errorPage))

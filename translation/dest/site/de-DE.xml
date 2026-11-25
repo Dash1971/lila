@@ -1354,4 +1354,5 @@ Leer lassen, um Partien von der normalen Ausgangsstellung aus zu starten.</strin
   <string name="muteAboutMaiaEngineCredit">%s ermöglicht unsere menschenähnlich spielenden Gegner sowie Vorhersagen zu Zugwahrscheinlichkeiten und erwarteten Ergebnissen.</string>
   <string name="muteAboutMaiaFrontendCredit">%1$s und sein %2$s dienen als Vorlagen für unsere Analyseoberfläche: Züge nach Wertung, Zugqualitätsfarben, die Logik der Stellungsbeschreibungen und die Inspiration für die Zugübersicht.</string>
   <string name="muteAboutMaiaFrontendSource">quelloffenes Frontend</string>
+  <string name="mutePromotionCanceled">Umwandlung abgebrochen</string>
 </resources>

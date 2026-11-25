@@ -1309,4 +1309,5 @@
   <string name="muteAboutMaiaEngineCredit">%s は、人間らしい対戦相手、指し手の確率、期待スコアの予測を支えています。</string>
   <string name="muteAboutMaiaFrontendCredit">%1$s とその%2$sは、レーティング別の指し手、指し手の質を示す色、局面説明のロジック、指し手マップの着想など、分析画面の参考となっています。</string>
   <string name="muteAboutMaiaFrontendSource">オープンソースのフロントエンド</string>
+  <string name="mutePromotionCanceled">プロモーションがキャンセルされました</string>
 </resources>

@@ -47,7 +47,7 @@ final class AnalyseUi(helpers: Helpers)(val endpoints: AnalyseEndpoints, standar
       .graph(
         title = "Chess analysis board",
         url = routeUrl(routes.UserAnalysis.index),
-        description = "Analyse chess positions and variations on an interactive chess board"
+        description = "Analyze chess positions and variations on an interactive chess board"
       )
       .flag(_.zoom):
         main(

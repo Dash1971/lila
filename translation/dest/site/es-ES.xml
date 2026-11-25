@@ -1354,4 +1354,5 @@ Déjalo vacío para empezar las partidas desde la posición inicial habitual.</s
   <string name="muteAboutMaiaEngineCredit">%s impulsa a nuestros rivales con juego similar al humano, las probabilidades de las jugadas y las predicciones de puntuación esperada.</string>
   <string name="muteAboutMaiaFrontendCredit">%1$s y su %2$s sirven de referencia para nuestra interfaz de análisis: Jugadas por nivel, colores de calidad de las jugadas, lógica de descripción de posiciones e inspiración para el Mapa de jugadas.</string>
   <string name="muteAboutMaiaFrontendSource">interfaz web de código abierto</string>
+  <string name="mutePromotionCanceled">Promoción cancelada</string>
 </resources>
