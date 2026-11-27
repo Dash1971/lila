@@ -1,10 +1,11 @@
 import { hl, type Hooks, type VNode } from 'lib/view';
 
 import type { Candidate } from './core';
+import { chartLabels, chartTicks, standardDomains } from './ratingChartLayout';
 import { reviewMove } from './reviewEvents';
 
-// Maia platform a6e52f5: useMoveRecommendations.ts and MovesByRating.tsx.
-// Preserve the raw policy and candidate union; adapt only the compact/native view.
+// Maia platform (GPL-3.0), 50083f295d7043b54eeaa2f53f459b1c5aee9937:
+// natural-move selection, standard axes and lighter nested lines. Raw policy/gaps stay native.
 export const ratingSamples: number[] = Array.from({ length: 21 }, (_, i) => 600 + i * 100);
 export const chartX = (rating: number): number => 48 + ((rating - 600) / 2000) * 300;
 export const chartY = (probability: number): number => 200 - Math.max(0, Math.min(1, probability)) * 165;
@@ -20,23 +21,32 @@ export interface RatingChartOptions {
   primary?: Candidate[];
   stockfish?: string[];
   color?: (uci: string) => string;
+  isBlunder?: (uci: string) => boolean;
+  previewLabel?: (move: string) => string;
   describe?: (uci: string, rating: number, probability: number) => string;
   hover?: (uci?: string) => void;
 }
 
 export function chartMoves(
   data: Map<number, Candidate[]>,
-  primary: Candidate[] = [],
+  _primary: Candidate[] = [],
   stockfish: string[] = [],
+  isBlunder: (uci: string) => boolean = () => false,
 ): string[] {
-  const moves = new Set<string>();
-  primary.slice(0, 3).forEach(move => moves.add(move.uci));
-  stockfish.slice(0, 3).forEach(move => moves.add(move));
-  for (const rating of ratingSamples) {
-    const leader = data.get(rating)?.[0]?.uci;
-    if (leader) moves.add(leader);
+  const peak = new Map<string, number>();
+  for (const rating of ratingSamples)
+    for (const move of data.get(rating) ?? []) {
+      const p = move.probability;
+      if (Number.isFinite(p) && p > 0 && p <= 1 && p > (peak.get(move.uci) ?? 0)) peak.set(move.uci, p);
+    }
+  const ranked = [...peak.keys()].sort((a, b) => peak.get(b)! - peak.get(a)! || a.localeCompare(b));
+  const natural = ranked.filter((uci, i) => i === 0 || peak.get(uci)! >= 0.15);
+  const moves = [...new Set([...(stockfish[0] ? [stockfish[0]] : []), ...natural])].slice(0, 6);
+  if (moves.length < 6 && !moves.some(isBlunder)) {
+    const tempting = ranked.find(uci => peak.get(uci)! >= 0.05 && isBlunder(uci));
+    if (tempting) moves.push(tempting);
   }
-  return [...moves];
+  return moves;
 }
 
 function probabilityAt(data: Map<number, Candidate[]>, rating: number, uci: string): number | undefined {
@@ -46,11 +56,13 @@ function probabilityAt(data: Map<number, Candidate[]>, rating: number, uci: stri
   return Number.isFinite(probability) && probability >= 0 && probability <= 1 ? probability : undefined;
 }
 
-export function chartDomain(data: Map<number, Candidate[]>, moves: string[]): 0.6 | 1 {
+export function chartDomain(data: Map<number, Candidate[]>, moves: string[]): number {
   if (!ratingSamples.some(rating => data.has(rating))) return 1;
-  return ratingSamples.some(rating => moves.some(uci => (probabilityAt(data, rating, uci) ?? 0) > 0.6))
-    ? 1
-    : 0.6;
+  const peak = Math.max(
+    0,
+    ...ratingSamples.flatMap(rating => moves.map(uci => probabilityAt(data, rating, uci) ?? 0)),
+  );
+  return standardDomains.find(top => peak <= top) ?? 1;
 }
 
 export function chartPath(
@@ -120,7 +132,7 @@ export function ratingLegend(
 ): VNode {
   return hl(
     'div.nosweat-chart-legend',
-    (options.moves ?? chartMoves(data, options.primary, options.stockfish)).map(uci =>
+    (options.moves ?? chartMoves(data, options.primary, options.stockfish, options.isBlunder)).map(uci =>
       hl(
         'button.fbt',
         {
@@ -129,7 +141,7 @@ export function ratingLegend(
             type: 'button',
             style: `color:${moveColor(uci, options)}`,
             'data-move': uci,
-            title: `Preview ${name(uci)}`,
+            title: options.previewLabel?.(name(uci)) ?? `Preview ${name(uci)}`,
           },
           hook: reviewMove(
             () => preview(uci),
@@ -172,22 +184,45 @@ function showTooltip(
   tooltipRatings.set(host, rating);
   const heading = document.createElement('strong');
   heading.textContent = `Maia ${rating}`;
-  const rows = moves.flatMap(uci => {
-    const probability = probabilityAt(data, rating, uci);
-    if (probability === undefined) return [];
-    const row = document.createElement('div');
-    row.className = 'nosweat-rating-tooltip-row';
-    row.style.color = moveColor(uci, options);
-    row.title = describe(uci, rating, probability, name, options);
-    const label = document.createElement('span');
-    label.textContent = name(uci);
-    const value = document.createElement('span');
-    value.textContent = `${(probability * 100).toFixed(1)}%`;
-    row.append(label, value);
-    return [row];
-  });
+  const rows = [...moves]
+    .sort((a, b) => (probabilityAt(data, rating, b) ?? 0) - (probabilityAt(data, rating, a) ?? 0))
+    .flatMap(uci => {
+      const probability = probabilityAt(data, rating, uci);
+      if (probability === undefined) return [];
+      const row = document.createElement('div');
+      row.className = 'nosweat-rating-tooltip-row';
+      row.style.color = moveColor(uci, options);
+      row.title = describe(uci, rating, probability, name, options);
+      const label = document.createElement('span');
+      label.textContent = name(uci);
+      const value = document.createElement('span');
+      value.textContent = `${(probability * 100).toFixed(1)}%`;
+      row.append(label, value);
+      return [row];
+    });
   tooltip.replaceChildren(heading, ...rows);
   tooltip.hidden = false;
+}
+
+// Like the shared tooltip, the highlight layer owns only its local DOM children.
+// A <use> raises the hovered curve without moving Snabbdom's keyed series.
+function highlightMove(host: Element, uci?: string): void {
+  if (uci) host.setAttribute('data-hover-move', uci);
+  else host.removeAttribute('data-hover-move');
+  const groups = [...host.querySelectorAll<SVGGElement>('.nosweat-rating-series')];
+  const active = groups.find(group => group.getAttribute('data-move') === uci);
+  if (!active) host.removeAttribute('data-hover-move');
+  for (const group of groups) group.style.opacity = !active || group === active ? '1' : '0.18';
+  for (const label of host.querySelectorAll<SVGGElement>('[data-label-move]'))
+    label.style.opacity = !active || label.getAttribute('data-label-move') === uci ? '1' : '0.18';
+  const layer = host.querySelector('.nosweat-rating-highlight');
+  if (!layer) return;
+  layer.replaceChildren();
+  if (active) {
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', '#' + active.id);
+    layer.append(use);
+  }
 }
 
 function pointHooks(
@@ -202,8 +237,12 @@ function pointHooks(
   let element: Element | undefined;
   const hooks = reviewMove(action, active => {
     options.hover?.(active ? uci : undefined);
+    element
+      ?.querySelector('circle')
+      ?.setAttribute('opacity', active || options.selectedRating === rating ? '1' : '0');
     const host = element?.closest('.nosweat-rating-chart');
     if (host) {
+      highlightMove(host, active ? uci : undefined);
       if (active) showTooltip(host, rating, data, moves, name, options);
       else hideTooltip(host);
     }
@@ -270,13 +309,13 @@ export function ratingChart(
   redraw: Redraw = () => {},
   options: RatingChartOptions = {},
 ): VNode {
-  const moves = options.moves ?? chartMoves(data, options.primary, options.stockfish);
+  const moves = options.moves ?? chartMoves(data, options.primary, options.stockfish, options.isBlunder);
   const width =
     options.width ?? (document.querySelector<HTMLElement>('.nosweat-rating-chart')?.clientWidth || 300);
   const height = options.height ?? 149;
   const left = 41;
-  const right = Math.min(68, Math.max(38, ...moves.map(uci => name(uci).length * 6 + 9)));
-  const top = 7;
+  const right = height < 200 ? 50 : 68;
+  const top = height < 200 ? 19 : 25;
   const bottom = 23;
   const domain = chartDomain(data, moves);
   const gradientPrefix = `nosweat-rating-${chartSerial++}`;
@@ -290,22 +329,28 @@ export function ratingChart(
   const x = (rating: number) => left + ((rating - 600) / 2000) * (width - left - right);
   const y = (p: number) =>
     height - bottom - (Math.max(0, Math.min(domain, p)) / domain) * (height - top - bottom);
-  // Every series remains in the plot/legend. Only endpoint labels are bounded by
-  // the available height; dense cases remain fully named in the shared tooltip.
-  const endpoints = moves
-    .flatMap(uci => {
-      const probability = probabilityAt(data, 2600, uci);
-      return probability === undefined ? [] : [{ uci, y: y(probability) }];
-    })
-    .slice(0, Math.floor((height - bottom - top) / 12) + 1)
-    .sort((a, b) => a.y - b.y);
-  for (let i = 1; i < endpoints.length; i++)
-    endpoints[i].y = Math.max(endpoints[i].y, endpoints[i - 1].y + 12);
-  if (endpoints.length) {
-    endpoints[endpoints.length - 1].y = Math.min(endpoints[endpoints.length - 1].y, height - bottom);
-    for (let i = endpoints.length - 2; i >= 0; i--)
-      endpoints[i].y = Math.min(endpoints[i].y, endpoints[i + 1].y - 12);
-  }
+  const selected =
+    options.selectedRating === undefined
+      ? undefined
+      : Math.max(0, Math.min(20, Math.round((options.selectedRating - 600) / 100)));
+  const selectedRating = selected === undefined ? undefined : ratingSamples[selected];
+  const rankRating = selectedRating ?? 1600;
+  const ordered = [...moves].sort(
+    (a, b) =>
+      (probabilityAt(data, rankRating, b) ?? 0) - (probabilityAt(data, rankRating, a) ?? 0) ||
+      moves.indexOf(a) - moves.indexOf(b),
+  );
+  const main = new Set([...ordered.slice(0, 3), ...(options.stockfish?.slice(0, 1) ?? [])]);
+  const lines = ordered.map(uci => ({
+    uci,
+    name: name(uci),
+    values: ratingSamples.map(r => probabilityAt(data, r, uci)),
+  }));
+  const locale = document.documentElement.lang || 'en-US';
+  const share = (p: number) =>
+    new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: p < 0.1 ? 1 : 0 }).format(p);
+  const labels = chartLabels(lines, selected, width, height, i => x(ratingSamples[i]), y, share);
+  const lineWidths = [3.5, 2.8, 2.25, 1.75, 1.4, 1.15];
   const attachSurface = (vnode: VNode) => {
     const svg = vnode.elm as SVGSVGElement;
     svg.onmousemove = event => {
@@ -314,16 +359,49 @@ export function ratingChart(
       const mouseX = ((event.clientX - rect.left) / rect.width) * width;
       if (mouseX < left || mouseX > width - right) {
         const host = svg.closest('.nosweat-rating-chart');
-        if (host) hideTooltip(host);
+        if (host) {
+          hideTooltip(host);
+          highlightMove(host);
+        }
         return;
       }
       const rating = 600 + Math.round(((mouseX - left) / (width - left - right)) * 20) * 100;
       const host = svg.closest('.nosweat-rating-chart');
-      if (host) showTooltip(host, rating, data, moves, name, options);
+      if (host) {
+        showTooltip(host, rating, data, moves, name, options);
+        const sample = Math.max(0, Math.min(19, Math.floor(((mouseX - left) / (width - left - right)) * 20)));
+        const ratio = Math.max(
+          0,
+          Math.min(
+            1,
+            (600 + ((mouseX - left) / (width - left - right)) * 2000 - ratingSamples[sample]) / 100,
+          ),
+        );
+        let nearest: string | undefined;
+        let distance = 12;
+        const mouseY = ((event.clientY - rect.top) / rect.height) * height;
+        for (const uci of moves) {
+          const a = probabilityAt(data, ratingSamples[sample], uci);
+          const b = probabilityAt(data, ratingSamples[sample + 1], uci);
+          if (a === undefined || b === undefined) continue;
+          const d = Math.abs(y(a + ratio * (b - a)) - mouseY);
+          if (d < distance) {
+            distance = d;
+            nearest = uci;
+          }
+        }
+        highlightMove(
+          host,
+          (event.target as Element).closest('.nosweat-rating-series')?.getAttribute('data-move') ?? nearest,
+        );
+      }
     };
     svg.onmouseleave = () => {
       const host = svg.closest('.nosweat-rating-chart');
-      if (host && !svg.contains(document.activeElement)) hideTooltip(host);
+      if (host && !svg.contains(document.activeElement)) {
+        hideTooltip(host);
+        highlightMove(host);
+      }
     };
   };
   return hl(
@@ -345,6 +423,7 @@ export function ratingChart(
         },
         postpatch: (_, vnode) => {
           const host = vnode.elm as Element;
+          highlightMove(host, host.getAttribute('data-hover-move') ?? undefined);
           const rating = tooltipRatings.get(host);
           if (rating !== undefined) showTooltip(host, rating, data, moves, name, options);
           const active = document.activeElement;
@@ -376,8 +455,7 @@ export function ratingChart(
           hook: { insert: attachSurface, update: (_, vnode) => attachSurface(vnode) },
         },
         [
-          ...[0, 0.25, 0.5, 0.75, 1].flatMap(fraction => {
-            const p = fraction * domain;
+          ...chartTicks(domain, height).flatMap(p => {
             return [
               hl('line', {
                 attrs: {
@@ -435,10 +513,13 @@ export function ratingChart(
             'text',
             {
               attrs: {
-                transform: `translate(10 ${(top + height - bottom) / 2}) rotate(-90)`,
+                transform: `translate(13 ${(top + height - bottom) / 2}) rotate(-90)`,
                 'text-anchor': 'middle',
                 fill: 'currentColor',
-                'font-size': 11,
+                'font-size': Math.min(
+                  11,
+                  (height - top - bottom) / ((options.probabilityLabel ?? 'Maia probability').length * 0.6),
+                ),
               },
             },
             options.probabilityLabel ?? 'Maia probability',
@@ -454,7 +535,11 @@ export function ratingChart(
                 },
                 [
                   hl('stop', {
-                    attrs: { offset: '5%', 'stop-color': moveColor(uci, options), 'stop-opacity': 0.5 },
+                    attrs: {
+                      offset: '5%',
+                      'stop-color': moveColor(uci, options),
+                      'stop-opacity': main.has(uci) ? 0.18 : 0.07,
+                    },
                   }),
                   hl('stop', {
                     attrs: { offset: '95%', 'stop-color': moveColor(uci, options), 'stop-opacity': 0 },
@@ -463,13 +548,26 @@ export function ratingChart(
               ),
             ),
           ),
-          ...(options.selectedRating === undefined
+          ...(selectedRating === undefined
             ? []
             : [
+                hl(
+                  'text',
+                  {
+                    attrs: {
+                      x: Math.max(left + 14, Math.min(width - right - 14, x(selectedRating))),
+                      y: 13,
+                      'text-anchor': 'middle',
+                      fill: 'currentColor',
+                      'font-size': 10,
+                    },
+                  },
+                  String(selectedRating),
+                ),
                 hl('line', {
                   attrs: {
-                    x1: x(options.selectedRating),
-                    x2: x(options.selectedRating),
+                    x1: x(selectedRating),
+                    x2: x(selectedRating),
                     y1: top,
                     y2: height - bottom,
                     stroke: 'currentColor',
@@ -478,78 +576,124 @@ export function ratingChart(
                   },
                 }),
               ]),
-          ...moves.map(uci => {
+          ...ordered.map((uci, rank) => {
             const color = moveColor(uci, options);
-            return hl('g.nosweat-rating-series', { key: uci, attrs: { 'data-move': uci } }, [
-              hl('path.nosweat-rating-area', {
-                attrs: {
-                  d: chartArea(data, uci, x, y),
-                  fill: `url(#${gradientPrefix}-${uci})`,
-                  'pointer-events': 'none',
-                },
-              }),
-              hl('path.nosweat-rating-line', {
-                attrs: {
-                  d: chartPath(data, uci, x, y),
-                  fill: 'none',
-                  stroke: color,
-                  'stroke-width': 2,
-                  'stroke-linejoin': 'round',
-                  'pointer-events': 'none',
-                },
-              }),
-              ...ratingSamples.flatMap(rating => {
-                const p = probabilityAt(data, rating, uci);
-                if (p === undefined) return [];
-                const title = describe(uci, rating, p, name, options);
-                return [
-                  hl(
-                    'a.nosweat-rating-point',
-                    {
-                      key: rating,
-                      attrs: {
-                        href: '#',
-                        role: 'button',
-                        'aria-label': `${title} · ${options.selectLabel?.(rating) ?? `Select Maia ${rating}`}`,
-                        'data-rating': rating,
-                        tabindex: uci === firstMove && rating === firstRating ? 0 : -1,
-                      },
-                      hook: pointHooks(
-                        event => {
-                          event.preventDefault();
-                          select(rating);
+            return hl(
+              'g.nosweat-rating-series',
+              { key: uci, attrs: { 'data-move': uci, id: `${gradientPrefix}-series-${uci}` } },
+              [
+                hl('path.nosweat-rating-area', {
+                  attrs: {
+                    d: chartArea(data, uci, x, y),
+                    fill: `url(#${gradientPrefix}-${uci})`,
+                    'pointer-events': 'none',
+                  },
+                }),
+                hl('path.nosweat-rating-line', {
+                  attrs: {
+                    d: chartPath(data, uci, x, y),
+                    fill: 'none',
+                    stroke: color,
+                    'stroke-width': main.has(uci)
+                      ? Math.max(2, lineWidths[Math.min(rank, 5)])
+                      : lineWidths[Math.min(rank, 5)],
+                    opacity: main.has(uci) ? 1 : 0.65,
+                    'stroke-linejoin': 'round',
+                    'pointer-events': 'none',
+                  },
+                }),
+                ...ratingSamples.flatMap(rating => {
+                  const p = probabilityAt(data, rating, uci);
+                  if (p === undefined) return [];
+                  const title = describe(uci, rating, p, name, options);
+                  return [
+                    hl(
+                      'a.nosweat-rating-point',
+                      {
+                        key: rating,
+                        attrs: {
+                          href: '#',
+                          role: 'button',
+                          'aria-label': `${title} · ${options.selectLabel?.(rating) ?? `Select Maia ${rating}`}`,
+                          'data-rating': rating,
+                          tabindex: uci === firstMove && rating === firstRating ? 0 : -1,
                         },
-                        uci,
-                        rating,
-                        data,
-                        moves,
-                        name,
-                        options,
-                      ),
-                    },
-                    [
-                      hl('title', title),
-                      hl('circle', { attrs: { cx: x(rating), cy: y(p), r: 2.5, fill: color } }),
-                    ],
-                  ),
-                ];
-              }),
-            ]);
+                        hook: pointHooks(
+                          event => {
+                            event.preventDefault();
+                            select(rating);
+                          },
+                          uci,
+                          rating,
+                          data,
+                          moves,
+                          name,
+                          options,
+                        ),
+                      },
+                      [
+                        hl('title', title),
+                        hl('circle', {
+                          attrs: {
+                            cx: x(rating),
+                            cy: y(p),
+                            r: selectedRating === rating ? 3 : 5,
+                            opacity: selectedRating === rating ? 1 : 0,
+                            fill: color,
+                          },
+                        }),
+                      ],
+                    ),
+                  ];
+                }),
+              ],
+            );
           }),
-          ...endpoints.map(point =>
+          hl('g.nosweat-rating-highlight', { attrs: { 'aria-hidden': 'true', 'pointer-events': 'none' } }),
+          ...[...labels.endpoints, ...labels.peaks, ...labels.shares].map((label, index) =>
             hl(
-              'text.nosweat-rating-endpoint',
+              'g',
               {
-                key: point.uci,
-                attrs: {
-                  x: width - right + 5,
-                  y: point.y + 4,
-                  fill: moveColor(point.uci, options),
-                  'font-size': 11,
-                  'data-move': point.uci,
-                },
+                key: `label-${index}-${label.uci}`,
+                attrs: { 'pointer-events': 'none', 'data-label-move': label.uci },
               },
-              name(point.uci),
+              [
+                hl('line', {
+                  attrs: {
+                    x1: label.px,
+                    y1: label.py,
+                    x2: label.x - (label.anchor === 'start' ? 3 : 0),
+                    y2: label.y,
+                    stroke: moveColor(label.uci, options),
+                    opacity: 0.55,
+                    'stroke-width': 0.7,
+                  },
+                }),
+                hl(
+                  'text.' +
+                    (index < labels.endpoints.length
+                      ? 'nosweat-rating-endpoint'
+                      : index < labels.endpoints.length + labels.peaks.length
+                        ? 'nosweat-rating-peak'
+                        : 'nosweat-rating-share'),
+                  {
+                    attrs: {
+                      x: label.x,
+                      y: label.y,
+                      'dominant-baseline': 'central',
+                      'text-anchor': label.anchor,
+                      fill: moveColor(label.uci, options),
+                      'font-size': label.size,
+                      'font-weight': 600,
+                      'data-move': label.uci,
+                      stroke: 'var(--c-bg-box)',
+                      'stroke-width': 2.5,
+                      'paint-order': 'stroke',
+                    },
+                  },
+                  label.text,
+                ),
+              ],
             ),
           ),
         ],

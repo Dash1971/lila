@@ -86,29 +86,60 @@ test('the complete 600–2600 rating range retains raw probabilities and real ga
   assert.equal(chartDomain(values, ['e2e4']), 0.6);
 });
 
-test('Maia candidate union retains human leaders, rare engine choices and low-rating-only moves', () => {
-  const primary = [move('e2e4', 0.5), move('d2d4', 0.3), move('c2c4', 0.1), move('ignored', 0.1)];
-  // Insertion order is deliberately reversed; rating leaders follow the actual rating axis.
+test('compact selection keeps the best engine root and peak-ranked natural moves, independent of selected rating', () => {
   const values = new Map([
     [2600, [move('expert', 0.6), move('e2e4', 0.2)]],
     [600, [move('tempting', 0.4), move('e2e4', 0.3)]],
-    [700, [move('e2e4', 0.5)]],
+    [700, [move('e2e4', 0.5), move('invalid', NaN)]],
   ]);
-  assert.deepEqual(chartMoves(values, primary, ['d2d4', 'rare-engine', 'third-engine', 'ignored-sf']), [
-    'e2e4',
-    'd2d4',
-    'c2c4',
-    'rare-engine',
-    'third-engine',
-    'tempting',
-    'expert',
-  ]);
+  const expected = ['rare-engine', 'expert', 'e2e4', 'tempting'];
+  assert.deepEqual(
+    chartMoves(values, [move('ignored-primary', 0.9)], ['rare-engine', 'third-engine']),
+    expected,
+  );
+  assert.deepEqual(chartMoves(values, [move('other-primary', 1)], ['rare-engine']), expected);
+  assert.equal(values.get(600)![0].probability, 0.4, 'raw policies are never rescaled or reordered');
 });
 
-test('adaptive scale matches Maia at the exact 60% boundary without considering unplotted moves', () => {
+test('compact selection bounds natural moves at six, retaining rare SF best and a useful blunder', () => {
+  const crowded = new Map(ratingSamples.map((r, i) => [r, [move('natural' + i, 0.4)]]));
+  const limited = chartMoves(crowded, [], ['rare-best']);
+  assert.equal(limited.length, 6);
+  assert.equal(limited[0], 'rare-best');
+  const values = new Map([
+    [600, [move('best', 0.8), move('bad', 0.05), move('quieter', 0.049), move('threshold', 0.15)]],
+  ]);
+  assert.deepEqual(
+    chartMoves(values, [], ['best'], uci => uci === 'bad'),
+    ['best', 'threshold', 'bad'],
+  );
+  assert.deepEqual(
+    chartMoves(values, [], ['best'], uci => uci === 'quieter'),
+    ['best', 'threshold'],
+  );
+  assert.deepEqual(
+    chartMoves(values, [], ['best'], uci => uci === 'threshold' || uci === 'bad'),
+    ['best', 'threshold'],
+  );
+  values.set(700, [move('best', -1), move('bad-infinite', Infinity), move('over-one', 1.1)]);
+  assert.ok(!chartMoves(values).includes('bad-infinite'));
+  assert.ok(!chartMoves(values).includes('over-one'));
+});
+
+test('adaptive axes use the smallest standard top and ignore unplotted/nonfinite values', () => {
   assert.equal(chartDomain(new Map(), ['a']), 1);
   assert.equal(chartDomain(new Map([[600, [move('a', 0.6), move('not-plotted', 0.9)]]]), ['a']), 0.6);
-  assert.equal(chartDomain(new Map([[600, [move('a', 0.60001)]]]), ['a']), 1);
+  assert.equal(chartDomain(new Map([[600, [move('a', 0.60001)]]]), ['a']), 0.8);
+  for (const [p, top] of [
+    [0.12, 0.2],
+    [0.2, 0.2],
+    [0.20001, 0.4],
+    [0.4, 0.4],
+    [0.40001, 0.6],
+    [0.8, 0.8],
+    [0.80001, 1],
+  ])
+    assert.equal(chartDomain(new Map([[600, [move('a', p)]]]), ['a']), top);
   assert.equal(chartDomain(new Map([[600, [move('a', 1)]]]), ['a']), 1);
 });
 
@@ -123,11 +154,11 @@ test('compact chart keeps every series and shared quality colors, without invent
   };
   const values = new Map([[600, [...primary, move('g2g3', 0.05), move('g1f3', 0.05)]]]);
   chart.render(values, options);
-  assert.equal(chart.root.querySelectorAll('.nosweat-chart-legend button').length, 5);
-  assert.equal(chart.root.querySelectorAll('.nosweat-rating-series').length, 5);
+  assert.equal(chart.root.querySelectorAll('.nosweat-chart-legend button').length, 4);
+  assert.equal(chart.root.querySelectorAll('.nosweat-rating-series').length, 4);
   assert.equal(chart.root.querySelector('svg')!.getAttribute('viewBox'), '0 0 300 149');
-  assert.equal(chart.root.querySelector('svg')!.getAttribute('data-domain'), '0.6');
-  assert.ok(chart.root.querySelector('svg')!.textContent.includes('60%'));
+  assert.equal(chart.root.querySelector('svg')!.getAttribute('data-domain'), '0.4');
+  assert.ok(chart.root.querySelector('svg')!.textContent.includes('40%'));
   assert.equal(chart.root.querySelectorAll('.nosweat-rating-endpoint').length, 0);
   for (const uci of chartMoves(values, primary, options.stockfish)) {
     const color = options.color!(uci);
@@ -141,7 +172,7 @@ test('compact chart keeps every series and shared quality colors, without invent
   }
   values.set(2600, [move('g1f3', 0.65), ...primary]);
   chart.render(values, options);
-  assert.equal(chart.root.querySelector('svg')!.getAttribute('data-domain'), '1');
+  assert.equal(chart.root.querySelector('svg')!.getAttribute('data-domain'), '0.8');
   assert.equal(chart.root.querySelectorAll('.nosweat-rating-endpoint').length, 5);
 });
 
@@ -203,7 +234,7 @@ test('hover and keyboard focus explain one rating without playing, with fresh na
   assert.equal(tooltip.textContent, '');
 });
 
-test('dense endpoint labels stay inside the compact plot while every series remains available', t => {
+test('six crowded endpoint names stay separated and inside the compact frame', t => {
   const chart = mount(t);
   const values = new Map<number, Candidate[]>();
   for (let i = 0; i < 15; i++) values.set(600 + i * 100, [move(`move${i}`, 0.4)]);
@@ -213,15 +244,15 @@ test('dense endpoint labels stay inside the compact plot while every series rema
   );
   chart.render(values, {});
   const count = chartMoves(values).length;
-  assert.equal(count, 15);
+  assert.equal(count, 6);
   assert.equal(chart.root.querySelectorAll('.nosweat-rating-series').length, count);
   assert.equal(chart.root.querySelectorAll('.nosweat-chart-legend button').length, count);
-  const ys = [...chart.root.querySelectorAll('.nosweat-rating-endpoint')].map(
-    el => Number(el.getAttribute('y')) - 4,
+  const ys = [...chart.root.querySelectorAll('.nosweat-rating-endpoint')].map(el =>
+    Number(el.getAttribute('y')),
   );
-  assert.ok(ys.length < count);
-  assert.ok(ys.every(y => y >= 7 && y <= 126));
-  assert.ok(ys.every((y, i) => i === 0 || y - ys[i - 1] >= 12));
+  assert.equal(ys.length, count);
+  assert.ok(ys.every(y => y >= 19 && y <= 126));
+  assert.ok(ys.every((y, i) => i === 0 || y - ys[i - 1] >= 13));
 });
 
 test('shared tooltip follows rating columns with raw probabilities and no invented missing sample', t => {
@@ -243,7 +274,7 @@ test('shared tooltip follows rating columns with raw probabilities and no invent
   const svg = chart.root.querySelector<SVGSVGElement>('svg')!;
   t.mock.method(svg, 'getBoundingClientRect', () => new window.DOMRect(0, 0, 300, 149));
   const tooltip = chart.root.querySelector<HTMLElement>('.nosweat-rating-tooltip')!;
-  svg.dispatchEvent(new window.MouseEvent('mousemove', { clientX: 151, clientY: 40 }));
+  svg.dispatchEvent(new window.MouseEvent('mousemove', { clientX: 146, clientY: 40 }));
   assert.equal(tooltip.hidden, false);
   assert.equal(tooltip.querySelector('strong')!.textContent, 'Maia 1600');
   assert.deepEqual(
@@ -324,4 +355,32 @@ test('one keyboard entry explores series and available ratings without triggerin
   beforeBrowserShortcut.dispatchEvent(browserShortcut);
   assert.equal(browserShortcut.defaultPrevented, false, 'browser navigation modifiers remain available');
   assert.equal(document.activeElement, beforeBrowserShortcut);
+});
+
+test('Lab may explicitly render eight candidates while selected-rating shares and peaks avoid collisions', t => {
+  const chart = mount(t);
+  const moves = Array.from({ length: 8 }, (_, i) => 'move' + i);
+  const values = new Map(
+    ratingSamples.map((r, i) => [
+      r,
+      moves.map((uci, k) => move(uci, k === 0 ? 0.1 + 0.3 * Math.sin((i * Math.PI) / 20) : 0.03 + k * 0.005)),
+    ]),
+  );
+  chart.render(values, { moves, width: 640, height: 300, selectedRating: 1600 });
+  assert.equal(chart.root.querySelectorAll('.nosweat-rating-series').length, 8);
+  assert.equal(chart.root.querySelectorAll('.nosweat-rating-endpoint').length, 8);
+  assert.ok(chart.root.querySelector('.nosweat-rating-peak'));
+  assert.ok(chart.root.querySelector('.nosweat-rating-share'));
+  const points = chart.root.querySelectorAll('.nosweat-rating-point circle[opacity="1"]');
+  assert.equal(points.length, 8, 'only the chosen rating has visible markers');
+  const first = chart.root.querySelector<SVGElement>('.nosweat-rating-series a')!;
+  first.dispatchEvent(new window.FocusEvent('focus'));
+  assert.ok(chart.root.querySelector('.nosweat-rating-highlight use'));
+  assert.ok(
+    [...chart.root.querySelectorAll<SVGGElement>('.nosweat-rating-series')].some(
+      g => g.style.opacity === '0.18',
+    ),
+  );
+  first.dispatchEvent(new window.FocusEvent('blur'));
+  assert.equal(chart.root.querySelector('.nosweat-rating-highlight use'), null);
 });

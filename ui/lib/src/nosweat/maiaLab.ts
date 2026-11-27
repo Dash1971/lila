@@ -11,6 +11,7 @@ import { labText, type LabTextKey } from './maiaLabI18n';
 import {
   describeLabPosition,
   labMoves,
+  labMoveValue,
   labProbability,
   labQualities,
   labScores,
@@ -278,6 +279,9 @@ export class MaiaLab {
             width,
             height: 300,
             selectedRating: this.rating,
+            stockfish: [...scores.keys()]
+              .sort((a, b) => labMoveValue(scores.get(b)!, white) - labMoveValue(scores.get(a)!, white))
+              .slice(0, 1),
             color: uci => qualities.get(uci)?.color ?? 'var(--c-font-dim)',
             hover: uci => this.source.hover(uci),
             ariaLabel: labText('LabChartHelp'),
