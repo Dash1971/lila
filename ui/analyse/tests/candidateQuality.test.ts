@@ -23,13 +23,25 @@ test('Maia-platform boundaries use five and ten percentage points of SF winrate 
 test('Maia mate evidence uses empirical CP endpoints, including a losing mate-zero for either mover', () => {
   const winning = stockfishWinrate({ cp: 10000 }, true);
   const losing = stockfishWinrate({ cp: -10000 }, true);
-  assert.equal(winning, 0.8518353443061348);
-  assert.equal(losing, 0.16874792794783955);
+  assert.equal(winning, 0.851931);
+  assert.equal(losing, 0.169027);
   assert.equal(stockfishWinrate({ mate: 2 }, true), winning);
   assert.equal(stockfishWinrate({ mate: -2 }, false), winning);
   assert.equal(stockfishWinrate({ mate: 0 }, true), losing);
   assert.equal(stockfishWinrate({ mate: 0 }, false), losing);
   assert.equal(stockfishWinrate({ mate: NaN }, true), undefined);
+});
+
+test('smoothed Stockfish win rate interpolates continuously across centipawns', () => {
+  assert.equal(stockfishWinrate({ cp: 0 }, true), 0.539177);
+  assert.equal(stockfishWinrate({ cp: 10 }, true), 0.550862);
+  assert.equal(stockfishWinrate({ cp: 20 }, true), 0.562709);
+  assert.ok(Math.abs(stockfishWinrate({ cp: 15 }, true)! - (0.550862 + 0.562709) / 2) < 1e-12);
+  assert.ok(stockfishWinrate({ cp: 15 }, true)! - stockfishWinrate({ cp: 14 }, true)! < 0.002);
+  assert.equal(stockfishWinrate({ cp: 15 }, true), stockfishWinrate({ cp: -15 }, false));
+  for (let cp = -999; cp <= 1000; cp++) {
+    assert.ok(stockfishWinrate({ cp }, true)! >= stockfishWinrate({ cp: cp - 1 }, true)!);
+  }
 });
 
 test('blunder shades follow Stockfish loss order, cap at five and ignore missing evidence', () => {
