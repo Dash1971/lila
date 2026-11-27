@@ -645,6 +645,12 @@ export class NoSweatAnalysis {
     const qualities = this.candidateQualities();
     return {
       primary: this.chartPrimaryCandidates(),
+      selectedRating: this.selfElo,
+      isBlunder: uci => qualities.get(uci)?.quality === 'blunder',
+      ariaLabel: labText('LabChartHelp'),
+      probabilityLabel: labText('LabProbability'),
+      selectLabel: rating => labText('LabSelectRating', rating),
+      previewLabel: move => labText('LabPreview', move),
       stockfish: this.chartStockfishMoves(),
       color: uci => qualities.get(uci)?.color ?? 'var(--c-font-dim)',
       describe: (uci, rating, probability) => {
